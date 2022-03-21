@@ -25,6 +25,5 @@ This is a custom component for Home Assistant to integrate Day Ahead spotprices 
 * Go to Home Assistant > Settings > Integrations
 * Add Energidataservice integration *(If it doesn't show, try CTRL+F5 to force a refresh of the page)*
 * Select area
-* Select DKK or EUR for the price
 
 Voila
