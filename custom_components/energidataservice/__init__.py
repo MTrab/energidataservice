@@ -1,5 +1,5 @@
-"""Adds support for Energidatastyrelsen spot prices."""
-from datetime import timedelta
+"""Adds support for Energi Data Service spot prices."""
+from datetime import timedelta, datetime, time
 import logging
 import asyncio
 import voluptuous as vol
@@ -10,15 +10,21 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
-#from homeassistant.util import Throttle
 
-from .api import Energidatastyrelsen
+# from homeassistant.util import Throttle
+
+from .api import Energidataservice
 
 from .const import (
     CONF_AREA,
+    CONF_VAT,
+    CONF_DECIMALS,
+    AREA_EAST,
+    AREA_WEST,
+    AREA_MAP,
     DATA,
     DOMAIN,
-    SIGNAL_ENERGIDATASTYRELSEN_UPDATE_RECEIVED,
+    SIGNAL_ENERGIDATASERVICE_UPDATE_RECEIVED,
     UPDATE_LISTENER,
     UPDATE_TRACK,
 )
@@ -27,25 +33,22 @@ LOADED_COMPONENTS = ["sensor"]
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = 15
+SCAN_INTERVAL = 60
 
-CONFIG_SCHEMA = vol.Schema(
+DATA_SCHEMA = vol.Schema(
     {
-        DOMAIN: vol.All(
-            cv.ensure_list,
-            [
-                {
-                    vol.Required(CONF_AREA): cv.string,
-                }
-            ],
-        )
-    },
-    extra=vol.ALLOW_EXTRA,
+        vol.Required(
+            CONF_AREA,
+            default=AREA_WEST,
+        ): vol.In([AREA_WEST, AREA_EAST]),
+        vol.Required(CONF_VAT, default=True): bool,
+        vol.Optional(CONF_DECIMALS, default=3): vol.Coerce(int),
+    }
 )
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up Energidatastyrelsen component."""
+    """Set up Energi Data Service component."""
 
     hass.data.setdefault(DOMAIN, {})
 
@@ -63,10 +66,11 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
     return True
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Set up Energidatastyrelsen from a config entry."""
 
-    area = entry.data[CONF_AREA]
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Set up Energi Data Service from a config entry."""
+
+    area = AREA_MAP[entry.data[CONF_AREA]]
 
     eds_connector = EDSConnector(hass, area)
 
@@ -93,9 +97,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     return True
 
+
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""
@@ -118,17 +124,38 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 
 class EDSConnector:
-    """An object to store the Danfoss Ally data."""
+    """An object to store Energi Data Service data."""
 
     def __init__(self, hass, area):
-        """Initialize Danfoss Ally Connector."""
+        """Initialize Energi Data Service Connector."""
         self.hass = hass
         self._area = area
-        self.eds = Energidatastyrelsen(self._area)
+        self._last_update = 0
+        self._next_update = 0
+        self._json = {}
+        _LOGGER.debug("Setting up sensor for area %s", area)
+        self.eds = Energidataservice(self._area)
 
     def update(self, now=None):
-        """Fetch latest prices from Energidatastyrelsen API"""
-        _LOGGER.debug("Updating Energidatastyrelsen sensors")
-        self.eds.get_spotprices()
+        """Fetch latest prices from Energi Data Service API"""
+        ts_now = int(datetime.now().timestamp())
+        if ts_now > self._next_update:
+            _LOGGER.debug("Updating Energi Data Service data")
+            self.eds.get_spotprices()
+            self._json = self.eds.raw_data
+            self._last_update = ts_now
+            self._next_update = int(
+                (
+                    datetime.combine(
+                        datetime.today(), datetime.strptime("13:00", "%H:%M").time()
+                    )
+                ).timestamp()
+            )
+        else:
+            _LOGGER.debug(
+                "Skipping data refresh, last refresh: %s - next refresh: %s",
+                datetime.fromtimestamp(self._last_update).strftime("%d-%m-%Y %H:%M"),
+                datetime.fromtimestamp(self._next_update).strftime("%d-%m-%Y %H:%M"),
+            )
 
-        dispatcher_send(self.hass, SIGNAL_ENERGIDATASTYRELSEN_UPDATE_RECEIVED)
+        dispatcher_send(self.hass, SIGNAL_ENERGIDATASERVICE_UPDATE_RECEIVED)

@@ -11,10 +11,11 @@
         "step": {
             "user": {
                 "data": {
-                    "key": "API Key",
-                    "secret": "API Secret"
+                    "area": "Price area",
+                    "vat": "VAT",
+                    "decimals": "Decimals"
                 },
-                "title": "Connect to your Danfoss Ally account"
+                "title": "Fetch spot prices from Energi Data Service"
             }
         }
     }

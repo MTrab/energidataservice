@@ -2,24 +2,18 @@
 import logging
 
 from homeassistant.const import (
-    DEVICE_CLASS_BATTERY,
-    DEVICE_CLASS_TEMPERATURE,
-    DEVICE_CLASS_HUMIDITY,
-    PERCENTAGE,
-    TEMP_CELSIUS,
-
+    DEVICE_CLASS_MONETARY,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import Entity
 
 from .const import (
     DATA,
     DOMAIN,
-    SIGNAL_ALLY_UPDATE_RECEIVED,
+    SIGNAL_ENERGIDATASERVICE_UPDATE_RECEIVED,
 )
-from .entity import AllyDeviceEntity
+from .entity import EnergidataserviceEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,60 +21,30 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ):
-    """Set up the Ally binary_sensor platform."""
-    _LOGGER.debug("Setting up Danfoss Ally sensor entities")
-    ally = hass.data[DOMAIN][entry.entry_id][DATA]
+    """Set up the Energi Data Service sensor platform."""
+    _LOGGER.debug("Setting up Energi Data Service sensor")
+    eds = hass.data[DOMAIN][entry.entry_id][DATA]
     entities = []
 
-    for device in ally.devices:
-        for sensor_type in ['battery', 'temperature', 'humidity']:
-            if sensor_type in ally.devices[device]:
-                _LOGGER.debug(f"Found {sensor_type} sensor for {ally.devices[device]['name']}")
-                entities.extend(
-                    [
-                        AllySensor(
-                            ally,
-                            ally.devices[device]["name"],
-                            device,
-                            sensor_type
-                        )
-                    ]
-                )
-
-    if entities:
-        async_add_entities(entities, True)
+    entities.extend([EnergidataserviceSensor(eds)])
+    async_add_entities(entities, True)
 
 
-class AllySensor(AllyDeviceEntity):
-    """Representation of an Ally sensor."""
+class EnergidataserviceSensor(EnergidataserviceEntity):
+    """Representation of Energi Data Service data."""
 
-    def __init__(self, ally, name, device_id, device_type):
+    def __init__(self, eds):
         """Initialize Ally binary_sensor."""
-        self._ally = ally
-        self._device = ally.devices[device_id]
-        self._device_id = device_id
-        self._type = device_type
-        super().__init__(name, device_id, device_type)
+        self.eds = eds
+        self._name = f"Energi Data Service {eds._area}"
+        super().__init__(self._name, eds._area)
 
-        _LOGGER.debug(
-            "Device_id: %s --- Device: %s",
-            self._device_id,
-            self._device
-        )
-
-        self._type = device_type
-
-        self._unique_id = f"{device_type}_{device_id}_ally"
+        self._unique_id = f"energidataservice_data_{eds._area}"
 
         self._state = None
         self._state_attributes = None
 
-        if self._type == "battery":
-            self._state = self._device['battery']
-        elif self._type == "temperature":
-            self._state = self._device['temperature']
-        elif self._type == "humidity":
-            self._state = self._device['humidity']
+        self._async_update_data()
 
     async def async_added_to_hass(self):
         """Register for sensor updates."""
@@ -88,7 +52,7 @@ class AllySensor(AllyDeviceEntity):
         self.async_on_remove(
             async_dispatcher_connect(
                 self.hass,
-                SIGNAL_ALLY_UPDATE_RECEIVED,
+                SIGNAL_ENERGIDATASERVICE_UPDATE_RECEIVED,
                 self._async_update_callback,
             )
         )
@@ -101,7 +65,7 @@ class AllySensor(AllyDeviceEntity):
     @property
     def name(self):
         """Return the name of the sensor."""
-        return f"{self._name} {self._type}"
+        return f"{self._name}"
 
     @property
     def state(self):
@@ -116,24 +80,12 @@ class AllySensor(AllyDeviceEntity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        if self._type == "battery":
-            return PERCENTAGE
-        elif self._type == "temperature":
-            return TEMP_CELSIUS
-        elif self._type == "humidity":
-            return PERCENTAGE
-        return None
+        return "DKK"
 
     @property
     def device_class(self):
         """Return the class of this sensor."""
-        if self._type == "battery":
-            return DEVICE_CLASS_BATTERY
-        elif self._type == "temperature":
-            return DEVICE_CLASS_TEMPERATURE
-        elif self._type == "humidity":
-            return DEVICE_CLASS_HUMIDITY
-        return None
+        return DEVICE_CLASS_MONETARY
 
     @callback
     def _async_update_callback(self):
@@ -144,15 +96,6 @@ class AllySensor(AllyDeviceEntity):
     @callback
     def _async_update_data(self):
         """Load data."""
-        _LOGGER.debug(
-            "Loading new sensor data for device %s",
-            self._device_id
-        )
-        self._device = self._ally.devices[self._device_id]
-
-        if self._type == "battery":
-            self._state = self._device['battery']
-        elif self._type == "temperature":
-            self._state = self._device['temperature']
-        elif self._type == "humidity":
-            self._state = self._device['humidity']
+        _LOGGER.debug("Updating sensor")
+        self._state = self.eds.eds.current
+        # _LOGGER.debug()

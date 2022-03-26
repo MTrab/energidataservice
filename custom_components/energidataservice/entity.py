@@ -1,55 +1,29 @@
-"""Base class for Danfoss Ally entity."""
+"""Base class for Energi Data Service entity."""
 from homeassistant.helpers.entity import Entity
 
-from .const import DEFAULT_NAME, DOMAIN
+from .const import DOMAIN, AREA_TO_TEXT
 
 
-class AllyDeviceEntity(Entity):
-    """Base implementation for Ally device."""
+class EnergidataserviceEntity(Entity):
+    """Base implementation for Energi Data Service."""
 
-    def __init__(self, name, device_id, device_type):
-        """Initialize a Ally device."""
+    def __init__(self, name, area):
+        """Initialize Energi Data Service."""
         super().__init__()
-        self._type = device_type
         self._name = name
-        self._device_id = device_id
+        self._area = area
 
     @property
     def device_info(self):
         """Return the device_info of the device."""
         return {
-            "identifiers": {(DOMAIN, self._device_id)},
+            "identifiers": {(DOMAIN, self._area)},
             "name": self._name,
-            "manufacturer": DEFAULT_NAME,
-            "model": None,
+            "manufacturer": None,
+            "model": f"Spot prices {AREA_TO_TEXT[self._area]} ({self._area})",
         }
 
     @property
     def should_poll(self):
         """Do not poll."""
-        return False
-
-
-class AllyClimateEntity(Entity):
-    """Base implementation for Danfoss Ally Thermostat."""
-
-    def __init__(self, name, device_id):
-        """Initialize a Danfoss Ally zone."""
-        super().__init__()
-        self._device_id = device_id
-        self._name = name
-
-    @property
-    def device_info(self):
-        """Return the device_info of the device."""
-        return {
-            "identifiers": {(DOMAIN, self._device_id)},
-            "name": self._name,
-            "manufacturer": DEFAULT_NAME,
-            "model": None,
-        }
-
-    @property
-    def should_poll(self):
-        """Do not poll."""
-        return False
+        return True
