@@ -1,6 +1,5 @@
 """Support for Energi Data Service sensor."""
 from collections import defaultdict, namedtuple
-from email.policy import default
 import logging
 from datetime import datetime
 
@@ -108,13 +107,13 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._today = None
         self._tomorrow = None
 
-        # Holds lowest and highest prices for today
-        self._today_lowpoint = {}
-        self._today_highpoint = {}
+        # Holds statistical prices for today
+        self._today_min = None
+        self._today_max = None
 
-        # Holds lowest and highest prices for tomorrow
-        self._tomorrow_lowpoint = {}
-        self._tomorrow_highpoint = {}
+        # Holds statistical prices for tomorrow
+        self._tomorrow_min = None
+        self._tomorrow_max = None
 
         # Check incase the sensor was setup using config flow.
         # This blow up if the template isnt valid.
@@ -144,10 +143,16 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             await self._api.update()
 
         self._api.today = self._format_list(self._api.today)
-        self._api.tomorrow = self._format_list(self._api.tomorrow)
+        if self.tomorrow_valid:
+            self._api.tomorrow = self._format_list(self._api.tomorrow)
 
         # Updates price for this hour.
         await self._get_current_price()
+
+        self._today_min = self._get_specific("min", self._api.today)
+        self._today_max = self._get_specific("max", self._api.today)
+        self._tomorrow_min = self._get_specific("min", self._api.tomorrow)
+        self._tomorrow_max = self._get_specific("max", self._api.tomorrow)
 
         self.async_write_ha_state()
 
@@ -260,10 +265,10 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             "tomorrow": self.tomorrow,
             "raw_today": self.raw_today,
             "raw_tomorrow": self.raw_tomorrow,
-            "today_lowpoint": self.today_lowpoint,
-            "today_highpoint": self.today_highpoint,
-            "tomorrow_lowpoint": self.tomorrow_lowpoint,
-            "tomorrow_highpoint": self.tomorrow_highpoint,
+            "today_min": self.today_min,
+            "today_max": self.today_max,
+            "tomorrow_min": self.tomorrow_min,
+            "tomorrow_max": self.tomorrow_max,
         }
 
     @property
@@ -332,33 +337,31 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         return self._api.tomorrow_valid
 
     @property
-    def today_lowpoint(self):
+    def today_min(self):
         """Return lowpoint for today."""
-        return self._get_specific("min", self._api.today)
+        return self._today_min
 
     @property
-    def today_highpoint(self):
+    def today_max(self):
         """Return highpoint for today."""
-        return self._get_specific("max", self._api.today)
+        return self._today_max
 
     @property
-    def tomorrow_lowpoint(self):
+    def tomorrow_min(self):
         """Return lowpoint for tomorrow."""
-        return self._get_specific("min", self._api.tomorrow)
+        return self._tomorrow_min
 
     @property
-    def tomorrow_highpoint(self):
+    def tomorrow_max(self):
         """Return highpoint for tomorrow."""
-        return self._get_specific("max", self._api.tomorrow)
+        return self._tomorrow_max
 
     def _format_list(self, data) -> list:
         """Format data as list with prices localized."""
         formatted_pricelist = []
         for i in data:
-            Interval = namedtuple('Interval', 'price hour')
-            price = self._calculate(
-                i.price, fake_dt=dt_utils.as_local(i.hour)
-            )
+            Interval = namedtuple("Interval", "price hour")
+            price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
             formatted_pricelist.append(Interval(price, i.hour))
         return formatted_pricelist
 

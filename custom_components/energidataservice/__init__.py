@@ -3,8 +3,6 @@ import logging
 
 from random import randint
 from pytz import timezone
-from functools import partial
-from collections import defaultdict
 
 import voluptuous as vol
 
@@ -13,12 +11,7 @@ from homeassistant.core import Config, HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_call_later, async_track_time_change
-from homeassistant.util import dt as dt_utils
-
-from homeassistant.const import (
-    CONF_CURRENCY,
-)
+from homeassistant.helpers.event import async_track_time_change
 
 from .events import async_track_time_change_in_tz
 
@@ -34,17 +27,12 @@ from .const import (
     UPDATE_EDS,
     REGIONS,
     PRICE_TYPES,
-    CURRENCY,
 )
 
 RANDOM_MINUTE = randint(0, 10)
 RANDOM_SECOND = randint(0, 59)
 
 _LOGGER = logging.getLogger(__name__)
-
-# SCAN_INTERVAL = 60
-
-CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 
 DATA_SCHEMA = vol.Schema(
     {
@@ -101,11 +89,11 @@ async def _setup(hass: HomeAssistant, config: Config) -> bool:
 
         await api.update()
 
-        # async def new_day(indata):
-        #     """Handle data on new day."""
-        #     _LOGGER.debug("New day function called")
-        #     api._tomorrow_valid = False
-        #     async_dispatcher_send(hass, UPDATE_EDS)
+        async def new_day(indata):
+            """Handle data on new day."""
+            _LOGGER.debug("New day function called")
+            api._tomorrow_valid = False
+            async_dispatcher_send(hass, UPDATE_EDS)
 
         async def new_hour(indata):
             """Callback to tell the sensors to update on a new hour."""

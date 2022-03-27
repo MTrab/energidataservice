@@ -2,7 +2,7 @@
 import logging
 
 from datetime import datetime, timedelta
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 import pytz
 
