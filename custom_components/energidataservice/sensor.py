@@ -182,7 +182,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     @staticmethod
     def _convert_currency(currency_from, currency_to, value):
         """Convert currency"""
-        c = CurrencyConverter() # pylint: disable=invalid-name
+        c = CurrencyConverter()  # pylint: disable=invalid-name
         return c.convert(value, currency_from, currency_to)
 
     def _calculate(self, value=None, fake_dt=None) -> float:
@@ -199,7 +199,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         if fake_dt is not None:
 
             def faker():
-                def inner(*args, **kwargs): # type: ignore pylint: disable=unused-argument
+                def inner(*args, **kwargs):  # type: ignore pylint: disable=unused-argument
                     return fake_dt
 
                 return contextfunction(inner)

@@ -86,20 +86,20 @@ async def _setup(hass: HomeAssistant, config: Config) -> bool:
 
         # await api.update()
 
-        async def new_day(indata): # type: ignore pylint: disable=unused-argument
+        async def new_day(indata):  # type: ignore pylint: disable=unused-argument
             """Handle data on new day."""
             _LOGGER.debug("New day function called")
             api.today = api.tomorrow
             api.tomorrow = None
-            api._tomorrow_valid = False # pylint: disable=protected-access
+            api._tomorrow_valid = False  # pylint: disable=protected-access
             async_dispatcher_send(hass, UPDATE_EDS)
 
-        async def new_hour(indata): # type: ignore pylint: disable=unused-argument
+        async def new_hour(indata):  # type: ignore pylint: disable=unused-argument
             """Callback to tell the sensors to update on a new hour."""
             _LOGGER.debug("New hour, updating state")
             async_dispatcher_send(hass, UPDATE_EDS)
 
-        async def get_new_data(indata): # type: ignore pylint: disable=unused-argument
+        async def get_new_data(indata):  # type: ignore pylint: disable=unused-argument
             """Fetch new data for tomorrows prices at 1300 CET."""
             _LOGGER.debug("Getting latest dataset")
             await api.update()
@@ -144,7 +144,7 @@ class EDSConnector:
         self._eds = Energidataservice(area, client, hass.config.time_zone)
         _LOGGER.debug("Initializing Energi Data Service for area %s", area)
 
-    async def update(self, dt=None): # type: ignore pylint: disable=unused-argument,invalid-name
+    async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from Energi Data Service API"""
         eds = self._eds
 

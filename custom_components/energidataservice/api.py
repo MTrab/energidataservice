@@ -8,7 +8,7 @@ import pytz
 _LOGGER = logging.getLogger(__name__)
 
 
-def prepare_data(indata, date, tz): # pylint: disable=invalid-name
+def prepare_data(indata, date, tz):  # pylint: disable=invalid-name
     """Get today prices."""
     local_tz = pytz.timezone(tz)
     reslist = []
@@ -33,7 +33,7 @@ def prepare_data(indata, date, tz): # pylint: disable=invalid-name
 class Energidataservice:
     """Energi Data Service API"""
 
-    def __init__(self, area, client, tz): # pylint: disable=invalid-name
+    def __init__(self, area, client, tz):  # pylint: disable=invalid-name
         """Init API connection to Energi Data Service"""
         self._area = area
         self.client = client
