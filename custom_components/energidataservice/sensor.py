@@ -89,6 +89,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             util_slugify(self._friendly_name)
         )
         self._unique_id = f"energidataservice_{area}"
+        super().__init__(self._friendly_name, self._area)
 
         # Currently only supports Danish VAT.
         if vat is True:
@@ -181,7 +182,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     @staticmethod
     def _convert_currency(currency_from, currency_to, value):
         """Convert currency"""
-        c = CurrencyConverter()
+        c = CurrencyConverter() # pylint: disable=invalid-name
         return c.convert(value, currency_from, currency_to)
 
     def _calculate(self, value=None, fake_dt=None) -> float:
@@ -198,7 +199,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         if fake_dt is not None:
 
             def faker():
-                def inner(*args, **kwargs):
+                def inner(*args, **kwargs): # type: ignore pylint: disable=unused-argument
                     return fake_dt
 
                 return contextfunction(inner)
@@ -281,6 +282,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         return {
             "identifiers": {(DOMAIN, self.unique_id)},
             "name": self.name,
+            "model": f"Area code: {AREA_MAP[self._area]}",
             "manufacturer": "Energi Data Service",
         }
 
