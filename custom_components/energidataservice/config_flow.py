@@ -6,11 +6,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.template import Template
 
 from . import DATA_SCHEMA
-from .const import (
-    CONF_TEMPLATE,
-    DEFAULT_TEMPLATE,
-    DOMAIN,
-)
+from .const import CONF_TEMPLATE, DEFAULT_TEMPLATE, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
