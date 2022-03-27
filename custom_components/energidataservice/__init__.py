@@ -87,11 +87,13 @@ async def _setup(hass: HomeAssistant, config: Config) -> bool:
         api = EDSConnector(hass, AREA_MAP[config.get(CONF_AREA)])
         hass.data[DOMAIN] = api
 
-        await api.update()
+        # await api.update()
 
         async def new_day(indata):
             """Handle data on new day."""
             _LOGGER.debug("New day function called")
+            api.today = api.tomorrow
+            api.tomorrow = None
             api._tomorrow_valid = False
             async_dispatcher_send(hass, UPDATE_EDS)
 
