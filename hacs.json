@@ -2,5 +2,10 @@
     "name": "Energi Data Service",
     "render_readme": true,
     "country": "DK",
-    "homeassistant": "2022.3.0"
+    "domains": [
+        "sensor"
+    ],
+    "homeassistant": "2022.3.0",
+    "zip_release": true,
+    "filename": "energidataservice.zip"
 }

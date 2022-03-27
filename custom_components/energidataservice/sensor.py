@@ -141,10 +141,9 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         if not self._api.today:
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
-
-        self._api.today = self._format_list(self._api.today)
-        if self.tomorrow_valid:
-            self._api.tomorrow = self._format_list(self._api.tomorrow)
+            self._api.today = self._format_list(self._api.today)
+            if self.tomorrow_valid:
+                self._api.tomorrow = self._format_list(self._api.tomorrow)
 
         # Updates price for this hour.
         await self._get_current_price()
