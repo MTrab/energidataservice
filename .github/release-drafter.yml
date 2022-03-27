@@ -5,7 +5,7 @@ sort-direction: ascending
 categories:
   - title: '🚀 Features'
     labels:
-      - 'feature'
+      - 'feature request'
       - 'enhancement'
 
   - title: '🐛 Bug Fixes'
