@@ -2,7 +2,7 @@
 import logging
 
 from datetime import datetime, timedelta
-from collections import defaultdict
+from collections import namedtuple
 
 import pytz
 
@@ -14,18 +14,20 @@ def prepare_data(indata, date, tz):
     local_tz = pytz.timezone(tz)
     reslist = []
     for dataset in indata:
-        if date in dataset["HourUTC"]:
-            val = defaultdict(dict)
-            val["value"] = dataset["SpotPriceEUR"]
-            tmpdate = (
-                datetime.fromisoformat(dataset["HourUTC"])
-                .replace(tzinfo=pytz.utc)
-                .astimezone(local_tz)
-            )
-            val["start"] = local_tz.normalize(tmpdate)
-            reslist.append(val)
+        # val = defaultdict(dict)
+        Interval = namedtuple("Interval", "price hour")
+        # val["price"] = dataset["SpotPriceEUR"]
+        tmpdate = (
+            datetime.fromisoformat(dataset["HourUTC"])
+            .replace(tzinfo=pytz.utc)
+            .astimezone(local_tz)
+        )
+        # val["start"] = local_tz.normalize(tmpdate)
+        tmp = Interval(dataset["SpotPriceEUR"], local_tz.normalize(tmpdate))
+        # if date in val["start"].strftime("%Y-%m-%d"):
+        if date in tmp.hour.strftime("%Y-%m-%d"):
+            reslist.append(tmp)
 
-    _LOGGER.debug(reslist)
     return reslist
 
 
@@ -67,15 +69,12 @@ class Energidataservice:
     @staticmethod
     def _header():
         """Create default request header"""
-
         data = {"Content-Type": "application/json"}
-
         return data
 
     def _body(self):
         """Create GraphQL request body"""
-
-        date_from = datetime.utcnow().strftime("%Y-%m-%d")
+        date_from = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
         date_to = (datetime.utcnow() + timedelta(days=2)).strftime("%Y-%m-%d")
         _LOGGER.debug("Start Date: %s", date_from)
         _LOGGER.debug("End Data: %s", date_to)
@@ -88,23 +87,16 @@ class Energidataservice:
             + str(self._area)
             + '\\"}} order_by: {HourUTC: asc} limit: 100 offset: 0){HourUTC SpotPriceEUR }}"}'
         )
-
         return data
-
-    @property
-    def raw_data(self):
-        """Return the raw dataset."""
-        return self._result
 
     @property
     def today(self):
         """Return raw dataset for today."""
-        date = datetime.utcnow().strftime("%Y-%m-%d")
+        date = datetime.now().strftime("%Y-%m-%d")
         return prepare_data(self._result, date, self._tz)
 
     @property
     def tomorrow(self):
         """Return raw dataset for today."""
-        date = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d")
+        date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         return prepare_data(self._result, date, self._tz)
-        # return []
