@@ -1,31 +1,27 @@
 """Support for Energi Data Service sensor."""
 from collections import defaultdict, namedtuple
-import logging
 from datetime import datetime
+import logging
 
 from currency_converter import CurrencyConverter
-import homeassistant.helpers.config_validation as cv
 from homeassistant.components import sensor
+from homeassistant.const import DEVICE_CLASS_MONETARY
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach
-from homeassistant.util import dt as dt_utils
-from homeassistant.util import slugify as util_slugify
-from homeassistant.const import (
-    DEVICE_CLASS_MONETARY,
-)
-
+from homeassistant.util import dt as dt_utils, slugify as util_slugify
 from jinja2 import contextfunction
 
 from .const import (
     AREA_MAP,
     CONF_AREA,
-    CONF_VAT,
     CONF_DECIMALS,
-    CONF_TEMPLATE,
     CONF_PRICETYPE,
-    PRICE_IN,
-    DOMAIN,
+    CONF_TEMPLATE,
+    CONF_VAT,
     DEFAULT_TEMPLATE,
+    DOMAIN,
+    PRICE_IN,
     UPDATE_EDS,
 )
 from .entity import EnergidataserviceEntity

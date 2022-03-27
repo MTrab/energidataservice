@@ -1,33 +1,30 @@
 """Adds support for Energi Data Service spot prices."""
 import logging
-
 from random import randint
-from pytz import timezone
-
-import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_change
-
-from .events import async_track_time_change_in_tz
+from pytz import timezone
+import voluptuous as vol
 
 from .api import Energidataservice
 from .const import (
     AREA_MAP,
     CONF_AREA,
-    CONF_VAT,
     CONF_DECIMALS,
-    CONF_TEMPLATE,
     CONF_PRICETYPE,
+    CONF_TEMPLATE,
+    CONF_VAT,
     DOMAIN,
-    UPDATE_EDS,
-    REGIONS,
     PRICE_TYPES,
+    REGIONS,
+    UPDATE_EDS,
 )
+from .events import async_track_time_change_in_tz
 
 RANDOM_MINUTE = randint(0, 10)
 RANDOM_SECOND = randint(0, 59)

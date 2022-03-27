@@ -1,8 +1,7 @@
 """Energi Data Service API handler"""
-import logging
-
-from datetime import datetime, timedelta
 from collections import namedtuple
+from datetime import datetime, timedelta
+import logging
 
 import pytz
 

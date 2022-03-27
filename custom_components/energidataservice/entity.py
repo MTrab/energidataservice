@@ -1,7 +1,7 @@
 """Base class for Energi Data Service entity."""
 from homeassistant.helpers.entity import Entity
 
-from .const import DOMAIN, AREA_TO_TEXT
+from .const import AREA_TO_TEXT, DOMAIN
 
 
 class EnergidataserviceEntity(Entity):
