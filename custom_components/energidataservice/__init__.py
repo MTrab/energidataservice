@@ -1,126 +1,144 @@
 """Adds support for Energi Data Service spot prices."""
-from datetime import timedelta, datetime, time
 import logging
-import asyncio
+
+from random import randint
+from pytz import timezone
+from functools import partial
+from collections import defaultdict
+
 import voluptuous as vol
 
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import Config, HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.dispatcher import dispatcher_send
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.event import async_call_later, async_track_time_change
+from homeassistant.util import dt as dt_utils
 
-# from homeassistant.util import Throttle
+from homeassistant.const import (
+    CONF_CURRENCY,
+)
+
+from .events import async_track_time_change_in_tz
 
 from .api import Energidataservice
-
 from .const import (
+    AREA_MAP,
     CONF_AREA,
     CONF_VAT,
     CONF_DECIMALS,
-    AREA_EAST,
-    AREA_WEST,
-    AREA_MAP,
-    DATA,
+    CONF_TEMPLATE,
+    CONF_PRICETYPE,
     DOMAIN,
-    SIGNAL_ENERGIDATASERVICE_UPDATE_RECEIVED,
-    UPDATE_LISTENER,
-    UPDATE_TRACK,
+    UPDATE_EDS,
+    REGIONS,
+    PRICE_TYPES,
+    CURRENCY,
 )
 
-LOADED_COMPONENTS = ["sensor"]
+RANDOM_MINUTE = randint(0, 10)
+RANDOM_SECOND = randint(0, 59)
 
 _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = 60
 
+CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
+
 DATA_SCHEMA = vol.Schema(
     {
         vol.Required(
             CONF_AREA,
-            default=AREA_WEST,
-        ): vol.In([AREA_WEST, AREA_EAST]),
+            default=None,
+        ): vol.In(REGIONS),
         vol.Required(CONF_VAT, default=True): bool,
         vol.Optional(CONF_DECIMALS, default=3): vol.Coerce(int),
+        vol.Optional(CONF_PRICETYPE, default="kWh"): vol.In(PRICE_TYPES),
+        vol.Optional(CONF_TEMPLATE, default=""): str,
     }
 )
 
 
-async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up Energi Data Service component."""
-
-    hass.data.setdefault(DOMAIN, {})
-
-    if DOMAIN not in config:
-        return True
-
-    for conf in config[DOMAIN]:
-        hass.async_create_task(
-            hass.config_entries.flow.async_init(
-                DOMAIN,
-                context={"source": SOURCE_IMPORT},
-                data=conf,
-            )
-        )
-
-    return True
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up Energi Data Service from a config entry."""
+    _LOGGER.debug("Entry data: %s", entry.data)
+    result = await _setup(hass, entry.data)
 
-    area = AREA_MAP[entry.data[CONF_AREA]]
-
-    eds_connector = EDSConnector(hass, area)
-
-    await hass.async_add_executor_job(eds_connector.update)
-
-    update_track = async_track_time_interval(
-        hass,
-        lambda now: eds_connector.update(),
-        timedelta(seconds=SCAN_INTERVAL),
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(entry, "sensor")
     )
 
-    update_listener = entry.add_update_listener(_async_update_listener)
-
-    hass.data[DOMAIN][entry.entry_id] = {
-        DATA: eds_connector,
-        UPDATE_TRACK: update_track,
-        UPDATE_LISTENER: update_listener,
-    }
-
-    for component in LOADED_COMPONENTS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, component)
-        )
-
-    return True
+    return result
 
 
-async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
-    """Handle options update."""
-    await hass.config_entries.async_reload(entry.entry_id)
-
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = all(
-        await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, component)
-                for component in LOADED_COMPONENTS
-            ]
-        )
-    )
-
-    hass.data[DOMAIN][entry.entry_id][UPDATE_TRACK]()
-    hass.data[DOMAIN][entry.entry_id][UPDATE_LISTENER]()
+    unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
 
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        for unsub in hass.data[DOMAIN].listeners:
+            unsub()
+        hass.data.pop(DOMAIN)
 
-    return unload_ok
+        return True
+
+    return False
+
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload config entry."""
+    await async_unload_entry(hass, entry)
+    await async_setup_entry(hass, entry)
+
+
+async def _setup(hass: HomeAssistant, config: Config) -> bool:
+    """Setup the integration using a config entry."""
+
+    if DOMAIN not in hass.data:
+        api = EDSConnector(hass, AREA_MAP[config.get(CONF_AREA)])
+        hass.data[DOMAIN] = api
+
+        await api.update()
+
+        # async def new_day(indata):
+        #     """Handle data on new day."""
+        #     _LOGGER.debug("New day function called")
+        #     api._tomorrow_valid = False
+        #     async_dispatcher_send(hass, UPDATE_EDS)
+
+        async def new_hour(indata):
+            """Callback to tell the sensors to update on a new hour."""
+            _LOGGER.debug("New hour, updating state")
+            async_dispatcher_send(hass, UPDATE_EDS)
+
+        async def get_new_data(indata):
+            """Fetch new data for tomorrows prices at 1300 CET."""
+            _LOGGER.debug("Getting latest dataset")
+            await api.update()
+            async_dispatcher_send(hass, UPDATE_EDS)
+
+        # Handle dataset updates
+        update_tomorrow = async_track_time_change_in_tz(
+            hass,
+            get_new_data,
+            hour=13,
+            minute=RANDOM_MINUTE,
+            second=RANDOM_SECOND,
+            tz=timezone("Europe/Copenhagen"),
+        )
+
+        # update_new_day = async_track_time_change(
+        #     hass, new_day, hour=0, minute=0, second=0
+        # )
+
+        update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
+
+        api.listeners.append(update_tomorrow)
+        api.listeners.append(update_new_hour)
+        # api.listeners.append(update_new_day)
+
+        return True
 
 
 class EDSConnector:
@@ -128,34 +146,41 @@ class EDSConnector:
 
     def __init__(self, hass, area):
         """Initialize Energi Data Service Connector."""
-        self.hass = hass
-        self._area = area
-        self._last_update = 0
-        self._next_update = 0
-        self._json = {}
-        _LOGGER.debug("Setting up sensor for area %s", area)
-        self.eds = Energidataservice(self._area)
+        self._hass = hass
+        self._last_tick = None
+        self._tomorrow_valid = False
+        self.today = None
+        self.tomorrow = None
+        self.listeners = []
+        # self.data = defaultdict(dict)
+        client = async_get_clientsession(hass)
+        self._eds = Energidataservice(area, client, hass.config.time_zone)
+        _LOGGER.debug("Initializing Energi Data Service for area %s", area)
 
-    def update(self, now=None):
+    async def update(self, dt=None):
         """Fetch latest prices from Energi Data Service API"""
-        ts_now = int(datetime.now().timestamp())
-        if ts_now > self._next_update:
-            _LOGGER.debug("Updating Energi Data Service data")
-            self.eds.get_spotprices()
-            self._json = self.eds.raw_data
-            self._last_update = ts_now
-            self._next_update = int(
-                (
-                    datetime.combine(
-                        datetime.today(), datetime.strptime("13:00", "%H:%M").time()
-                    )
-                ).timestamp()
-            )
-        else:
-            _LOGGER.debug(
-                "Skipping data refresh, last refresh: %s - next refresh: %s",
-                datetime.fromtimestamp(self._last_update).strftime("%d-%m-%Y %H:%M"),
-                datetime.fromtimestamp(self._next_update).strftime("%d-%m-%Y %H:%M"),
-            )
+        eds = self._eds
 
-        dispatcher_send(self.hass, SIGNAL_ENERGIDATASERVICE_UPDATE_RECEIVED)
+        await eds.get_spotprices()
+        # data = eds.raw_data
+        self.today = eds.today
+        self.tomorrow = eds.tomorrow
+
+        if not self.tomorrow:
+            self._tomorrow_valid = False
+            self.tomorrow = None
+        else:
+            self._tomorrow_valid = True
+
+        # if data:
+        #     self.data["json"] = data
+        # else:
+        #     _LOGGER.warning(
+        #         "Couldn't get data from Energi Data Service, retrying later."
+        #     )
+        #     async_call_later(hass, 60, partial(self.update))
+
+    @property
+    def tomorrow_valid(self):
+        """Is tomorrows prices valid?"""
+        return self._tomorrow_valid

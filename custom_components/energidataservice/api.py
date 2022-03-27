@@ -1,115 +1,110 @@
 """Energi Data Service API handler"""
-import requests
 import logging
 
-from currency_converter import CurrencyConverter
-from datetime import datetime, timedelta, timezone
-from .const import LIMIT
+from datetime import datetime, timedelta
+from collections import defaultdict
+
+import pytz
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def prepare_data(indata, date, tz):
+    """Get today prices."""
+    local_tz = pytz.timezone(tz)
+    reslist = []
+    for dataset in indata:
+        if date in dataset["HourUTC"]:
+            val = defaultdict(dict)
+            val["value"] = dataset["SpotPriceEUR"]
+            tmpdate = (
+                datetime.fromisoformat(dataset["HourUTC"])
+                .replace(tzinfo=pytz.utc)
+                .astimezone(local_tz)
+            )
+            val["start"] = local_tz.normalize(tmpdate)
+            reslist.append(val)
+
+    _LOGGER.debug(reslist)
+    return reslist
 
 
 class Energidataservice:
     """Energi Data Service API"""
 
-    def __init__(self, area):
+    def __init__(self, area, client, tz):
         """Init API connection to Energi Data Service"""
         self._area = area
+        self.client = client
         self._result = {}
+        self._tz = tz
 
-    def get_spotprices(self):
+    async def get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
-        try:
-            headers = self._header()
-            body = self._body()
-            # url = (
-            #    "https://api.energidataservice.dk/datastore_search?resource_id=elspotprices&limit="
-            #    + LIMIT
-            #    + '&filters={"PriceArea":"'
-            #    + self._area
-            #    + '"}&sort=HourUTC desc'
-            # )
-            url = "https://data-api.energidataservice.dk/v1/graphql"
-            _LOGGER.debug("API URL: %s", url)
-            _LOGGER.debug("Request header: %s", headers[0])
-            _LOGGER.debug("Request body: %s", body)
-            resp = requests.post(url, headers=headers[0], data=body, timeout=10)
-            self._result = resp.json()
+        headers = self._header()
+        body = self._body()
+        url = "https://data-api.energidataservice.dk/v1/graphql"
+        _LOGGER.debug("API URL: %s", url)
+        _LOGGER.debug("Request header: %s", headers)
+        _LOGGER.debug("Request body: %s", body)
+        resp = await self.client.post(url, data=body, headers=headers)
+
+        if resp.status == 400:
+            _LOGGER.error("API returned error 400, Bad Request!")
+            self._result = {}
+        elif resp.status == 411:
+            _LOGGER.error("API returned error 411, Invalid Request!")
+            self._result = {}
+        elif resp.status == 200:
+            res = await resp.json()
+            self._result = res["data"]["elspotprices"]
 
             _LOGGER.debug("Response:")
             _LOGGER.debug(self._result)
+        else:
+            _LOGGER.error("API returned error %s", str(resp.status))
 
-        except Exception as ex:
-            raise Exception(str(ex))
-
-    def _header(self):
+    @staticmethod
+    def _header():
         """Create default request header"""
 
         data = {"Content-Type": "application/json"}
 
-        return [data]
+        return data
 
     def _body(self):
         """Create GraphQL request body"""
 
-        today = datetime.utcnow().strftime("%Y-%m-%d")
-        tomorrow = (datetime.utcnow() + timedelta(days=2)).strftime("%Y-%m-%d")
+        date_from = datetime.utcnow().strftime("%Y-%m-%d")
+        date_to = (datetime.utcnow() + timedelta(days=2)).strftime("%Y-%m-%d")
+        _LOGGER.debug("Start Date: %s", date_from)
+        _LOGGER.debug("End Data: %s", date_to)
         data = (
             '{"query": "query Dataset {elspotprices(where: {HourUTC: {_gte: \\"'
-            + today
+            + str(date_from)
             + '\\", _lt: \\"'
-            + tomorrow
-            + '\\"}PriceArea: {_eq: \\"'
-            + self._area
+            + str(date_to)
+            + '\\"} PriceArea: {_eq: \\"'
+            + str(self._area)
             + '\\"}} order_by: {HourUTC: asc} limit: 100 offset: 0){HourUTC SpotPriceEUR }}"}'
         )
 
         return data
 
-    def _currency(self, currency_from, currency_to, value):
-        """Convert currency"""
-        c = CurrencyConverter()
-        return c.convert(value, currency_from, currency_to)
-
     @property
     def raw_data(self):
-        """Return the raw JSON result"""
+        """Return the raw dataset."""
         return self._result
 
     @property
     def today(self):
-        """Return array of prices for today"""
+        """Return raw dataset for today."""
+        date = datetime.utcnow().strftime("%Y-%m-%d")
+        return prepare_data(self._result, date, self._tz)
 
     @property
     def tomorrow(self):
-        """Return array of prices for tomorrow"""
-
-    @property
-    def current(self):
-        """Return price for current hour"""
-        now = datetime.utcnow()
-        current_state_time = (
-            now.replace(tzinfo=timezone.utc)
-            .replace(microsecond=0)
-            .replace(second=0)
-            .replace(minute=0)
-            .isoformat()
-        )
-
-        mwh_price = None
-
-        for dataset in self._result["data"]["elspotprices"]:
-            if dataset["HourUTC"] == current_state_time:
-                mwh_price = dataset["SpotPriceEUR"]
-                _LOGGER.debug("Found MWh price %f EUR", dataset["SpotPriceEUR"])
-                break
-
-        if not mwh_price is None:
-            kwh_price = mwh_price / 1000
-        else:
-            kwh_price = None
-            _LOGGER.warning(
-                "OOPS! Something went very wrong! Couldn't find current price"
-            )
-
-        return self._currency("EUR", "DKK", kwh_price)
+        """Return raw dataset for today."""
+        date = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d")
+        return prepare_data(self._result, date, self._tz)
+        # return []

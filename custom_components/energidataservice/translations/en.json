@@ -1,21 +1,21 @@
 {
     "config": {
-        "abort": {
-            "already_configured": "Device is already configured"
-        },
+        "title": "Energi Data Service",
         "error": {
-            "cannot_connect": "Failed to connect",
-            "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
+            "invalid_template": "The additional cost template is invalid, check https://github.com/mtrab/energidataservice"
         },
         "step": {
             "user": {
                 "data": {
                     "area": "Price area",
-                    "vat": "VAT",
-                    "decimals": "Decimals"
+                    "vat": "Show prices including VAT",
+                    "decimals": "Decimals",
+                    "pricetype": "Price calculated in",
+                    "cost_template": "Template for additional costs",
+                    "currency": "Show prices in this currency"
                 },
-                "title": "Fetch spot prices from Energi Data Service"
+                "description": "Fetch spot prices from Energi Data Service",
+                "title": "Energi Data Service"
             }
         }
     }
