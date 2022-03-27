@@ -42,7 +42,7 @@ RANDOM_SECOND = randint(0, 59)
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = 60
+# SCAN_INTERVAL = 60
 
 CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 

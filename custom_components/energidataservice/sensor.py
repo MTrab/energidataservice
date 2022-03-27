@@ -1,5 +1,6 @@
 """Support for Energi Data Service sensor."""
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+from email.policy import default
 import logging
 from datetime import datetime
 
@@ -17,6 +18,7 @@ from homeassistant.const import (
 from jinja2 import contextfunction
 
 from .const import (
+    AREA_MAP,
     CONF_AREA,
     CONF_VAT,
     CONF_DECIMALS,
@@ -142,11 +144,12 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             await self._api.update()
 
         self._api.today = self._format_list(self._api.today)
+        self._api.tomorrow = self._format_list(self._api.tomorrow)
 
         # Updates price for this hour.
         await self._get_current_price()
 
-        # self.async_write_ha_state()
+        self.async_write_ha_state()
 
     async def _get_current_price(self) -> None:
         """Get price for current hour"""
@@ -161,8 +164,8 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
         if self._api.today:
             for dataset in self._api.today:
-                if dataset["hour"] == current_state_time:
-                    self._state = dataset["price"]
+                if dataset.hour == current_state_time:
+                    self._state = dataset.price
                     _LOGGER.debug("Current price updated to %f", self._state)
                     break
         else:
@@ -229,10 +232,13 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         return self._friendly_name
 
     @property
+    def should_poll(self):
+        """No need to poll. Coordinator notifies entity of updates."""
+        return False
+
+    @property
     def state(self):
         """Return sensor state."""
-        # res = self._calculate()
-        # return res
         return self._state
 
     @property
@@ -248,6 +254,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             "unit": self.unit,
             "currency": self._currency,
             "area": self._area,
+            "area_code": AREA_MAP[self._area],
             "tomorrow_valid": self.tomorrow_valid,
             "today": self.today,
             "tomorrow": self.tomorrow,
@@ -284,7 +291,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             list: sorted list where today[0] is the price of hour 00.00 - 01.00
         """
 
-        return [i["price"] for i in self._api.today if i]
+        return [i.price for i in self._api.today if i]
         # return None
 
     @property
@@ -294,19 +301,30 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             list: sorted where tomorrow[0] is the price of hour 00.00 - 01.00 etc.
         """
         if self._api.tomorrow_valid:
-            return [i["price"] for i in self._api.tomorrow if i]
+            return [i.price for i in self._api.tomorrow if i]
         else:
             return None
+
+    @staticmethod
+    def _add_raw(data):
+        lst = []
+        for i in data:
+            ret = defaultdict(dict)
+            ret["hour"] = i.hour
+            ret["price"] = i.price
+            lst.append(ret)
+
+        return lst
 
     @property
     def raw_today(self):
         """Return the raw array with todays prices."""
-        return self._api.today
+        return self._add_raw(self._api.today)
 
     @property
     def raw_tomorrow(self):
         """Return the raw array with tomorrows prices."""
-        return self._api.tomorrow
+        return self._add_raw(self._api.tomorrow)
 
     @property
     def tomorrow_valid(self):
@@ -337,12 +355,11 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         """Format data as list with prices localized."""
         formatted_pricelist = []
         for i in data:
-            val = defaultdict(dict)
-            val["price"] = self._calculate(
-                i.get("value"), fake_dt=dt_utils.as_local(i.get("start"))
+            Interval = namedtuple('Interval', 'price hour')
+            price = self._calculate(
+                i.price, fake_dt=dt_utils.as_local(i.hour)
             )
-            val["hour"] = i.get("start")
-            formatted_pricelist.append(val)
+            formatted_pricelist.append(Interval(price, i.hour))
         return formatted_pricelist
 
     @staticmethod
@@ -351,30 +368,22 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
         if datatype in ["MIN", "Min", "min"]:
             if data:
-                ret = None
-                val = None
-                for i in data:
-                    if ret is None:
-                        ret = i["price"]
-                        val = i
-                    elif i["price"] < ret:
-                        ret = i["price"]
-                        val = i
-                return val
+                res = min(data, key=lambda k: k.price)
+                ret = defaultdict(dict)
+                ret["hour"] = res.hour
+                ret["price"] = res.price
+
+                return ret
             else:
                 return None
         elif datatype in ["MAX", "Max", "max"]:
             if data:
-                ret = None
-                val = None
-                for i in data:
-                    if ret is None:
-                        ret = i["price"]
-                        val = i
-                    elif i["price"] > ret:
-                        ret = i["price"]
-                        val = i
-                return val
+                res = max(data, key=lambda k: k.price)
+                ret = defaultdict(dict)
+                ret["hour"] = res.hour
+                ret["price"] = res.price
+
+                return ret
             else:
                 return None
         else:
