@@ -1,9 +1,14 @@
 {
     "domain": "energidataservice",
-    "name": "Energidataservice",
+    "name": "Energi Data Service",
     "documentation": "https://github.com/MTrab/energidataservice/blob/master/README.md",
     "issue_tracker": "https://github.com/MTrab/energidataservice/issues",
-    "requirements": ["CurrencyConverter==0.16.10"],
+    "requirements": [
+        "CurrencyConverter==0.16.10"
+    ],
+    "after_dependencies": [
+        "http"
+    ],
     "codeowners": [
         "@MTrab"
     ],

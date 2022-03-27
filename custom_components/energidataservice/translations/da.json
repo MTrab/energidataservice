@@ -1,0 +1,21 @@
+{
+    "config": {
+        "title": "Energi Data Service",
+        "error": {
+            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https://github.com/mtrab/energidataservice"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "area": "Pris område",
+                    "vat": "Vis priser med moms",
+                    "decimals": "Decimaler",
+                    "pricetype": "Pris beregnes i",
+                    "cost_template": "Skabelon til ekstra omkostninger"
+                },
+                "description": "Henter el spot priser fra Energi Data Service",
+                "title": "Energi Data Service"
+            }
+        }
+    }
+}

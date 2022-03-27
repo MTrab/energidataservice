@@ -11,8 +11,7 @@
                     "vat": "Show prices including VAT",
                     "decimals": "Decimals",
                     "pricetype": "Price calculated in",
-                    "cost_template": "Template for additional costs",
-                    "currency": "Show prices in this currency"
+                    "cost_template": "Template for additional costs"
                 },
                 "description": "Fetch spot prices from Energi Data Service",
                 "title": "Energi Data Service"
