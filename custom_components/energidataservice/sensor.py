@@ -139,7 +139,8 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             self._api.today = self._format_list(self._api.today)
 
         if self.tomorrow_valid:
-            self._api.tomorrow = self._format_list(self._api.tomorrow, True)
+            if not self._api.tomorrow_calculated:
+                self._api.tomorrow = self._format_list(self._api.tomorrow, True)
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
             self._api.tomorrow = None
