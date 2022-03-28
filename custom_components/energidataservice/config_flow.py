@@ -2,7 +2,7 @@
 import logging
 import re
 
-from homeassistant import config_entries, core, exceptions
+from homeassistant import config_entries
 from homeassistant.helpers.template import Template
 from homeassistant.data_entry_flow import FlowResult
 

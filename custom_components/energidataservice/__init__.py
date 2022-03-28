@@ -1,13 +1,16 @@
 """Adds support for Energi Data Service spot prices."""
 import logging
+from datetime import timedelta
+from functools import partial
 from random import randint
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import Config, HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_track_time_change
+from homeassistant.helpers.event import async_call_later, async_track_time_change
+from homeassistant.helpers.typing import ConfigType
 from pytz import timezone
 import voluptuous as vol
 
@@ -43,6 +46,18 @@ DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_TEMPLATE, default=""): str,
     }
 )
+
+
+# async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+#     """Import YAML coonfiguration."""
+#     hass.async_create_task(
+#         hass.config_entries.flow.async_init(
+#             DOMAIN,
+#             context={"source": SOURCE_IMPORT},
+#             data=config,
+#         )
+#     )
+#     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
@@ -84,8 +99,6 @@ async def _setup(hass: HomeAssistant, config: Config) -> bool:
         api = EDSConnector(hass, AREA_MAP[config.get(CONF_AREA)])
         hass.data[DOMAIN] = api
 
-        # await api.update()
-
         async def new_day(indata):  # type: ignore pylint: disable=unused-argument
             """Handle data on new day."""
             _LOGGER.debug("New day function called")
@@ -100,9 +113,19 @@ async def _setup(hass: HomeAssistant, config: Config) -> bool:
             async_dispatcher_send(hass, UPDATE_EDS)
 
         async def get_new_data(indata):  # type: ignore pylint: disable=unused-argument
-            """Fetch new data for tomorrows prices at 1300 CET."""
+            """Fetch new data for tomorrows prices at 13:00ish CET."""
             _LOGGER.debug("Getting latest dataset")
             await api.update()
+
+            api.today_calculated = False
+            api.tomorrow_calculated = False
+
+            if not api.tomorrow_valid:
+                _LOGGER.warning(
+                    "Couldn't get data from Energi Data Service, retrying later."
+                )
+                async_call_later(hass, timedelta(minutes=10), partial(api.update))
+
             async_dispatcher_send(hass, UPDATE_EDS)
 
         # Handle dataset updates
@@ -138,8 +161,9 @@ class EDSConnector:
         self._tomorrow_valid = False
         self.today = None
         self.tomorrow = None
+        self.today_calculated = False
+        self.tomorrow_calculated = False
         self.listeners = []
-        # self.data = defaultdict(dict)
         client = async_get_clientsession(hass)
         self._eds = Energidataservice(area, client, hass.config.time_zone)
         _LOGGER.debug("Initializing Energi Data Service for area %s", area)
@@ -149,7 +173,6 @@ class EDSConnector:
         eds = self._eds
 
         await eds.get_spotprices()
-        # data = eds.raw_data
         self.today = eds.today
         self.tomorrow = eds.tomorrow
 
@@ -159,15 +182,12 @@ class EDSConnector:
         else:
             self._tomorrow_valid = True
 
-        # if data:
-        #     self.data["json"] = data
-        # else:
-        #     _LOGGER.warning(
-        #         "Couldn't get data from Energi Data Service, retrying later."
-        #     )
-        #     async_call_later(hass, 60, partial(self.update))
-
     @property
     def tomorrow_valid(self):
         """Is tomorrows prices valid?"""
         return self._tomorrow_valid
+
+    @property
+    def next_data_refresh(self):
+        """When is next data update?"""
+        return f"13:{RANDOM_MINUTE:02d}:{RANDOM_SECOND:02d}"
