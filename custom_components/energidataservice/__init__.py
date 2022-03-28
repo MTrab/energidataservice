@@ -1,7 +1,7 @@
 """Adds support for Energi Data Service spot prices."""
-import logging
 from datetime import timedelta
 from functools import partial
+import logging
 from random import randint
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry

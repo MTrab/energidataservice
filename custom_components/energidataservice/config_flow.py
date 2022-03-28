@@ -3,8 +3,8 @@ import logging
 import re
 
 from homeassistant import config_entries
-from homeassistant.helpers.template import Template
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.template import Template
 
 from . import DATA_SCHEMA
 from .const import CONF_TEMPLATE, DEFAULT_TEMPLATE, DOMAIN
