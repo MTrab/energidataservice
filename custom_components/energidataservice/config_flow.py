@@ -4,6 +4,7 @@ import re
 
 from homeassistant import config_entries
 from homeassistant.helpers.template import Template
+from homeassistant.data_entry_flow import FlowResult
 
 from . import DATA_SCHEMA
 from .const import CONF_TEMPLATE, DEFAULT_TEMPLATE, DOMAIN
@@ -21,7 +22,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize the config flow."""
         self._errors = {}
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(self, user_input=None) -> FlowResult:
         """Handle the initial config flow step."""
         self._errors = {}
 

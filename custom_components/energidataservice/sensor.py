@@ -129,15 +129,9 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
         attach(self._hass, self._cost_template)
 
-        # To control the updates.
-        self._last_tick = None
-        self._cbs = []
-
     async def validate_data(self) -> None:
         """Validate sensor data."""
         _LOGGER.debug("Validating sensor %s", self.name)
-        if self._last_tick is None:
-            self._last_tick = dt_utils.now()
 
         if not self._api.today:
             _LOGGER.debug("No sensor data found - calling update")
@@ -145,10 +139,17 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             self._api.today = self._format_list(self._api.today)
 
         if self.tomorrow_valid:
-            self._api.tomorrow = self._format_list(self._api.tomorrow)
+            self._api.tomorrow = self._format_list(self._api.tomorrow, True)
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
             self._api.tomorrow = None
+            self._api.tomorrow_calculated = False
+
+        if not self._api.today_calculated:
+            self._api.today = self._format_list(self._api.today)
+
+        if not self._api.tomorrow_calculated:
+            self._api.tomorrow = self._format_list(self._api.tomorrow, True)
 
         # Updates price for this hour.
         await self._get_current_price()
@@ -268,6 +269,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             "area": self._area,
             "area_code": AREA_MAP[self._area],
             "tomorrow_valid": self.tomorrow_valid,
+            "next_data_update": self._api.next_data_refresh,
             "today": self.today,
             "tomorrow": self.tomorrow,
             "raw_today": self.raw_today,
@@ -364,13 +366,20 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         """Return highpoint for tomorrow."""
         return self._tomorrow_max
 
-    def _format_list(self, data) -> list:
+    def _format_list(self, data, tomorrow=False) -> list:
         """Format data as list with prices localized."""
         formatted_pricelist = []
+
         for i in data:
             Interval = namedtuple("Interval", "price hour")
             price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
             formatted_pricelist.append(Interval(price, i.hour))
+
+        if tomorrow:
+            self._api.tomorrow_calculated = True
+        else:
+            self._api.today_calculated = True
+
         return formatted_pricelist
 
     @staticmethod
