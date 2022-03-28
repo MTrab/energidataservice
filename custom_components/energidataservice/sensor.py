@@ -104,6 +104,10 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._today = None
         self._tomorrow = None
 
+        # Holds the raw data
+        self._today_raw = None
+        self._tomorrow_raw = None
+
         # Holds statistical prices for today
         self._today_min = None
         self._today_max = None
@@ -139,11 +143,18 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
             self._api.today = self._format_list(self._api.today)
-            if self.tomorrow_valid:
-                self._api.tomorrow = self._format_list(self._api.tomorrow)
+
+        if self.tomorrow_valid:
+            self._api.tomorrow = self._format_list(self._api.tomorrow)
+            self._tomorrow_raw = self._add_raw(self._api.tomorrow)
+        else:
+            self._api.tomorrow = None
 
         # Updates price for this hour.
         await self._get_current_price()
+
+        # Update attributes
+        self._today_raw = self._add_raw(self._api.today)
 
         self._today_min = self._get_specific("min", self._api.today)
         self._today_max = self._get_specific("max", self._api.today)
@@ -321,12 +332,12 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     @property
     def raw_today(self):
         """Return the raw array with todays prices."""
-        return self._add_raw(self._api.today)
+        return self._today_raw
 
     @property
     def raw_tomorrow(self):
         """Return the raw array with tomorrows prices."""
-        return self._add_raw(self._api.tomorrow)
+        return self._tomorrow_raw
 
     @property
     def tomorrow_valid(self):
