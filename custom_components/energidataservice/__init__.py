@@ -1,8 +1,9 @@
 """Adds support for Energi Data Service spot prices."""
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import partial
 import logging
 from random import randint
+from threading import local
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import Config, HomeAssistant
@@ -173,6 +174,40 @@ class EDSConnector:
         if not self.tomorrow:
             self._tomorrow_valid = False
             self.tomorrow = None
+
+            local_tz = timezone(self._hass.config.time_zone)
+            midnight = datetime.strptime("23:59:59", "%H:%M:%S")
+            refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
+            now = datetime.now().astimezone(local_tz)
+            _LOGGER.debug(
+                "Now: %s:%s:%s",
+                f"{now.hour:02d}",
+                f"{now.minute:02d}",
+                f"{now.second:02d}",
+            )
+            _LOGGER.debug(
+                "Refresh: %s:%s:%s",
+                f"{refresh.hour:02d}",
+                f"{refresh.minute:02d}",
+                f"{refresh.second:02d}",
+            )
+            _LOGGER.debug(
+                "Midnight: %s:%s:%s", midnight.hour, midnight.minute, midnight.second
+            )
+            if (
+                f"{midnight.hour}:{midnight.minute}:{midnight.second}"
+                > f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+                and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
+                < f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+            ):
+                _LOGGER.warning(
+                    "Couldn't get data from Energi Data Service, retrying later."
+                )
+                async_call_later(self._hass, timedelta(minutes=1), partial(self.update))
+            else:
+                _LOGGER.debug(
+                    "Not forcing refresh, as we are past midtnight and haven't reached next update time"
+                )
         else:
             self._tomorrow_valid = True
 
