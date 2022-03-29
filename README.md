@@ -5,6 +5,8 @@
 
 This is a custom component for Home Assistant to integrate Day Ahead spotprices for electricity, from Energidataservice
 
+For Tips & Tricks, see the (wiki pages)[https://github.com/MTrab/energidataservice/wiki]
+
 ### Installation:
 
 #### HACS
@@ -21,6 +23,9 @@ This is a custom component for Home Assistant to integrate Day Ahead spotprices 
 - Restart Home Assistant.
 
 ## Setup
+
+Shortcut:<br>
+[![](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=energidataservice)
 
 * Go to Home Assistant > Settings > Integrations
 * Add Energidataservice integration *(If it doesn't show, try CTRL+F5 to force a refresh of the page)*

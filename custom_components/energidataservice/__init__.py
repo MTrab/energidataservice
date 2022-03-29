@@ -11,6 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 from pytz import timezone
 import voluptuous as vol
 
@@ -26,6 +27,7 @@ from .const import (
     PRICE_TYPES,
     REGIONS,
     UPDATE_EDS,
+    STARTUP,
 )
 from .events import async_track_time_change_in_tz  # type: ignore
 
@@ -48,22 +50,10 @@ DATA_SCHEMA = vol.Schema(
 )
 
 
-# async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-#     """Import YAML coonfiguration."""
-#     hass.async_create_task(
-#         hass.config_entries.flow.async_init(
-#             DOMAIN,
-#             context={"source": SOURCE_IMPORT},
-#             data=config,
-#         )
-#     )
-#     return True
-
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Energi Data Service from a config entry."""
     _LOGGER.debug("Entry data: %s", entry.data)
-    result = await _setup(hass, entry.data)
+    result = await _setup(hass, entry)
 
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
@@ -92,11 +82,13 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     await async_setup_entry(hass, entry)
 
 
-async def _setup(hass: HomeAssistant, config: Config) -> bool:
+async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Setup the integration using a config entry."""
-
+    integration = await async_get_integration(hass, DOMAIN)
+    config = entry.data
+    _LOGGER.info(STARTUP, integration.version)
     if DOMAIN not in hass.data:
-        api = EDSConnector(hass, AREA_MAP[config.get(CONF_AREA)])
+        api = EDSConnector(hass, AREA_MAP[config.get(CONF_AREA)], entry.entry_id)
         hass.data[DOMAIN] = api
 
         async def new_day(indata):  # type: ignore pylint: disable=unused-argument
@@ -154,11 +146,13 @@ async def _setup(hass: HomeAssistant, config: Config) -> bool:
 class EDSConnector:
     """An object to store Energi Data Service data."""
 
-    def __init__(self, hass, area):
+    def __init__(self, hass, area, entry_id):
         """Initialize Energi Data Service Connector."""
         self._hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
+        self._entry_id = entry_id
+
         self.today = None
         self.tomorrow = None
         self.today_calculated = False
@@ -191,3 +185,8 @@ class EDSConnector:
     def next_data_refresh(self):
         """When is next data update?"""
         return f"13:{RANDOM_MINUTE:02d}:{RANDOM_SECOND:02d}"
+
+    @property
+    def entry_id(self):
+        """Return entry_id."""
+        return self._entry_id

@@ -13,17 +13,13 @@ def prepare_data(indata, date, tz):  # pylint: disable=invalid-name
     local_tz = pytz.timezone(tz)
     reslist = []
     for dataset in indata:
-        # val = defaultdict(dict)
         Interval = namedtuple("Interval", "price hour")
-        # val["price"] = dataset["SpotPriceEUR"]
         tmpdate = (
             datetime.fromisoformat(dataset["HourUTC"])
             .replace(tzinfo=pytz.utc)
             .astimezone(local_tz)
         )
-        # val["start"] = local_tz.normalize(tmpdate)
         tmp = Interval(dataset["SpotPriceEUR"], local_tz.normalize(tmpdate))
-        # if date in val["start"].strftime("%Y-%m-%d"):
         if date in tmp.hour.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
