@@ -9,6 +9,8 @@ from homeassistant.data_entry_flow import FlowResult
 import voluptuous as vol
 
 from .utils.configuration_schema import energidataservice_config_option_schema
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.template import Template
 
 from .const import CONF_TEMPLATE, DEFAULT_TEMPLATE, DOMAIN
 
