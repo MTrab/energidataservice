@@ -283,7 +283,6 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
         return {
-            "unique_id": self.unique_id,
             "current_price": self.state,
             "unit": self.unit,
             "currency": self._currency,
