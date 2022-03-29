@@ -5,7 +5,7 @@ import logging
 
 from currency_converter import CurrencyConverter
 from homeassistant.components import sensor
-from homeassistant.const import DEVICE_CLASS_MONETARY
+from homeassistant.const import DEVICE_CLASS_MONETARY, CONF_NAME
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach
@@ -22,6 +22,7 @@ from .const import (
     DEFAULT_TEMPLATE,
     DOMAIN,
     PRICE_IN,
+    UNIQUE_ID,
     UPDATE_EDS,
 )
 from .entity import EnergidataserviceEntity
@@ -47,8 +48,11 @@ def _setup(hass, config, add_devices):
     currency = hass.config.currency
     vat = config.get(CONF_VAT)
     cost_template = config.get(CONF_TEMPLATE)
+    name = config.get(CONF_NAME)
     api = hass.data[DOMAIN]
+    _LOGGER.debug(config.get(UNIQUE_ID))
     sens = EnergidataserviceSensor(
+        name,
         area,
         price_type,
         decimals,
@@ -57,6 +61,7 @@ def _setup(hass, config, add_devices):
         api,
         cost_template,
         hass,
+        api.entry_id,
     )
 
     add_devices([sens])
@@ -67,6 +72,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
     def __init__(
         self,
+        name,
         area,
         price_type,
         decimals,
@@ -75,8 +81,10 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         api,
         cost_template,
         hass,
+        entry_id,
     ) -> None:
         """Initialize Ally binary_sensor."""
+        self._entry_id = entry_id
         self._area = area
         self._currency = currency
         self._price_type = price_type
@@ -84,18 +92,32 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._api = api
         self._cost_template = cost_template
         self._hass = hass
+        # self._friendly_name = f"{name} {area}"
+        # self._entity_id = sensor.ENTITY_ID_FORMAT.format(util_slugify(f"{name} {area}"))
+        if vat is True:
+            self._vat = 0.25
+        else:
+            self._vat = 0
+
+        # self._unique_id = f"energidataservice_{area}"
+        # self._unique_id = "energidataservice_%s_%s_%s_%s_%s_%s" % (
+        #     self._friendly_name,
+        #     self._price_type,
+        #     self._area,
+        #     self._decimals,
+        #     self._vat,
+        #     self._entry_id,
+        # )
+
+        # super().__init__(self._entity_id, self._area)
+
+        ### BUGFIX
         self._friendly_name = f"Energi Data Service {area}"
         self._entity_id = sensor.ENTITY_ID_FORMAT.format(
             util_slugify(self._friendly_name)
         )
         self._unique_id = f"energidataservice_{area}"
         super().__init__(self._friendly_name, self._area)
-
-        # Currently only supports Danish VAT.
-        if vat is True:
-            self._vat = 0.25
-        else:
-            self._vat = 0
 
         # Holds current price
         self._state = None
@@ -148,9 +170,6 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
         if not self._api.today_calculated:
             self._api.today = self._format_list(self._api.today)
-
-        if not self._api.tomorrow_calculated:
-            self._api.tomorrow = self._format_list(self._api.tomorrow, True)
 
         # Updates price for this hour.
         await self._get_current_price()
@@ -264,6 +283,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
         return {
+            "unique_id": self.unique_id,
             "current_price": self.state,
             "unit": self.unit,
             "currency": self._currency,
@@ -308,7 +328,6 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         """
 
         return [i.price for i in self._api.today if i]
-        # return None
 
     @property
     def tomorrow(self) -> list:
