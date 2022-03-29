@@ -5,7 +5,7 @@ import logging
 
 from currency_converter import CurrencyConverter
 from homeassistant.components import sensor
-from homeassistant.const import DEVICE_CLASS_MONETARY, CONF_NAME
+from homeassistant.const import CONF_NAME, DEVICE_CLASS_MONETARY
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach

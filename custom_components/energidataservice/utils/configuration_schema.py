@@ -1,17 +1,16 @@
 """Define config schema."""
 # pylint: disable=dangerous-default-value
-import voluptuous as vol
-
 from homeassistant.const import CONF_NAME
+import voluptuous as vol
 
 from ..const import (
     CONF_AREA,
-    REGIONS,
-    CONF_VAT,
     CONF_DECIMALS,
     CONF_PRICETYPE,
     CONF_TEMPLATE,
+    CONF_VAT,
     PRICE_TYPES,
+    REGIONS,
 )
 
 

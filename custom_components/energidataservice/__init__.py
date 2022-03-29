@@ -26,8 +26,8 @@ from .const import (
     DOMAIN,
     PRICE_TYPES,
     REGIONS,
-    UPDATE_EDS,
     STARTUP,
+    UPDATE_EDS,
 )
 from .events import async_track_time_change_in_tz  # type: ignore
 

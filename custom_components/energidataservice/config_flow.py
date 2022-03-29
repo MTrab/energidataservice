@@ -3,16 +3,13 @@ import logging
 import re
 
 from homeassistant import config_entries
-from homeassistant.helpers.template import Template
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.template import Template
 import voluptuous as vol
 
-from .utils.configuration_schema import energidataservice_config_option_schema
-from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers.template import Template
-
 from .const import CONF_TEMPLATE, DEFAULT_TEMPLATE, DOMAIN
+from .utils.configuration_schema import energidataservice_config_option_schema
 
 _LOGGER = logging.getLogger(__name__)
 
