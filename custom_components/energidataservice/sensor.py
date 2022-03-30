@@ -90,7 +90,7 @@ def _async_migrate_unique_id(
             device_registry = dr.async_get(hass)
             curdevice = device_registry.async_get(curentity.device_id)
             identifiers = curdevice.identifiers
-            identifiers.add((new_id))
+            identifiers.add((DOMAIN, new_id))
             device_registry.async_update_device(
                 curentity.device_id, new_identifiers=identifiers
             )
