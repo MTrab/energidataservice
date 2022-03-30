@@ -131,8 +131,13 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             tz=timezone("Europe/Copenhagen"),
         )
 
-        update_new_day = async_track_time_change(
-            hass, new_day, hour=0, minute=0, second=0
+        update_new_day = async_track_time_change_in_tz(
+            hass,
+            new_day,
+            hour=0,
+            minute=0,
+            second=0,
+            tz=timezone("Europe/Copenhagen"),
         )
 
         update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
@@ -203,7 +208,9 @@ class EDSConnector:
                 _LOGGER.warning(
                     "Couldn't get data from Energi Data Service, retrying later."
                 )
-                async_call_later(self._hass, timedelta(minutes=1), partial(self.update))
+                async_call_later(
+                    self._hass, timedelta(minutes=10), partial(self.update)
+                )
             else:
                 _LOGGER.debug(
                     "Not forcing refresh, as we are past midtnight and haven't reached next update time"
