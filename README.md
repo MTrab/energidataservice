@@ -5,7 +5,7 @@
 
 This is a custom component for Home Assistant to integrate Day Ahead spotprices for electricity, from Energidataservice
 
-For Tips & Tricks, see the (wiki pages)[https://github.com/MTrab/energidataservice/wiki]
+For Tips & Tricks, see the [wiki pages](https://github.com/MTrab/energidataservice/wiki)
 
 ### Installation:
 
