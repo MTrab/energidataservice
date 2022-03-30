@@ -3,7 +3,9 @@ import logging
 import re
 
 from homeassistant import config_entries
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.template import Template
+from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 import voluptuous as vol
@@ -31,6 +33,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             template_ok = False
+            name_ok = False
             if user_input[CONF_TEMPLATE] in (None, ""):
                 user_input[CONF_TEMPLATE] = DEFAULT_TEMPLATE
             else:
@@ -39,15 +42,18 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     r"\s{2,}", "", user_input[CONF_TEMPLATE]
                 )
 
-            template_ok = await self._validate_template(user_input[CONF_TEMPLATE])
-            if template_ok:
+            template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
+            name_ok = await _check_name(self.hass, user_input[CONF_NAME])
+            if template_ok and name_ok:
                 return self.async_create_entry(
                     title="Energi Data Service", data=user_input
                 )
-            else:
+            elif not template_ok:
                 self._errors["base"] = "invalid_template"
+            elif not name_ok:
+                self._errors["base"] = "invalid_name"
 
-        schema = energidataservice_config_option_schema()
+        schema = energidataservice_config_option_schema(user_input)
         return self.async_show_form(
             step_id="user", data_schema=vol.Schema(schema), errors=self._errors
         )
@@ -57,18 +63,6 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     # def async_get_options_flow(config_entry):
     #     """Get the options flow for this handler."""
     #     return EnergidataserviceOptionsFlowHandler(config_entry)
-
-    async def _validate_template(self, user_template):
-        """Validate template to eliminate most user errors."""
-        try:
-            _LOGGER.debug("Template:")
-            _LOGGER.debug(user_template)
-            user_template = Template(user_template, self.hass).async_render()
-            return bool(isinstance(user_template, float))
-        except Exception as err:
-            _LOGGER.error(err)
-
-        return False
 
     async def async_step_import(self, user_input):  # pylint: disable=unused-argument
         """Import a config entry.
@@ -80,6 +74,34 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
 
+async def _validate_template(hass, user_template):
+    """Validate template to eliminate most user errors."""
+    try:
+        _LOGGER.debug("Template:")
+        _LOGGER.debug(user_template)
+        user_template = Template(user_template, hass).async_render()
+        return bool(isinstance(user_template, float))
+    except Exception as err:
+        _LOGGER.error(err)
+
+    return False
+
+
+async def _check_name(hass, name):
+    """Checks if a device with the same name exists in this domain"""
+    try:
+        _LOGGER.debug("Device name:")
+        _LOGGER.debug(name)
+        device_registry = dr.async_get(hass)
+        device = device_registry.async_get_device
+        _LOGGER.debug(device)
+
+    except Exception as err:
+        _LOGGER.error(err)
+
+    return False
+
+
 class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
     """Energidataservice config flow options handler."""
 
@@ -87,17 +109,6 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize Energidataservice options flow."""
         self.config_entry = config_entry
         self._errors = {}
-
-    async def _validate_template(self, user_template):
-        """Validate template to eliminate most user errors."""
-        try:
-            _LOGGER.debug(user_template)
-            user_template = Template(user_template, self.hass).async_render()
-            return bool(isinstance(user_template, float))
-        except Exception as err:
-            _LOGGER.error(err)
-
-        return False
 
     async def async_step_init(self, _user_input=None):
         """Manage the options."""
@@ -109,6 +120,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
         if user_input is not None:
             template_ok = False
+            name_ok = False
             if user_input[CONF_TEMPLATE] in (None, ""):
                 user_input[CONF_TEMPLATE] = DEFAULT_TEMPLATE
             else:
@@ -117,13 +129,18 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                     r"\s{2,}", "", user_input[CONF_TEMPLATE]
                 )
 
-            template_ok = await self._validate_template(user_input[CONF_TEMPLATE])
-            if template_ok:
+            template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
+            name_ok = await _check_name(self.hass, user_input[CONF_NAME])
+            if template_ok and name_ok:
                 return self.async_create_entry(
                     title="Energi Data Service", data=user_input
                 )
-            else:
+            elif not template_ok:
                 self._errors["base"] = "invalid_template"
+            elif not name_ok:
+                self._errors["base"] = "invalid_name"
+
+        schema = energidataservice_config_option_schema(user_input)
 
         schema = energidataservice_config_option_schema(self.config_entry.options)
         return self.async_show_form(

@@ -72,7 +72,7 @@ def _setup(hass, config, add_devices):
 
 @callback
 def _async_migrate_unique_id(
-    hass: HomeAssistant, entity: str, unique_id: str, new_id: str
+    hass: HomeAssistant, entity: str, old_id: str, new_id: str
 ) -> None:
     """Change unique_ids to allow multiple instances."""
     _LOGGER.debug("Testing for unique_id")
@@ -86,24 +86,28 @@ def _async_migrate_unique_id(
             identifiers = curdevice.identifiers
             for identifier in identifiers:
                 _LOGGER.debug(" - Identifier found: %s", identifier)
-            _LOGGER.debug(" - Adding extra identifier")
+            _LOGGER.debug(" - Adding new device identifier")
             device_registry = dr.async_get(hass)
             curdevice = device_registry.async_get(curentity.device_id)
             identifiers = curdevice.identifiers
-            identifiers.add((DOMAIN, new_id))
+            tup_dict = dict(identifiers) # {'hi': 'bye', 'one': 'two'}
+            tup_dict[DOMAIN] = new_id
+            identifiers = tuple(tup_dict.items()) # (('one', 'two'),)
+            for identifier in identifiers:
+                _LOGGER.debug(" - Identifier after edit: %s", identifier)
             device_registry.async_update_device(
                 curentity.device_id, new_identifiers=identifiers
             )
+            if curentity.unique_id in [
+                "energidataservice_West of the great belt",
+                "energidataservice_East of the great belt",
+            ]:
+                _LOGGER.debug(" - Adding extra entity identifier")
+                entity_registry.async_update_entity(entity, new_unique_id=new_id)
         else:
             _LOGGER.debug(" - New id not set, skipping")
     else:
         _LOGGER.debug("- Check didn't find anything")
-    # if curentity.unique_id in [
-    #     "energidataservice_West of the great belt",
-    #     "energidataservice_East of the great belt",
-    # ]:
-    #     _LOGGER.debug("Updating unique_id to new style")
-    #     entity_registry.async_update_entity(entity, new_unique_id=new_id)
 
 
 class EnergidataserviceSensor(EnergidataserviceEntity):
@@ -137,25 +141,25 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         else:
             self._vat = 0
 
-        # ### NEW WAY
-        # self._friendly_name = f"{name} {area}"
-        # self._entity_id = sensor.ENTITY_ID_FORMAT.format(util_slugify(f"{name} {area}"))
-        self._newstyle_unique_id = f"energidataservice_{self._entry_id}"
+        ### NEW WAY
+        self._friendly_name = f"{name} {area}"
+        self._entity_id = sensor.ENTITY_ID_FORMAT.format(util_slugify(f"{name} {area}"))
+        self._unique_id = util_slugify(f"{name}_{self._entry_id}")
+        old_id = f"energidataservice_{area}"
         # self._unique_id = f"energidataservice_{self._entry_id}"
-        # ###
-
-        ### OLD WAY
-        self._friendly_name = f"Energi Data Service {area}"
-        self._entity_id = sensor.ENTITY_ID_FORMAT.format(
-            util_slugify(self._friendly_name)
+        _async_migrate_unique_id(
+            hass, self._entity_id, old_id, self._unique_id
         )
-        self._unique_id = f"energidataservice_{area}"
-        # super().__init__(self._friendly_name, self._area)
         ###
 
-        _async_migrate_unique_id(
-            hass, self._entity_id, self._unique_id, self._newstyle_unique_id
-        )
+        # ### OLD WAY
+        # self._friendly_name = f"Energi Data Service {area}"
+        # self._entity_id = sensor.ENTITY_ID_FORMAT.format(
+        #     util_slugify(self._friendly_name)
+        # )
+        # self._unique_id = f"energidataservice_{area}"
+        # # super().__init__(self._friendly_name, self._area)
+        # ###
 
         # Holds current price
         self._state = None
@@ -348,21 +352,12 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
     @property
     def device_info(self):
-        _newstyle_unique_id = False
-        if not _newstyle_unique_id:
-            return {
-                "identifiers": {(DOMAIN, self.unique_id)},
-                "name": self.name,
-                "model": f"Area code: {AREA_MAP[self._area]}",
-                "manufacturer": "Energi Data Service",
-            }
-        else:
-            return {
-                "identifiers": {(DOMAIN, self.unique_id, self._newstyle_unique_id)},
-                "name": self.name,
-                "model": f"Area code: {AREA_MAP[self._area]}",
-                "manufacturer": "Energi Data Service",
-            }
+        return {
+            "identifiers": {(DOMAIN, self.unique_id)},
+            "name": self.name,
+            "model": f"Area code: {AREA_MAP[self._area]}",
+            "manufacturer": "Energi Data Service",
+        }
 
     @property
     def today(self) -> list:
