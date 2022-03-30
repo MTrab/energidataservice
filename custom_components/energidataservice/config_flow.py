@@ -9,8 +9,6 @@ from homeassistant.data_entry_flow import FlowResult
 import voluptuous as vol
 
 from .utils.configuration_schema import energidataservice_config_option_schema
-from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers.template import Template
 
 from .const import CONF_TEMPLATE, DEFAULT_TEMPLATE, DOMAIN
 
@@ -50,7 +48,6 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._errors["base"] = "invalid_template"
 
         schema = energidataservice_config_option_schema()
-        # _LOGGER.debug("Schema %s", schema)
         return self.async_show_form(
             step_id="user", data_schema=vol.Schema(schema), errors=self._errors
         )
@@ -64,6 +61,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _validate_template(self, user_template):
         """Validate template to eliminate most user errors."""
         try:
+            _LOGGER.debug("Template:")
             _LOGGER.debug(user_template)
             user_template = Template(user_template, self.hass).async_render()
             return bool(isinstance(user_template, float))

@@ -41,8 +41,6 @@ class Energidataservice:
         headers = self._header()
         body = self._body()
         url = "https://data-api.energidataservice.dk/v1/graphql"
-        _LOGGER.debug("API URL: %s", url)
-        _LOGGER.debug("Request header: %s", headers)
         _LOGGER.debug("Request body: %s", body)
         resp = await self.client.post(url, data=body, headers=headers)
 
@@ -94,4 +92,5 @@ class Energidataservice:
     def tomorrow(self):
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        _LOGGER.debug("Date: %s", date)
         return prepare_data(self._result, date, self._tz)

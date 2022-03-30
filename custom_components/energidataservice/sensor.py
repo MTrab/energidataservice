@@ -6,6 +6,9 @@ import logging
 from currency_converter import CurrencyConverter
 from homeassistant.components import sensor
 from homeassistant.const import DEVICE_CLASS_MONETARY, CONF_NAME
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach
@@ -50,7 +53,7 @@ def _setup(hass, config, add_devices):
     cost_template = config.get(CONF_TEMPLATE)
     name = config.get(CONF_NAME)
     api = hass.data[DOMAIN]
-    _LOGGER.debug(config.get(UNIQUE_ID))
+    _LOGGER.debug("Unique_id from config: %s", config.get(UNIQUE_ID))
     sens = EnergidataserviceSensor(
         name,
         area,
@@ -65,6 +68,42 @@ def _setup(hass, config, add_devices):
     )
 
     add_devices([sens])
+
+
+@callback
+def _async_migrate_unique_id(
+    hass: HomeAssistant, entity: str, unique_id: str, new_id: str
+) -> None:
+    """Change unique_ids to allow multiple instances."""
+    _LOGGER.debug("Testing for unique_id")
+    entity_registry = er.async_get(hass)
+    curentity = entity_registry.async_get(entity)
+    if not curentity is None:
+        _LOGGER.debug("- Device_id: %s", curentity.device_id)
+        if not new_id is None:
+            device_registry = dr.async_get(hass)
+            curdevice = device_registry.async_get(curentity.device_id)
+            identifiers = curdevice.identifiers
+            for identifier in identifiers:
+                _LOGGER.debug(" - Identifier found: %s", identifier)
+            _LOGGER.debug(" - Adding extra identifier")
+            device_registry = dr.async_get(hass)
+            curdevice = device_registry.async_get(curentity.device_id)
+            identifiers = curdevice.identifiers
+            identifiers.add((new_id))
+            device_registry.async_update_device(
+                curentity.device_id, new_identifiers=identifiers
+            )
+        else:
+            _LOGGER.debug(" - New id not set, skipping")
+    else:
+        _LOGGER.debug("- Check didn't find anything")
+    # if curentity.unique_id in [
+    #     "energidataservice_West of the great belt",
+    #     "energidataservice_East of the great belt",
+    # ]:
+    #     _LOGGER.debug("Updating unique_id to new style")
+    #     entity_registry.async_update_entity(entity, new_unique_id=new_id)
 
 
 class EnergidataserviceSensor(EnergidataserviceEntity):
@@ -92,39 +131,34 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._api = api
         self._cost_template = cost_template
         self._hass = hass
-        # self._friendly_name = f"{name} {area}"
-        # self._entity_id = sensor.ENTITY_ID_FORMAT.format(util_slugify(f"{name} {area}"))
+        self._newstyle_unique_id = None
         if vat is True:
             self._vat = 0.25
         else:
             self._vat = 0
 
-        # self._unique_id = f"energidataservice_{area}"
-        # self._unique_id = "energidataservice_%s_%s_%s_%s_%s_%s" % (
-        #     self._friendly_name,
-        #     self._price_type,
-        #     self._area,
-        #     self._decimals,
-        #     self._vat,
-        #     self._entry_id,
-        # )
+        # ### NEW WAY
+        # self._friendly_name = f"{name} {area}"
+        # self._entity_id = sensor.ENTITY_ID_FORMAT.format(util_slugify(f"{name} {area}"))
+        self._newstyle_unique_id = f"energidataservice_{self._entry_id}"
+        # self._unique_id = f"energidataservice_{self._entry_id}"
+        # ###
 
-        # super().__init__(self._entity_id, self._area)
-
-        ### BUGFIX
+        ### OLD WAY
         self._friendly_name = f"Energi Data Service {area}"
         self._entity_id = sensor.ENTITY_ID_FORMAT.format(
             util_slugify(self._friendly_name)
         )
         self._unique_id = f"energidataservice_{area}"
-        super().__init__(self._friendly_name, self._area)
+        # super().__init__(self._friendly_name, self._area)
+        ###
+
+        _async_migrate_unique_id(
+            hass, self._entity_id, self._unique_id, self._newstyle_unique_id
+        )
 
         # Holds current price
         self._state = None
-
-        # Holds today and tomorrow data
-        self._today = None
-        self._tomorrow = None
 
         # Holds the raw data
         self._today_raw = None
@@ -166,6 +200,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
             self._api.tomorrow = None
+            self._tomorrow_raw = None
             self._api.tomorrow_calculated = False
 
         if not self._api.today_calculated:
@@ -283,6 +318,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
         return {
+            "unique_id": self.unique_id,
             "current_price": self.state,
             "unit": self.unit,
             "currency": self._currency,
@@ -312,12 +348,21 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
     @property
     def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self.unique_id)},
-            "name": self.name,
-            "model": f"Area code: {AREA_MAP[self._area]}",
-            "manufacturer": "Energi Data Service",
-        }
+        _newstyle_unique_id = False
+        if not _newstyle_unique_id:
+            return {
+                "identifiers": {(DOMAIN, self.unique_id)},
+                "name": self.name,
+                "model": f"Area code: {AREA_MAP[self._area]}",
+                "manufacturer": "Energi Data Service",
+            }
+        else:
+            return {
+                "identifiers": {(DOMAIN, self.unique_id, self._newstyle_unique_id)},
+                "name": self.name,
+                "model": f"Area code: {AREA_MAP[self._area]}",
+                "manufacturer": "Energi Data Service",
+            }
 
     @property
     def today(self) -> list:
