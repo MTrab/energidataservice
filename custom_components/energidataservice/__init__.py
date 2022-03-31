@@ -35,6 +35,9 @@ from .events import async_track_time_change_in_tz  # type: ignore
 RANDOM_MINUTE = randint(0, 10)
 RANDOM_SECOND = randint(0, 59)
 
+RETRY_MINUTES = 10
+MAX_RETRY_MINUTES = 120
+
 _LOGGER = logging.getLogger(__name__)
 
 DATA_SCHEMA = vol.Schema(
@@ -113,11 +116,11 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             api.today_calculated = False
             api.tomorrow_calculated = False
 
-            if not api.tomorrow_valid:
-                _LOGGER.warning(
-                    "Couldn't get data from Energi Data Service, retrying later."
-                )
-                async_call_later(hass, timedelta(minutes=10), partial(api.update))
+            # if not api.tomorrow_valid:
+            #     _LOGGER.warning(
+            #         "Couldn't get data from Energi Data Service, retrying later."
+            #     )
+            #     async_call_later(hass, timedelta(minutes=10), partial(api.update))
 
             async_dispatcher_send(hass, UPDATE_EDS)
 
@@ -164,6 +167,10 @@ class EDSConnector:
         self.today_calculated = False
         self.tomorrow_calculated = False
         self.listeners = []
+
+        self._next_retry_delay = RETRY_MINUTES
+        self._retry_count = 0
+
         client = async_get_clientsession(hass)
         self._eds = Energidataservice(area, client, hass.config.time_zone)
         _LOGGER.debug("Initializing Energi Data Service for area %s", area)
@@ -205,17 +212,27 @@ class EDSConnector:
                 and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
                 < f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
             ):
+                # Calculate next retry backoff delay
+                self._retry_count += 1
+                self._next_retry_delay = RETRY_MINUTES * self._retry_count
+                if self._next_retry_delay > MAX_RETRY_MINUTES:
+                    self._next_retry_delay = MAX_RETRY_MINUTES
+
                 _LOGGER.warning(
-                    "Couldn't get data from Energi Data Service, retrying later."
+                    "Couldn't get data from Energi Data Service, retrying in %s minutes.",
+                    self._next_retry_delay,
                 )
                 async_call_later(
-                    self._hass, timedelta(minutes=10), partial(self.update)
+                    self._hass,
+                    timedelta(minutes=self._next_retry_delay),
+                    partial(self.update),
                 )
             else:
                 _LOGGER.debug(
-                    "Not forcing refresh, as we are past midtnight and haven't reached next update time"
+                    "Not forcing refresh, as we are past midnight and haven't reached next update time"
                 )
         else:
+            self._retry_count = 0
             self._tomorrow_valid = True
 
     @property
