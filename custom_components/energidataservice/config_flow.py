@@ -43,7 +43,8 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
-            name_ok = await _check_name(self.hass, user_input[CONF_NAME])
+            # name_ok = await _check_name(self.hass, user_input[CONF_NAME])
+            self._async_abort_entries_match({CONF_NAME: user_input[CONF_NAME]})
             if template_ok and name_ok:
                 return self.async_create_entry(
                     title="Energi Data Service", data=user_input
