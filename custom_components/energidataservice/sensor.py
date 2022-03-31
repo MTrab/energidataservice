@@ -13,7 +13,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach
 from homeassistant.util import dt as dt_utils, slugify as util_slugify
-from jinja2 import contextfunction
+from jinja2 import pass_context
 
 from .const import (
     AREA_MAP,
@@ -90,9 +90,9 @@ def _async_migrate_unique_id(
             device_registry = dr.async_get(hass)
             curdevice = device_registry.async_get(curentity.device_id)
             identifiers = curdevice.identifiers
-            tup_dict = dict(identifiers) # {'hi': 'bye', 'one': 'two'}
+            tup_dict = dict(identifiers)  # {'hi': 'bye', 'one': 'two'}
             tup_dict[DOMAIN] = new_id
-            identifiers = tuple(tup_dict.items()) # (('one', 'two'),)
+            identifiers = tuple(tup_dict.items())  # (('one', 'two'),)
             for identifier in identifiers:
                 _LOGGER.debug(" - Identifier after edit: %s", identifier)
             device_registry.async_update_device(
@@ -147,9 +147,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._unique_id = util_slugify(f"{name}_{self._entry_id}")
         old_id = f"energidataservice_{area}"
         # self._unique_id = f"energidataservice_{self._entry_id}"
-        _async_migrate_unique_id(
-            hass, self._entity_id, old_id, self._unique_id
-        )
+        _async_migrate_unique_id(hass, self._entity_id, old_id, self._unique_id)
         ###
 
         # ### OLD WAY
@@ -273,7 +271,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
                 def inner(*args, **kwargs):  # type: ignore pylint: disable=unused-argument
                     return fake_dt
 
-                return contextfunction(inner)
+                return pass_context(inner)
 
             template_value = self._cost_template.async_render(now=faker())
         else:
