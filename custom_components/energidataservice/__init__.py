@@ -55,6 +55,26 @@ DATA_SCHEMA = vol.Schema(
 )
 
 
+async def async_setup(hass: HomeAssistant, config: dict):
+    """Set up the component."""
+
+    hass.data.setdefault(DOMAIN, {})
+
+    if DOMAIN not in config:
+        return True
+
+    for conf in config[DOMAIN]:
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_IMPORT},
+                data=conf,
+            )
+        )
+
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Energi Data Service from a config entry."""
     _LOGGER.debug("Entry data: %s", entry.data)
@@ -72,9 +92,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
 
     if unload_ok:
-        for unsub in hass.data[DOMAIN].listeners:
+        for unsub in hass.data[DOMAIN][entry.entry_id].listeners:
             unsub()
-        hass.data.pop(DOMAIN)
+        hass.data[DOMAIN].pop(entry.entry_id)
 
         return True
 
@@ -92,65 +112,65 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     integration = await async_get_integration(hass, DOMAIN)
     config = entry.data
     _LOGGER.info(STARTUP, integration.version)
-    if DOMAIN not in hass.data:
-        api = EDSConnector(hass, AREA_MAP[config.get(CONF_AREA)], entry.entry_id)
-        hass.data[DOMAIN] = api
 
-        async def new_day(indata):  # type: ignore pylint: disable=unused-argument
-            """Handle data on new day."""
-            _LOGGER.debug("New day function called")
-            api.today = api.tomorrow
-            api.tomorrow = None
-            api._tomorrow_valid = False  # pylint: disable=protected-access
-            async_dispatcher_send(hass, UPDATE_EDS)
+    api = EDSConnector(hass, AREA_MAP[config.get(CONF_AREA)], entry.entry_id)
+    hass.data[DOMAIN][entry.entry_id] = api
 
-        async def new_hour(indata):  # type: ignore pylint: disable=unused-argument
-            """Callback to tell the sensors to update on a new hour."""
-            _LOGGER.debug("New hour, updating state")
-            async_dispatcher_send(hass, UPDATE_EDS)
+    async def new_day(indata):  # type: ignore pylint: disable=unused-argument
+        """Handle data on new day."""
+        _LOGGER.debug("New day function called")
+        api.today = api.tomorrow
+        api.tomorrow = None
+        api._tomorrow_valid = False  # pylint: disable=protected-access
+        async_dispatcher_send(hass, UPDATE_EDS)
 
-        async def get_new_data(indata):  # type: ignore pylint: disable=unused-argument
-            """Fetch new data for tomorrows prices at 13:00ish CET."""
-            _LOGGER.debug("Getting latest dataset")
-            await api.update()
+    async def new_hour(indata):  # type: ignore pylint: disable=unused-argument
+        """Callback to tell the sensors to update on a new hour."""
+        _LOGGER.debug("New hour, updating state")
+        async_dispatcher_send(hass, UPDATE_EDS)
 
-            api.today_calculated = False
-            api.tomorrow_calculated = False
+    async def get_new_data(indata):  # type: ignore pylint: disable=unused-argument
+        """Fetch new data for tomorrows prices at 13:00ish CET."""
+        _LOGGER.debug("Getting latest dataset")
+        await api.update()
 
-            # if not api.tomorrow_valid:
-            #     _LOGGER.warning(
-            #         "Couldn't get data from Energi Data Service, retrying later."
-            #     )
-            #     async_call_later(hass, timedelta(minutes=10), partial(api.update))
+        api.today_calculated = False
+        api.tomorrow_calculated = False
 
-            async_dispatcher_send(hass, UPDATE_EDS)
+        # if not api.tomorrow_valid:
+        #     _LOGGER.warning(
+        #         "Couldn't get data from Energi Data Service, retrying later."
+        #     )
+        #     async_call_later(hass, timedelta(minutes=10), partial(api.update))
 
-        # Handle dataset updates
-        update_tomorrow = async_track_time_change_in_tz(
-            hass,
-            get_new_data,
-            hour=13,
-            minute=RANDOM_MINUTE,
-            second=RANDOM_SECOND,
-            tz=timezone("Europe/Copenhagen"),
-        )
+        async_dispatcher_send(hass, UPDATE_EDS)
 
-        update_new_day = async_track_time_change_in_tz(
-            hass,
-            new_day,
-            hour=0,
-            minute=0,
-            second=0,
-            tz=timezone("Europe/Copenhagen"),
-        )
+    # Handle dataset updates
+    update_tomorrow = async_track_time_change_in_tz(
+        hass,
+        get_new_data,
+        hour=13,
+        minute=RANDOM_MINUTE,
+        second=RANDOM_SECOND,
+        tz=timezone("Europe/Copenhagen"),
+    )
 
-        update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
+    update_new_day = async_track_time_change_in_tz(
+        hass,
+        new_day,
+        hour=0,
+        minute=0,
+        second=0,
+        tz=timezone("Europe/Copenhagen"),
+    )
 
-        api.listeners.append(update_tomorrow)
-        api.listeners.append(update_new_hour)
-        api.listeners.append(update_new_day)
+    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
 
-        return True
+    api.listeners.append(update_tomorrow)
+    api.listeners.append(update_new_hour)
+    api.listeners.append(update_new_day)
+
+    return True
 
 
 class EDSConnector:

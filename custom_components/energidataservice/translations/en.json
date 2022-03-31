@@ -1,8 +1,10 @@
 {
     "config": {
         "error": {
-            "invalid_template": "The additional cost template is invalid, check https://github.com/mtrab/energidataservice",
-            "invalid_name": "The specified name was not valid - perhaps another device exists with the same name?"
+            "invalid_template": "The additional cost template is invalid, check https://github.com/mtrab/energidataservice"
+        },
+        "abort": {
+            "already_configured": "The specified name exists!"
         },
         "step": {
             "user": {

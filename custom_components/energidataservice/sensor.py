@@ -2,9 +2,11 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
 import logging
+from types import MappingProxyType
 
 from currency_converter import CurrencyConverter
 from homeassistant.components import sensor
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import DEVICE_CLASS_MONETARY, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
@@ -33,18 +35,20 @@ from .entity import EnergidataserviceEntity
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
+async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Setup sensor platform from a config entry."""
     config = config_entry.data
-    _setup(hass, config, async_add_devices)
+    _setup(hass, config, config_entry, async_add_devices)
     return True
 
 
-def _setup(hass, config, add_devices):
-    """Setup the damn platform using yaml."""
+def _setup(hass, config: MappingProxyType, entry: ConfigEntry, add_devices):
+    """Setup the platform."""
     _LOGGER.debug("Dumping config %r", config)
     _LOGGER.debug("Timezone set in ha %r", hass.config.time_zone)
     _LOGGER.debug("Currency set in ha %r", hass.config.currency)
+    _LOGGER.debug("Domain %s", DOMAIN)
+
     area = config.get(CONF_AREA)
     price_type = config.get(CONF_PRICETYPE)
     decimals = config.get(CONF_DECIMALS)
@@ -52,7 +56,7 @@ def _setup(hass, config, add_devices):
     vat = config.get(CONF_VAT)
     cost_template = config.get(CONF_TEMPLATE)
     name = config.get(CONF_NAME)
-    api = hass.data[DOMAIN]
+    api = hass.data[DOMAIN][entry.entry_id]
     _LOGGER.debug("Unique_id from config: %s", config.get(UNIQUE_ID))
     sens = EnergidataserviceSensor(
         name,

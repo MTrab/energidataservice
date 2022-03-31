@@ -33,7 +33,6 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             template_ok = False
-            name_ok = False
             if user_input[CONF_TEMPLATE] in (None, ""):
                 user_input[CONF_TEMPLATE] = DEFAULT_TEMPLATE
             else:
@@ -45,14 +44,12 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
             # name_ok = await _check_name(self.hass, user_input[CONF_NAME])
             self._async_abort_entries_match({CONF_NAME: user_input[CONF_NAME]})
-            if template_ok and name_ok:
+            if template_ok:
                 return self.async_create_entry(
-                    title="Energi Data Service", data=user_input
+                    title=user_input[CONF_NAME], data=user_input
                 )
-            elif not template_ok:
+            else:
                 self._errors["base"] = "invalid_template"
-            elif not name_ok:
-                self._errors["base"] = "invalid_name"
 
         schema = energidataservice_config_option_schema(user_input)
         return self.async_show_form(

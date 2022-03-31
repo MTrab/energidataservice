@@ -1,8 +1,10 @@
 {
     "config": {
         "error": {
-            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https://github.com/mtrab/energidataservice",
-            "invalid_name": "Det angivede navn var ikke gyldigt - eksisterer der allerede en device med samme navn?"
+            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https://github.com/mtrab/energidataservice"
+        },
+        "abort": {
+            "already_configured": "Det angivede navn eksisterer allerede!"
         },
         "step": {
             "user": {
