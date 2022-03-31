@@ -13,8 +13,7 @@
                     "pricetype": "Pris beregnes i",
                     "cost_template": "Skabelon til ekstra omkostninger"
                 },
-                "description": "Henter el spot priser fra Energi Data Service",
-                "title": "Energi Data Service"
+                "description": "Henter el spot priser fra Energi Data Service"
             }
         }
     }

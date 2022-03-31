@@ -13,8 +13,7 @@
                     "pricetype": "Price calculated in",
                     "cost_template": "Template for additional costs"
                 },
-                "description": "Fetch spot prices from Energi Data Service",
-                "title": "Energi Data Service"
+                "description": "Fetch spot prices from Energi Data Service"
             }
         }
     }
