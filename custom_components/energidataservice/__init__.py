@@ -5,6 +5,7 @@ import logging
 from random import randint
 from threading import local
 
+import aiohttp
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import Config, HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -179,61 +180,54 @@ class EDSConnector:
         """Fetch latest prices from Energi Data Service API"""
         eds = self._eds
 
-        await eds.get_spotprices()
-        self.today = eds.today
-        self.tomorrow = eds.tomorrow
+        try:
+            await eds.get_spotprices()
+            self.today = eds.today
+            self.tomorrow = eds.tomorrow
 
-        if not self.tomorrow:
-            self._tomorrow_valid = False
-            self.tomorrow = None
+            if not self.tomorrow:
+                self._tomorrow_valid = False
+                self.tomorrow = None
 
-            local_tz = timezone(self._hass.config.time_zone)
-            midnight = datetime.strptime("23:59:59", "%H:%M:%S")
-            refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
-            now = datetime.now().astimezone(local_tz)
-            _LOGGER.debug(
-                "Now: %s:%s:%s",
-                f"{now.hour:02d}",
-                f"{now.minute:02d}",
-                f"{now.second:02d}",
-            )
-            _LOGGER.debug(
-                "Refresh: %s:%s:%s",
-                f"{refresh.hour:02d}",
-                f"{refresh.minute:02d}",
-                f"{refresh.second:02d}",
-            )
-            _LOGGER.debug(
-                "Midnight: %s:%s:%s", midnight.hour, midnight.minute, midnight.second
-            )
-            if (
-                f"{midnight.hour}:{midnight.minute}:{midnight.second}"
-                > f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
-                and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
-                < f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
-            ):
-                # Calculate next retry backoff delay
-                self._retry_count += 1
-                self._next_retry_delay = RETRY_MINUTES * self._retry_count
-                if self._next_retry_delay > MAX_RETRY_MINUTES:
-                    self._next_retry_delay = MAX_RETRY_MINUTES
-
-                _LOGGER.warning(
-                    "Couldn't get data from Energi Data Service, retrying in %s minutes.",
-                    self._next_retry_delay,
-                )
-                async_call_later(
-                    self._hass,
-                    timedelta(minutes=self._next_retry_delay),
-                    partial(self.update),
-                )
-            else:
+                local_tz = timezone(self._hass.config.time_zone)
+                midnight = datetime.strptime("23:59:59", "%H:%M:%S")
+                refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
+                now = datetime.now().astimezone(local_tz)
                 _LOGGER.debug(
-                    "Not forcing refresh, as we are past midnight and haven't reached next update time"
+                    "Now: %s:%s:%s",
+                    f"{now.hour:02d}",
+                    f"{now.minute:02d}",
+                    f"{now.second:02d}",
                 )
-        else:
-            self._retry_count = 0
-            self._tomorrow_valid = True
+                _LOGGER.debug(
+                    "Refresh: %s:%s:%s",
+                    f"{refresh.hour:02d}",
+                    f"{refresh.minute:02d}",
+                    f"{refresh.second:02d}",
+                )
+                _LOGGER.debug(
+                    "Midnight: %s:%s:%s",
+                    midnight.hour,
+                    midnight.minute,
+                    midnight.second,
+                )
+                if (
+                    f"{midnight.hour}:{midnight.minute}:{midnight.second}"
+                    > f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+                    and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
+                    < f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+                ):
+                    retry_update(self)
+                else:
+                    _LOGGER.debug(
+                        "Not forcing refresh, as we are past midnight and haven't reached next update time"
+                    )
+            else:
+                self._retry_count = 0
+                self._tomorrow_valid = True
+        except aiohttp.client_exceptions.ServerDisconnectedError:
+            _LOGGER.warning("Server disconnected.")
+            retry_update(self)
 
     @property
     def tomorrow_valid(self):
@@ -249,3 +243,22 @@ class EDSConnector:
     def entry_id(self):
         """Return entry_id."""
         return self._entry_id
+
+
+@staticmethod
+def retry_update(self):
+    """Retry update on error."""
+    self._retry_count += 1
+    self._next_retry_delay = RETRY_MINUTES * self._retry_count
+    if self._next_retry_delay > MAX_RETRY_MINUTES:
+        self._next_retry_delay = MAX_RETRY_MINUTES
+
+    _LOGGER.warning(
+        "Couldn't get data from Energi Data Service, retrying in %s minutes.",
+        self._next_retry_delay,
+    )
+    async_call_later(
+        self._hass,
+        timedelta(minutes=self._next_retry_delay),
+        partial(self.update),
+    )
