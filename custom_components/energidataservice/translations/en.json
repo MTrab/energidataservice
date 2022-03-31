@@ -1,8 +1,10 @@
 {
     "config": {
-        "title": "Energi Data Service",
         "error": {
             "invalid_template": "The additional cost template is invalid, check https://github.com/mtrab/energidataservice"
+        },
+        "abort": {
+            "already_configured": "The specified name exists!"
         },
         "step": {
             "user": {
@@ -13,8 +15,7 @@
                     "pricetype": "Price calculated in",
                     "cost_template": "Template for additional costs"
                 },
-                "description": "Fetch spot prices from Energi Data Service",
-                "title": "Energi Data Service"
+                "description": "Fetch spot prices from Energi Data Service"
             }
         }
     }

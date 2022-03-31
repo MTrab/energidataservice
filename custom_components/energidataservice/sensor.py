@@ -2,15 +2,20 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime
 import logging
+from types import MappingProxyType
 
 from currency_converter import CurrencyConverter
 from homeassistant.components import sensor
-from homeassistant.const import CONF_NAME, DEVICE_CLASS_MONETARY
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import DEVICE_CLASS_MONETARY, CONF_NAME
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach
 from homeassistant.util import dt as dt_utils, slugify as util_slugify
-from jinja2 import contextfunction
+from jinja2 import pass_context
 
 from .const import (
     AREA_MAP,
@@ -30,18 +35,20 @@ from .entity import EnergidataserviceEntity
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
+async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Setup sensor platform from a config entry."""
     config = config_entry.data
-    _setup(hass, config, async_add_devices)
+    _setup(hass, config, config_entry, async_add_devices)
     return True
 
 
-def _setup(hass, config, add_devices):
-    """Setup the damn platform using yaml."""
+def _setup(hass, config: MappingProxyType, entry: ConfigEntry, add_devices):
+    """Setup the platform."""
     _LOGGER.debug("Dumping config %r", config)
     _LOGGER.debug("Timezone set in ha %r", hass.config.time_zone)
     _LOGGER.debug("Currency set in ha %r", hass.config.currency)
+    _LOGGER.debug("Domain %s", DOMAIN)
+
     area = config.get(CONF_AREA)
     price_type = config.get(CONF_PRICETYPE)
     decimals = config.get(CONF_DECIMALS)
@@ -49,8 +56,8 @@ def _setup(hass, config, add_devices):
     vat = config.get(CONF_VAT)
     cost_template = config.get(CONF_TEMPLATE)
     name = config.get(CONF_NAME)
-    api = hass.data[DOMAIN]
-    _LOGGER.debug(config.get(UNIQUE_ID))
+    api = hass.data[DOMAIN][entry.entry_id]
+    _LOGGER.debug("Unique_id from config: %s", config.get(UNIQUE_ID))
     sens = EnergidataserviceSensor(
         name,
         area,
@@ -65,6 +72,46 @@ def _setup(hass, config, add_devices):
     )
 
     add_devices([sens])
+
+
+@callback
+def _async_migrate_unique_id(
+    hass: HomeAssistant, entity: str, old_id: str, new_id: str
+) -> None:
+    """Change unique_ids to allow multiple instances."""
+    _LOGGER.debug("Testing for unique_id")
+    entity_registry = er.async_get(hass)
+    curentity = entity_registry.async_get(entity)
+    if not curentity is None:
+        _LOGGER.debug("- Device_id: %s", curentity.device_id)
+        if not new_id is None:
+            device_registry = dr.async_get(hass)
+            curdevice = device_registry.async_get(curentity.device_id)
+            identifiers = curdevice.identifiers
+            for identifier in identifiers:
+                _LOGGER.debug(" - Identifier found: %s", identifier)
+            _LOGGER.debug(" - Adding new device identifier")
+            device_registry = dr.async_get(hass)
+            curdevice = device_registry.async_get(curentity.device_id)
+            identifiers = curdevice.identifiers
+            tup_dict = dict(identifiers)  # {'hi': 'bye', 'one': 'two'}
+            tup_dict[DOMAIN] = new_id
+            identifiers = tuple(tup_dict.items())  # (('one', 'two'),)
+            for identifier in identifiers:
+                _LOGGER.debug(" - Identifier after edit: %s", identifier)
+            device_registry.async_update_device(
+                curentity.device_id, new_identifiers=identifiers
+            )
+            if curentity.unique_id in [
+                "energidataservice_West of the great belt",
+                "energidataservice_East of the great belt",
+            ]:
+                _LOGGER.debug(" - Adding extra entity identifier")
+                entity_registry.async_update_entity(entity, new_unique_id=new_id)
+        else:
+            _LOGGER.debug(" - New id not set, skipping")
+    else:
+        _LOGGER.debug("- Check didn't find anything")
 
 
 class EnergidataserviceSensor(EnergidataserviceEntity):
@@ -92,39 +139,32 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._api = api
         self._cost_template = cost_template
         self._hass = hass
-        # self._friendly_name = f"{name} {area}"
-        # self._entity_id = sensor.ENTITY_ID_FORMAT.format(util_slugify(f"{name} {area}"))
+        self._newstyle_unique_id = None
         if vat is True:
             self._vat = 0.25
         else:
             self._vat = 0
 
-        # self._unique_id = f"energidataservice_{area}"
-        # self._unique_id = "energidataservice_%s_%s_%s_%s_%s_%s" % (
-        #     self._friendly_name,
-        #     self._price_type,
-        #     self._area,
-        #     self._decimals,
-        #     self._vat,
-        #     self._entry_id,
+        ### NEW WAY
+        self._friendly_name = f"{name} {area}"
+        self._entity_id = sensor.ENTITY_ID_FORMAT.format(util_slugify(f"{name} {area}"))
+        self._unique_id = util_slugify(f"{name}_{self._entry_id}")
+        old_id = f"energidataservice_{area}"
+        # self._unique_id = f"energidataservice_{self._entry_id}"
+        _async_migrate_unique_id(hass, self._entity_id, old_id, self._unique_id)
+        ###
+
+        # ### OLD WAY
+        # self._friendly_name = f"Energi Data Service {area}"
+        # self._entity_id = sensor.ENTITY_ID_FORMAT.format(
+        #     util_slugify(self._friendly_name)
         # )
-
-        # super().__init__(self._entity_id, self._area)
-
-        ### BUGFIX
-        self._friendly_name = f"Energi Data Service {area}"
-        self._entity_id = sensor.ENTITY_ID_FORMAT.format(
-            util_slugify(self._friendly_name)
-        )
-        self._unique_id = f"energidataservice_{area}"
-        super().__init__(self._friendly_name, self._area)
+        # self._unique_id = f"energidataservice_{area}"
+        # # super().__init__(self._friendly_name, self._area)
+        # ###
 
         # Holds current price
         self._state = None
-
-        # Holds today and tomorrow data
-        self._today = None
-        self._tomorrow = None
 
         # Holds the raw data
         self._today_raw = None
@@ -166,6 +206,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
             self._api.tomorrow = None
+            self._tomorrow_raw = None
             self._api.tomorrow_calculated = False
 
         if not self._api.today_calculated:
@@ -234,7 +275,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
                 def inner(*args, **kwargs):  # type: ignore pylint: disable=unused-argument
                     return fake_dt
 
-                return contextfunction(inner)
+                return pass_context(inner)
 
             template_value = self._cost_template.async_render(now=faker())
         else:
@@ -283,6 +324,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
         return {
+            "unique_id": self.unique_id,
             "current_price": self.state,
             "unit": self.unit,
             "currency": self._currency,
