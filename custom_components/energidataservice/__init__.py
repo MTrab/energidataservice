@@ -109,10 +109,14 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Setup the integration using a config entry."""
     integration = await async_get_integration(hass, DOMAIN)
-    options = entry.options
     _LOGGER.info(STARTUP, integration.version)
     converter = Currency(hass)
-    api = EDSConnector(hass, AREA_MAP[options.get(CONF_AREA)], entry.entry_id, converter)
+    api = EDSConnector(
+        hass,
+        AREA_MAP[(entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA))],
+        entry.entry_id,
+        converter,
+    )
     hass.data[DOMAIN][entry.entry_id] = api
 
     async def new_day(indata):  # type: ignore pylint: disable=unused-argument
