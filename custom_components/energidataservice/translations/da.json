@@ -18,5 +18,25 @@
                 "description": "Henter el spot priser fra Energi Data Service"
             }
         }
+    },
+    "options": {
+        "error": {
+            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https://github.com/mtrab/energidataservice"
+        },
+        "abort": {
+            "already_configured": "Det angivede navn eksisterer allerede!"
+        },
+        "step": {
+            "init": {
+                "data": {
+                    "area": "Pris område",
+                    "vat": "Vis priser med moms",
+                    "decimals": "Decimaler",
+                    "pricetype": "Pris beregnes i",
+                    "cost_template": "Skabelon til ekstra omkostninger"
+                },
+                "description": "Rediger Energi Data Service sensor"
+            }
+        }
     }
 }

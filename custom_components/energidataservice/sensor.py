@@ -1,11 +1,12 @@
 """Support for Energi Data Service sensor."""
+import asyncio
 from collections import defaultdict, namedtuple
 from datetime import datetime
 import logging
-from types import MappingProxyType
 
 from currency_converter import CurrencyConverter
 from homeassistant.components import sensor
+from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import DEVICE_CLASS_MONETARY, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
@@ -27,7 +28,6 @@ from .const import (
     DEFAULT_TEMPLATE,
     DOMAIN,
     PRICE_IN,
-    UNIQUE_ID,
     UPDATE_EDS,
 )
 from .entity import EnergidataserviceEntity
@@ -37,47 +37,25 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Setup sensor platform from a config entry."""
-    config = config_entry.data
-    _setup(hass, config, config_entry, async_add_devices)
+    config = config_entry
+    _setup(hass, config, async_add_devices)
     return True
 
 
-def _setup(hass, config: MappingProxyType, entry: ConfigEntry, add_devices):
+def _setup(hass, config: ConfigEntry, add_devices):
     """Setup the platform."""
     _LOGGER.debug("Dumping config %r", config)
     _LOGGER.debug("Timezone set in ha %r", hass.config.time_zone)
     _LOGGER.debug("Currency set in ha %r", hass.config.currency)
     _LOGGER.debug("Domain %s", DOMAIN)
 
-    area = config.get(CONF_AREA)
-    price_type = config.get(CONF_PRICETYPE)
-    decimals = config.get(CONF_DECIMALS)
-    currency = hass.config.currency
-    vat = config.get(CONF_VAT)
-    cost_template = config.get(CONF_TEMPLATE)
-    name = config.get(CONF_NAME)
-    api = hass.data[DOMAIN][entry.entry_id]
-    _LOGGER.debug("Unique_id from config: %s", config.get(UNIQUE_ID))
-    sens = EnergidataserviceSensor(
-        name,
-        area,
-        price_type,
-        decimals,
-        currency,
-        vat,
-        api,
-        cost_template,
-        hass,
-        api.entry_id,
-    )
+    sens = EnergidataserviceSensor(config, hass)
 
     add_devices([sens])
 
 
 @callback
-def _async_migrate_unique_id(
-    hass: HomeAssistant, entity: str, old_id: str, new_id: str
-) -> None:
+def _async_migrate_unique_id(hass: HomeAssistant, entity: str, new_id: str) -> None:
     """Change unique_ids to allow multiple instances."""
     _LOGGER.debug("Testing for unique_id")
     entity_registry = er.async_get(hass)
@@ -117,51 +95,29 @@ def _async_migrate_unique_id(
 class EnergidataserviceSensor(EnergidataserviceEntity):
     """Representation of Energi Data Service data."""
 
-    def __init__(
-        self,
-        name,
-        area,
-        price_type,
-        decimals,
-        currency,
-        vat,
-        api,
-        cost_template,
-        hass,
-        entry_id,
-    ) -> None:
-        """Initialize Ally binary_sensor."""
-        self._entry_id = entry_id
-        self._area = area
-        self._currency = currency
-        self._price_type = price_type
-        self._decimals = decimals
-        self._api = api
-        self._cost_template = cost_template
+    def __init__(self, config: ConfigEntry, hass: HomeAssistant) -> None:
+        """Initialize Energidataservice sensor."""
+        self._config = config
+        self._entry_id = config.entry_id
+        self._area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
+        self._currency = hass.config.currency
+        self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(CONF_PRICETYPE)
+        self._decimals = config.options.get(CONF_DECIMALS) or config.data.get(CONF_DECIMALS)
+        self._api = hass.data[DOMAIN][config.entry_id]
+        self._cost_template = config.options.get(CONF_TEMPLATE) or config.data.get(CONF_TEMPLATE)
         self._hass = hass
-        self._newstyle_unique_id = None
-        if vat is True:
+        self._name = config.data.get(CONF_NAME)
+        self._friendly_name = config.options.get(CONF_NAME) or config.data.get(CONF_NAME)
+        if config.options.get(CONF_VAT) is True:
             self._vat = 0.25
         else:
             self._vat = 0
 
-        ### NEW WAY
-        self._friendly_name = f"{name} {area}"
-        self._entity_id = sensor.ENTITY_ID_FORMAT.format(util_slugify(f"{name} {area}"))
-        self._unique_id = util_slugify(f"{name}_{self._entry_id}")
-        old_id = f"energidataservice_{area}"
-        # self._unique_id = f"energidataservice_{self._entry_id}"
-        _async_migrate_unique_id(hass, self._entity_id, old_id, self._unique_id)
-        ###
-
-        # ### OLD WAY
-        # self._friendly_name = f"Energi Data Service {area}"
-        # self._entity_id = sensor.ENTITY_ID_FORMAT.format(
-        #     util_slugify(self._friendly_name)
-        # )
-        # self._unique_id = f"energidataservice_{area}"
-        # # super().__init__(self._friendly_name, self._area)
-        # ###
+        self._entity_id = sensor.ENTITY_ID_FORMAT.format(
+            util_slugify(f"{self._name} {self._area}")
+        )
+        self._unique_id = util_slugify(f"{self._name}_{self._entry_id}")
+        _async_migrate_unique_id(hass, self._entity_id, self._unique_id)
 
         # Holds current price
         self._state = None
@@ -198,11 +154,11 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         if not self._api.today:
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
-            self._api.today = self._format_list(self._api.today)
+            self._api.today = await self._format_list(self._api.today)
 
         if self.tomorrow_valid:
             if not self._api.tomorrow_calculated:
-                self._api.tomorrow = self._format_list(self._api.tomorrow, True)
+                self._api.tomorrow = await self._format_list(self._api.tomorrow, True)
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
             self._api.tomorrow = None
@@ -210,7 +166,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             self._api.tomorrow_calculated = False
 
         if not self._api.today_calculated:
-            self._api.today = self._format_list(self._api.today)
+            self._api.today = await self._format_list(self._api.today)
 
         # Updates price for this hour.
         await self._get_current_price()
@@ -258,7 +214,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         c = CurrencyConverter()  # pylint: disable=invalid-name
         return c.convert(value, currency_from, currency_to)
 
-    def _calculate(self, value=None, fake_dt=None) -> float:
+    async def _calculate(self, value=None, fake_dt=None) -> float:
         """Do price calculations"""
         if value is None:
             value = self._state
@@ -324,7 +280,6 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     def extra_state_attributes(self):
         """Return the state attributes."""
         return {
-            "unique_id": self.unique_id,
             "current_price": self.state,
             "unit": self.unit,
             "currency": self._currency,
@@ -427,14 +382,29 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         """Return highpoint for tomorrow."""
         return self._tomorrow_max
 
-    def _format_list(self, data, tomorrow=False) -> list:
+    @property
+    def state_class(self) -> SensorStateClass.MEASUREMENT:
+        """Return the state class of this entity."""
+        return SensorStateClass.MEASUREMENT
+
+    async def _docalc(self, interval: namedtuple, price: str, hour: str) -> namedtuple:
+        """Initialize calculations"""
+        price = await self._calculate(price, fake_dt=dt_utils.as_local(hour))
+        return interval(price, hour)
+
+    async def _format_list(self, data, tomorrow=False) -> list:
         """Format data as list with prices localized."""
         formatted_pricelist = []
 
+        jobs = []
         for i in data:
             Interval = namedtuple("Interval", "price hour")
-            price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
-            formatted_pricelist.append(Interval(price, i.hour))
+            jobs.append(self._docalc(Interval, i.price, i.hour))
+            # price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
+            # formatted_pricelist.append(Interval(price, i.hour))
+
+        res = await asyncio.gather(*jobs)
+        formatted_pricelist = sorted(res, key=lambda tup: tup[1])
 
         if tomorrow:
             self._api.tomorrow_calculated = True
