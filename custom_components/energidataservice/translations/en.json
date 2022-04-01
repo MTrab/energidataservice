@@ -18,5 +18,25 @@
                 "description": "Fetch spot prices from Energi Data Service"
             }
         }
+    },
+    "options": {
+        "error": {
+            "invalid_template": "The additional cost template is invalid, check https://github.com/mtrab/energidataservice"
+        },
+        "abort": {
+            "already_configured": "The specified name exists!"
+        },
+        "step": {
+            "init": {
+                "data": {
+                    "area": "Price area",
+                    "vat": "Show prices including VAT",
+                    "decimals": "Decimals",
+                    "pricetype": "Price calculated in",
+                    "cost_template": "Template for additional costs"
+                },
+                "description": "Edit Energi Data Service sensor"
+            }
+        }
     }
 }

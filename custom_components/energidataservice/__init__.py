@@ -3,16 +3,13 @@ from datetime import datetime, timedelta
 from functools import partial
 import logging
 from random import randint
-from threading import local
 
 import aiohttp
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
-from homeassistant.core import Config, HomeAssistant
-from homeassistant.helpers import config_validation as cv
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_change
-from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 from pytz import timezone
 import voluptuous as vol
@@ -78,6 +75,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Energi Data Service from a config entry."""
     _LOGGER.debug("Entry data: %s", entry.data)
+    _LOGGER.debug("Entry options: %s", entry.options)
     result = await _setup(hass, entry)
 
     hass.async_create_task(
@@ -110,10 +108,10 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Setup the integration using a config entry."""
     integration = await async_get_integration(hass, DOMAIN)
-    config = entry.data
+    options = entry.options
     _LOGGER.info(STARTUP, integration.version)
 
-    api = EDSConnector(hass, AREA_MAP[config.get(CONF_AREA)], entry.entry_id)
+    api = EDSConnector(hass, AREA_MAP[options.get(CONF_AREA)], entry.entry_id)
     hass.data[DOMAIN][entry.entry_id] = api
 
     async def new_day(indata):  # type: ignore pylint: disable=unused-argument
@@ -136,12 +134,6 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         api.today_calculated = False
         api.tomorrow_calculated = False
-
-        # if not api.tomorrow_valid:
-        #     _LOGGER.warning(
-        #         "Couldn't get data from Energi Data Service, retrying later."
-        #     )
-        #     async_call_later(hass, timedelta(minutes=10), partial(api.update))
 
         async_dispatcher_send(hass, UPDATE_EDS)
 
