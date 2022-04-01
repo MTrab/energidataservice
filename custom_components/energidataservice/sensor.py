@@ -1,10 +1,8 @@
 """Support for Energi Data Service sensor."""
-import asyncio
 from collections import defaultdict, namedtuple
 from datetime import datetime
 import logging
 
-from currency_converter import CurrencyConverter
 from homeassistant.components import sensor
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
@@ -161,11 +159,15 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         if not self._api.today:
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
-            self._api.today = await self._format_list(self._api.today)
+            # self._api.today =
+            await self._hass.async_add_executor_job(self._format_list, self._api.today)
 
         if self.tomorrow_valid:
             if not self._api.tomorrow_calculated:
-                self._api.tomorrow = await self._format_list(self._api.tomorrow, True)
+                # self._api.tomorrow =
+                await self._hass.async_add_executor_job(
+                    self._format_list, self._api.tomorrow, True
+                )
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
             self._api.tomorrow = None
@@ -173,10 +175,10 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             self._api.tomorrow_calculated = False
 
         if not self._api.today_calculated:
-            self._api.today = await self._format_list(self._api.today)
+            await self._hass.async_add_executor_job(self._format_list, self._api.today)
 
         # Updates price for this hour.
-        await self._get_current_price()
+        self._get_current_price()
 
         # Update attributes
         self._today_raw = self._add_raw(self._api.today)
@@ -188,7 +190,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
         self.async_write_ha_state()
 
-    async def _get_current_price(self) -> None:
+    def _get_current_price(self) -> None:
         """Get price for current hour"""
         # now = dt_utils.now()
         current_state_time = datetime.fromisoformat(
@@ -198,7 +200,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             .replace(minute=0)
             .isoformat()
         )
-
+        _LOGGER.debug(self._api.today)
         if self._api.today:
             for dataset in self._api.today:
                 if dataset.hour == current_state_time:
@@ -215,20 +217,14 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         await self.validate_data()
         async_dispatcher_connect(self._hass, UPDATE_EDS, self.validate_data)
 
-    @staticmethod
-    def _convert_currency(currency_from, currency_to, value):
-        """Convert currency"""
-        c = CurrencyConverter()  # pylint: disable=invalid-name
-        return c.convert(value, currency_from, currency_to)
-
-    async def _calculate(self, value=None, fake_dt=None) -> float:
+    def _calculate(self, value=None, fake_dt=None) -> float:
         """Do price calculations"""
         if value is None:
             value = self._state
 
         # Convert currency from EUR
         if self._currency != "EUR":
-            value = self._convert_currency("EUR", self._currency, value)
+            value = self._api.converter.convert(value, self._currency)
 
         # Used to inject the current hour.
         # so template can be simplified using now
@@ -394,31 +390,40 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         """Return the state class of this entity."""
         return SensorStateClass.MEASUREMENT
 
-    async def _docalc(self, interval: namedtuple, price: str, hour: str) -> namedtuple:
+    def _docalc(self, interval: namedtuple, price: str, hour: str) -> namedtuple:
         """Initialize calculations"""
-        price = await self._calculate(price, fake_dt=dt_utils.as_local(hour))
+        price = self._calculate(price, fake_dt=dt_utils.as_local(hour))
+        _LOGGER.debug(
+            "%s was calculation for %s finished",
+            datetime.now().strftime("%H:%M:%S.%f"),
+            hour,
+        )
+
         return interval(price, hour)
 
-    async def _format_list(self, data, tomorrow=False) -> list:
+    def _format_list(self, data, tomorrow=False) -> None:
         """Format data as list with prices localized."""
         formatted_pricelist = []
 
-        jobs = []
+        _start = datetime.now().timestamp()
         for i in data:
             Interval = namedtuple("Interval", "price hour")
-            jobs.append(self._docalc(Interval, i.price, i.hour))
-            # price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
-            # formatted_pricelist.append(Interval(price, i.hour))
+            price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
+            formatted_pricelist.append(Interval(price, i.hour))
 
-        res = await asyncio.gather(*jobs)
-        formatted_pricelist = sorted(res, key=lambda tup: tup[1])
+        _stop = datetime.now().timestamp()
+        _ttf = round(_stop - _start, 2)
 
         if tomorrow:
+            _calc_for = "TOMORROW"
             self._api.tomorrow_calculated = True
+            self._api.tomorrow = formatted_pricelist
         else:
+            _calc_for = "TODAY"
             self._api.today_calculated = True
+            self._api.today = formatted_pricelist
 
-        return formatted_pricelist
+        _LOGGER.debug("Calculation for %s took %s seconds", _calc_for, _ttf)
 
     @staticmethod
     def _get_specific(datatype, data):

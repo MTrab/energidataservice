@@ -15,6 +15,7 @@ from pytz import timezone
 import voluptuous as vol
 
 from .api import Energidataservice
+from .utils.currency import Currency
 from .const import (
     AREA_MAP,
     CONF_AREA,
@@ -110,8 +111,8 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     integration = await async_get_integration(hass, DOMAIN)
     options = entry.options
     _LOGGER.info(STARTUP, integration.version)
-
-    api = EDSConnector(hass, AREA_MAP[options.get(CONF_AREA)], entry.entry_id)
+    converter = Currency(hass)
+    api = EDSConnector(hass, AREA_MAP[options.get(CONF_AREA)], entry.entry_id, converter)
     hass.data[DOMAIN][entry.entry_id] = api
 
     async def new_day(indata):  # type: ignore pylint: disable=unused-argument
@@ -168,13 +169,14 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class EDSConnector:
     """An object to store Energi Data Service data."""
 
-    def __init__(self, hass, area, entry_id):
+    def __init__(self, hass, area, entry_id, converter):
         """Initialize Energi Data Service Connector."""
         self._hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
         self._entry_id = entry_id
 
+        self.converter = converter
         self.today = None
         self.tomorrow = None
         self.today_calculated = False
