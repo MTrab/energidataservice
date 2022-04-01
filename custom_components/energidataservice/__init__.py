@@ -23,9 +23,9 @@ from .const import (
     CONF_TEMPLATE,
     CONF_VAT,
     DOMAIN,
-    UNIT_TO_MULTIPLIER,
     REGIONS,
     STARTUP,
+    UNIT_TO_MULTIPLIER,
     UPDATE_EDS,
 )
 from .events import async_track_time_change_in_tz  # type: ignore

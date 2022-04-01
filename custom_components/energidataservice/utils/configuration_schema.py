@@ -15,9 +15,9 @@ from ..const import (
     CONF_PRICETYPE,
     CONF_TEMPLATE,
     CONF_VAT,
-    UNIT_TO_MULTIPLIER,
     MULTIPLIER_TO_UNIT,
     REGIONS,
+    UNIT_TO_MULTIPLIER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,9 +49,9 @@ def energidataservice_config_option_schema(
         vol.Optional(CONF_DECIMALS, default=options.get(CONF_DECIMALS)): vol.Coerce(
             int
         ),
-        vol.Optional(
-            CONF_PRICETYPE, default=options.get(CONF_PRICETYPE)
-        ): vol.In(list(UNIT_TO_MULTIPLIER.keys())),
+        vol.Optional(CONF_PRICETYPE, default=options.get(CONF_PRICETYPE)): vol.In(
+            list(UNIT_TO_MULTIPLIER.keys())
+        ),
         vol.Optional(CONF_TEMPLATE, default=options.get(CONF_TEMPLATE)): str,
     }
     _LOGGER.debug("Schema: %s", schema)
