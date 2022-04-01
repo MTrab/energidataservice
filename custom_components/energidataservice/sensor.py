@@ -1,5 +1,5 @@
 """Support for Energi Data Service sensor."""
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from datetime import datetime
 import logging
 
@@ -13,6 +13,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach
 from homeassistant.util import dt as dt_utils, slugify as util_slugify
+from idna import valid_contextj
 from jinja2 import pass_context
 
 from .const import (
@@ -37,6 +38,18 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     config = config_entry
     _setup(hass, config, async_add_devices)
     return True
+
+
+def mean(data: list) -> float:
+    """Calculate mean value of list."""
+    val = 0
+    num = 0
+
+    for i in data:
+        val += i.price
+        num += 1
+
+    return val / num
 
 
 def _setup(hass, config: ConfigEntry, add_devices):
@@ -139,6 +152,10 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._tomorrow_min = None
         self._tomorrow_max = None
 
+        # Holds mean values for today and tomorrow
+        self._today_mean = None
+        self._tomorrow_mean = None
+
         # Check incase the sensor was setup using config flow.
         # This blow up if the template isnt valid.
         if not isinstance(self._cost_template, Template):
@@ -187,6 +204,8 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._today_max = self._get_specific("max", self._api.today)
         self._tomorrow_min = self._get_specific("min", self._api.tomorrow)
         self._tomorrow_max = self._get_specific("max", self._api.tomorrow)
+        self._today_mean = round(self._get_specific("mean", self._api.today), self._decimals)
+        self._tomorrow_mean = round(self._get_specific("mean", self._api.tomorrow), self._decimals)
 
         self.async_write_ha_state()
 
@@ -298,6 +317,8 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             "today_max": self.today_max,
             "tomorrow_min": self.tomorrow_min,
             "tomorrow_max": self.tomorrow_max,
+            "today_mean": self.today_mean,
+            "tomorrow_mean": self.tomorrow_mean,
         }
 
     @property
@@ -387,6 +408,16 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         return self._tomorrow_max
 
     @property
+    def today_mean(self):
+        """Return mean value for today."""
+        return self._today_mean
+
+    @property
+    def tomorrow_mean(self):
+        """Return mean value for tomorrow."""
+        return self._tomorrow_mean
+
+    @property
     def state_class(self) -> SensorStateClass.MEASUREMENT:
         """Return the state class of this entity."""
         return SensorStateClass.MEASUREMENT
@@ -427,15 +458,16 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         _LOGGER.debug("Calculation for %s took %s seconds", _calc_for, _ttf)
 
     @staticmethod
-    def _get_specific(datatype, data):
+    def _get_specific(datatype: str, data: list):
         """Get specific values - ie. min, max, mean values"""
 
         if datatype in ["MIN", "Min", "min"]:
             if data:
                 res = min(data, key=lambda k: k.price)
-                ret = defaultdict(dict)
-                ret["hour"] = res.hour
-                ret["price"] = res.price
+                ret = {
+                    "hour": res.hour,
+                    "price": res.price,
+                }
 
                 return ret
             else:
@@ -443,11 +475,17 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         elif datatype in ["MAX", "Max", "max"]:
             if data:
                 res = max(data, key=lambda k: k.price)
-                ret = defaultdict(dict)
-                ret["hour"] = res.hour
-                ret["price"] = res.price
+                ret = {
+                    "hour": res.hour,
+                    "price": res.price,
+                }
 
                 return ret
+            else:
+                return None
+        elif datatype in ["MEAN", "Mean", "mean"]:
+            if data:
+                return mean(data)
             else:
                 return None
         else:

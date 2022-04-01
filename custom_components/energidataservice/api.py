@@ -8,7 +8,7 @@ import pytz
 _LOGGER = logging.getLogger(__name__)
 
 
-def prepare_data(indata, date, tz):  # pylint: disable=invalid-name
+def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
     local_tz = pytz.timezone(tz)
     reslist = []
