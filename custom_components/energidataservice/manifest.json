@@ -4,7 +4,7 @@
     "documentation": "https://github.com/MTrab/energidataservice/blob/master/README.md",
     "issue_tracker": "https://github.com/MTrab/energidataservice/issues",
     "requirements": [
-        "CurrencyConverter==0.16.11"
+        "CurrencyConverter==0.16.10"
     ],
     "after_dependencies": [
         "http"

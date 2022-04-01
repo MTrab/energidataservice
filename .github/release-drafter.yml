@@ -17,6 +17,10 @@ categories:
   - title: '🧰 Maintenance'
     label: 'chore'
 
+  - title: ":package: Dependencies"
+    labels:
+      - 'dependencies'
+
 version-resolver:
   major:
     labels:
@@ -33,12 +37,10 @@ template: |
 
   $CHANGES
 
-  ## ⭐️ Thank you so much for helping out to keep this integration awesome
-  $CONTRIBUTORS
 autolabeler:
   - label: 'bug'
     branch:
       - '/fix\/.+/'
-  - label: 'enhancement'
+  - label: 'feature request'
     branch:
       - '/feature\/.+/'
