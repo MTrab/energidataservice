@@ -12,7 +12,7 @@
     "codeowners": [
         "@MTrab"
     ],
-    "version": "0.1.5",
+    "version": "0.1.6",
     "config_flow": true,
     "iot_class": "cloud_polling"
 }
