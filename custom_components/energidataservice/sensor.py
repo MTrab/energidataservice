@@ -206,9 +206,13 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._today_mean = round(
             self._get_specific("mean", self._api.today), self._decimals
         )
-        self._tomorrow_mean = round(
-            self._get_specific("mean", self._api.tomorrow), self._decimals
-        )
+
+        if self.tomorrow_valid:
+            self._tomorrow_mean = round(
+                self._get_specific("mean", self._api.tomorrow), self._decimals
+            )
+        else:
+            self._tomorrow_mean = None
 
         self.async_write_ha_state()
 
@@ -318,9 +322,9 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             "raw_tomorrow": self.raw_tomorrow,
             "today_min": self.today_min,
             "today_max": self.today_max,
+            "today_mean": self.today_mean,
             "tomorrow_min": self.tomorrow_min,
             "tomorrow_max": self.tomorrow_max,
-            "today_mean": self.today_mean,
             "tomorrow_mean": self.tomorrow_mean,
         }
 
