@@ -50,8 +50,8 @@ def energidataservice_config_option_schema(
             int
         ),
         vol.Optional(
-            CONF_PRICETYPE, default=UNIT_TO_MULTIPLIER[options.get(CONF_PRICETYPE)]
-        ): vol.In(MULTIPLIER_TO_UNIT),
+            CONF_PRICETYPE, default=options.get(CONF_PRICETYPE)
+        ): vol.In(list(UNIT_TO_MULTIPLIER.keys())),
         vol.Optional(CONF_TEMPLATE, default=options.get(CONF_TEMPLATE)): str,
     }
     _LOGGER.debug("Schema: %s", schema)
