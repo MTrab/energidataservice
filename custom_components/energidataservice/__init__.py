@@ -23,7 +23,7 @@ from .const import (
     CONF_TEMPLATE,
     CONF_VAT,
     DOMAIN,
-    PRICE_TYPES,
+    UNIT_TO_MULTIPLIER,
     REGIONS,
     STARTUP,
     UPDATE_EDS,
@@ -47,7 +47,7 @@ DATA_SCHEMA = vol.Schema(
         ): vol.In(REGIONS),
         vol.Required(CONF_VAT, default=True): bool,
         vol.Optional(CONF_DECIMALS, default=3): vol.Coerce(int),
-        vol.Optional(CONF_PRICETYPE, default="kWh"): vol.In(PRICE_TYPES),
+        vol.Optional(CONF_PRICETYPE, default="kWh"): vol.In(UNIT_TO_MULTIPLIER),
         vol.Optional(CONF_TEMPLATE, default=""): str,
     }
 )

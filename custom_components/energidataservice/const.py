@@ -44,8 +44,8 @@ CURRENCIES = {
     "Euro": "EUR",
 }
 
-PRICE_IN = {"MWh": 0, "kWh": 1000, "Wh": 1000 * 1000}
+UNIT_TO_MULTIPLIER = {"MWh": 0, "kWh": 1000, "Wh": 1000000}
+MULTIPLIER_TO_UNIT = {0: "MWh", 1000: "kWh", 1000000: "Wh"}
 
-PRICE_TYPES = PRICE_IN
 REGIONS = sorted(list(AREA_MAP.keys()))
 CURRENCY = sorted(list(CURRENCIES.keys()))

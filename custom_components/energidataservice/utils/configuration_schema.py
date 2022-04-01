@@ -2,7 +2,6 @@
 # pylint: disable=dangerous-default-value
 from __future__ import annotations
 
-from collections.abc import Mapping
 import logging
 from typing import Any
 
@@ -16,7 +15,8 @@ from ..const import (
     CONF_PRICETYPE,
     CONF_TEMPLATE,
     CONF_VAT,
-    PRICE_TYPES,
+    UNIT_TO_MULTIPLIER,
+    MULTIPLIER_TO_UNIT,
     REGIONS,
 )
 
@@ -31,8 +31,7 @@ def list_to_str(data: list[Any]) -> str:
 def energidataservice_config_option_schema(
     options: ConfigEntry = {},
 ) -> dict:
-    """Return a shcema for HACS configuration options."""
-    _LOGGER.debug("Options initial: %s", options)
+    """Return a shcema for configuration options."""
     if not options:
         options = {
             CONF_NAME: "Energi Data Service",
@@ -50,11 +49,10 @@ def energidataservice_config_option_schema(
         vol.Optional(CONF_DECIMALS, default=options.get(CONF_DECIMALS)): vol.Coerce(
             int
         ),
-        vol.Optional(CONF_PRICETYPE, default=options.get(CONF_PRICETYPE)): vol.In(
-            PRICE_TYPES
-        ),
+        vol.Optional(
+            CONF_PRICETYPE, default=UNIT_TO_MULTIPLIER[options.get(CONF_PRICETYPE)]
+        ): vol.In(MULTIPLIER_TO_UNIT),
         vol.Optional(CONF_TEMPLATE, default=options.get(CONF_TEMPLATE)): str,
     }
-    _LOGGER.debug("Options: %s", options[CONF_AREA])
     _LOGGER.debug("Schema: %s", schema)
     return schema
