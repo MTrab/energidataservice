@@ -340,12 +340,13 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             return None
 
     @staticmethod
-    def _add_raw(data):
+    def _add_raw(data) -> list:
         lst = []
         for i in data:
-            ret = defaultdict(dict)
-            ret["hour"] = i.hour
-            ret["price"] = i.price
+            ret = {
+                "hour": i.hour,
+                "price": i.price,
+            }
             lst.append(ret)
 
         return lst
