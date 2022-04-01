@@ -3,18 +3,16 @@ import logging
 import re
 
 from homeassistant import config_entries
-from homeassistant.helpers.event import async_call_later
-from homeassistant.helpers.template import Template
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.template import Template
 import voluptuous as vol
 
-from . import async_unload_entry, async_setup_entry
-
-from .utils.configuration_schema import energidataservice_config_option_schema
-
+from . import async_setup_entry, async_unload_entry
 from .const import CONF_TEMPLATE, DEFAULT_TEMPLATE, DOMAIN
+from .utils.configuration_schema import energidataservice_config_option_schema
 
 _LOGGER = logging.getLogger(__name__)
 

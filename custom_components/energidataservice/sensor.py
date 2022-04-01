@@ -100,13 +100,21 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._entry_id = config.entry_id
         self._area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
         self._currency = hass.config.currency
-        self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(CONF_PRICETYPE)
-        self._decimals = config.options.get(CONF_DECIMALS) or config.data.get(CONF_DECIMALS)
+        self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(
+            CONF_PRICETYPE
+        )
+        self._decimals = config.options.get(CONF_DECIMALS) or config.data.get(
+            CONF_DECIMALS
+        )
         self._api = hass.data[DOMAIN][config.entry_id]
-        self._cost_template = config.options.get(CONF_TEMPLATE) or config.data.get(CONF_TEMPLATE)
+        self._cost_template = config.options.get(CONF_TEMPLATE) or config.data.get(
+            CONF_TEMPLATE
+        )
         self._hass = hass
         self._name = config.data.get(CONF_NAME)
-        self._friendly_name = config.options.get(CONF_NAME) or config.data.get(CONF_NAME)
+        self._friendly_name = config.options.get(CONF_NAME) or config.data.get(
+            CONF_NAME
+        )
         if config.options.get(CONF_VAT) is True:
             self._vat = 0.25
         else:
