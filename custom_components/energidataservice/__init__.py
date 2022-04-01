@@ -15,7 +15,6 @@ from pytz import timezone
 import voluptuous as vol
 
 from .api import Energidataservice
-from .utils.currency import Currency
 from .const import (
     AREA_MAP,
     CONF_AREA,
@@ -30,6 +29,7 @@ from .const import (
     UPDATE_EDS,
 )
 from .events import async_track_time_change_in_tz  # type: ignore
+from .utils.currency import Currency
 
 RANDOM_MINUTE = randint(0, 10)
 RANDOM_SECOND = randint(0, 59)
