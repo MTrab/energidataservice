@@ -26,7 +26,8 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize Energidataservice options flow."""
         self.config_entry = config_entry
         self._errors = {}
-        _LOGGER.debug("Config: %s", self.config_entry.options)
+        config = self.config_entry.options or self.config_entry.data
+        _LOGGER.debug("Config: %s", config)
 
     async def async_step_init(self, user_input=None):
         """Handle an options flow."""
@@ -58,7 +59,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             else:
                 self._errors["base"] = "invalid_template"
         _LOGGER.debug("Config: %s", self.config_entry.options)
-        schema = energidataservice_config_option_schema(self.config_entry.options)
+        schema = energidataservice_config_option_schema(
+            self.config_entry.options or self.config_entry.data
+        )
         return self.async_show_form(
             step_id="init", data_schema=vol.Schema(schema), errors=self._errors
         )

@@ -13,7 +13,6 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach
 from homeassistant.util import dt as dt_utils, slugify as util_slugify
-from idna import valid_contextj
 from jinja2 import pass_context
 
 from .const import (
@@ -25,7 +24,7 @@ from .const import (
     CONF_VAT,
     DEFAULT_TEMPLATE,
     DOMAIN,
-    PRICE_IN,
+    UNIT_TO_MULTIPLIER,
     UPDATE_EDS,
 )
 from .entity import EnergidataserviceEntity
@@ -204,8 +203,12 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._today_max = self._get_specific("max", self._api.today)
         self._tomorrow_min = self._get_specific("min", self._api.tomorrow)
         self._tomorrow_max = self._get_specific("max", self._api.tomorrow)
-        self._today_mean = round(self._get_specific("mean", self._api.today), self._decimals)
-        self._tomorrow_mean = round(self._get_specific("mean", self._api.tomorrow), self._decimals)
+        self._today_mean = round(
+            self._get_specific("mean", self._api.today), self._decimals
+        )
+        self._tomorrow_mean = round(
+            self._get_specific("mean", self._api.tomorrow), self._decimals
+        )
 
         self.async_write_ha_state()
 
@@ -263,7 +266,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         if self._price_type in ("MWh", "mWh"):
             price = template_value / 1000 + value * float(1 + self._vat)
         else:
-            price = template_value + value / PRICE_IN[self._price_type] * (
+            price = template_value + value / UNIT_TO_MULTIPLIER[self._price_type] * (
                 float(1 + self._vat)
             )
 
