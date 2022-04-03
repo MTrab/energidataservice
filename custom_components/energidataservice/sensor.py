@@ -28,6 +28,7 @@ from .const import (
     UPDATE_EDS,
 )
 from .entity import EnergidataserviceEntity
+from .utils.regionhandler import RegionHandler
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,12 +54,25 @@ def mean(data: list) -> float:
 
 def _setup(hass, config: ConfigEntry, add_devices):
     """Setup the platform."""
-    _LOGGER.debug("Dumping config %r", config)
-    _LOGGER.debug("Timezone set in ha %r", hass.config.time_zone)
-    _LOGGER.debug("Currency set in ha %r", hass.config.currency)
+    area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
+    region = RegionHandler(area)
+    _LOGGER.debug("Timezone set in ha %s", hass.config.time_zone)
+    _LOGGER.debug("Currency set in ha %s", hass.config.currency)
+    _LOGGER.debug("Country: %s", region.country)
+    _LOGGER.debug("Region: %s", region.name)
+    _LOGGER.debug("Region description: %s", region.description)
+    _LOGGER.debug("Region currency %s", region.currency.name)
     _LOGGER.debug("Domain %s", DOMAIN)
 
-    sens = EnergidataserviceSensor(config, hass)
+    if region.currency.name != hass.config.currency:
+        _LOGGER.warning(
+            "Official currency for %s is %s but Home Assistant reports %s from config",
+            region.country,
+            region.currency.name,
+            hass.config.currency,
+        )
+
+    sens = EnergidataserviceSensor(config, hass, region)
 
     add_devices([sens])
 
@@ -104,11 +118,16 @@ def _async_migrate_unique_id(hass: HomeAssistant, entity: str, new_id: str) -> N
 class EnergidataserviceSensor(EnergidataserviceEntity):
     """Representation of Energi Data Service data."""
 
-    def __init__(self, config: ConfigEntry, hass: HomeAssistant) -> None:
+    def __init__(
+        self, config: ConfigEntry, hass: HomeAssistant, region: RegionHandler
+    ) -> None:
         """Initialize Energidataservice sensor."""
         self._config = config
+        self.region = region
         self._entry_id = config.entry_id
-        self._area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
+        self._area = (
+            region.description
+        )  # config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
         self._currency = hass.config.currency
         self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(
             CONF_PRICETYPE
@@ -243,39 +262,6 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         await self.validate_data()
         async_dispatcher_connect(self._hass, UPDATE_EDS, self.validate_data)
 
-    def _calculate(self, value=None, fake_dt=None) -> float:
-        """Do price calculations"""
-        if value is None:
-            value = self._state
-
-        # Convert currency from EUR
-        if self._currency != "EUR":
-            value = self._api.converter.convert(value, self._currency)
-
-        # Used to inject the current hour.
-        # so template can be simplified using now
-        if fake_dt is not None:
-
-            def faker():
-                def inner(*args, **kwargs):  # type: ignore pylint: disable=unused-argument
-                    return fake_dt
-
-                return pass_context(inner)
-
-            template_value = self._cost_template.async_render(now=faker())
-        else:
-            template_value = self._cost_template.async_render()
-
-        # The api returns prices in MWh
-        if self._price_type in ("MWh", "mWh"):
-            price = template_value / 1000 + value * float(1 + self._vat)
-        else:
-            price = template_value + value / UNIT_TO_MULTIPLIER[self._price_type] * (
-                float(1 + self._vat)
-            )
-
-        return round(price, self._decimals)
-
     @property
     def unique_id(self):
         """Return the unique id."""
@@ -331,7 +317,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return f"{self._currency}/{self._price_type}"
+        return f"{self.region.currency.name}/{self._price_type}"
 
     @property
     def device_class(self):
@@ -429,16 +415,38 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         """Return the state class of this entity."""
         return SensorStateClass.MEASUREMENT
 
-    def _docalc(self, interval: namedtuple, price: str, hour: str) -> namedtuple:
-        """Initialize calculations"""
-        price = self._calculate(price, fake_dt=dt_utils.as_local(hour))
-        _LOGGER.debug(
-            "%s was calculation for %s finished",
-            datetime.now().strftime("%H:%M:%S.%f"),
-            hour,
-        )
+    def _calculate(self, value=None, fake_dt=None) -> float:
+        """Do price calculations"""
+        if value is None:
+            value = self._state
 
-        return interval(price, hour)
+        # Convert currency from EUR
+        if self._currency != "EUR":
+            value = self._api.converter.convert(value, self._currency)
+
+        # Used to inject the current hour.
+        # so template can be simplified using now
+        if fake_dt is not None:
+
+            def faker():
+                def inner(*args, **kwargs):  # type: ignore pylint: disable=unused-argument
+                    return fake_dt
+
+                return pass_context(inner)
+
+            template_value = self._cost_template.async_render(now=faker())
+        else:
+            template_value = self._cost_template.async_render()
+
+        # The api returns prices in MWh
+        if self._price_type in ("MWh", "mWh"):
+            price = template_value / 1000 + value * float(1 + self._vat)
+        else:
+            price = template_value + value / UNIT_TO_MULTIPLIER[self._price_type] * (
+                float(1 + self._vat)
+            )
+
+        return round(price, self._decimals)
 
     def _format_list(self, data, tomorrow=False) -> None:
         """Format data as list with prices localized."""
