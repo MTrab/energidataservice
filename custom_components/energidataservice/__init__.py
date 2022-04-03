@@ -101,27 +101,24 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     hass.data[DOMAIN][entry.entry_id] = api
 
-    async def new_day(indata):  # type: ignore pylint: disable=unused-argument
+    async def new_day(n):  # type: ignore pylint: disable=unused-argument
         """Handle data on new day."""
         _LOGGER.debug("New day function called")
         api.today = api.tomorrow
         api.tomorrow = None
         api._tomorrow_valid = False  # pylint: disable=protected-access
+        api.tomorrow_calculated = False
         async_dispatcher_send(hass, UPDATE_EDS)
 
-    async def new_hour(indata):  # type: ignore pylint: disable=unused-argument
+    async def new_hour(n):  # type: ignore pylint: disable=unused-argument
         """Callback to tell the sensors to update on a new hour."""
         _LOGGER.debug("New hour, updating state")
         async_dispatcher_send(hass, UPDATE_EDS)
 
-    async def get_new_data(indata):  # type: ignore pylint: disable=unused-argument
+    async def get_new_data(n):  # type: ignore pylint: disable=unused-argument
         """Fetch new data for tomorrows prices at 13:00ish CET."""
         _LOGGER.debug("Getting latest dataset")
         await api.update()
-
-        api.today_calculated = False
-        api.tomorrow_calculated = False
-
         async_dispatcher_send(hass, UPDATE_EDS)
 
     # Handle dataset updates
@@ -183,15 +180,18 @@ class EDSConnector:
         try:
             await eds.get_spotprices()
             self.today = eds.today
-            self.tomorrow = eds.tomorrow
+            # self.tomorrow = eds.tomorrow
+
+            self.today_calculated = False
+            self.tomorrow_calculated = False
 
             if not self.tomorrow:
                 self._tomorrow_valid = False
                 self.tomorrow = None
 
-                local_tz = timezone(self._hass.config.time_zone)
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
                 refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
+                local_tz = timezone(self._hass.config.time_zone)
                 now = datetime.now().astimezone(local_tz)
                 _LOGGER.debug(
                     "Now: %s:%s:%s",
@@ -204,12 +204,6 @@ class EDSConnector:
                     f"{refresh.hour:02d}",
                     f"{refresh.minute:02d}",
                     f"{refresh.second:02d}",
-                )
-                _LOGGER.debug(
-                    "Midnight: %s:%s:%s",
-                    midnight.hour,
-                    midnight.minute,
-                    midnight.second,
                 )
                 if (
                     f"{midnight.hour}:{midnight.minute}:{midnight.second}"
@@ -245,7 +239,6 @@ class EDSConnector:
         return self._entry_id
 
 
-@staticmethod
 def retry_update(self):
     """Retry update on error."""
     self._retry_count += 1
@@ -256,6 +249,17 @@ def retry_update(self):
     _LOGGER.warning(
         "Couldn't get data from Energi Data Service, retrying in %s minutes.",
         self._next_retry_delay,
+    )
+
+    local_tz = timezone(self._hass.config.time_zone)
+    now = (datetime.now() + timedelta(minutes=self._next_retry_delay)).astimezone(
+        local_tz
+    )
+    _LOGGER.debug(
+        "Next retry: %s:%s:%s",
+        f"{now.hour:02d}",
+        f"{now.minute:02d}",
+        f"{now.second:02d}",
     )
     async_call_later(
         self._hass,
