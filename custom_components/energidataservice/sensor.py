@@ -56,24 +56,23 @@ def _setup(hass, config: ConfigEntry, add_devices):
     """Setup the platform."""
     area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
     region = RegionHandler(area)
-    _LOGGER.debug("Config area: %s", area)
-    _LOGGER.debug("Country: %s", region.country)
-    _LOGGER.debug("Area: %s", region.name)
-    _LOGGER.debug("Area description: %s", region.description)
     _LOGGER.debug("Timezone set in ha %s", hass.config.time_zone)
     _LOGGER.debug("Currency set in ha %s", hass.config.currency)
-    _LOGGER.debug("Currency set in integration %s", region.currency.name())
+    _LOGGER.debug("Country: %s", region.country)
+    _LOGGER.debug("Region: %s", region.name)
+    _LOGGER.debug("Region description: %s", region.description)
+    _LOGGER.debug("Region currency %s", region.currency.name)
     _LOGGER.debug("Domain %s", DOMAIN)
 
-    if region.currency.name() != hass.config.currency:
-        _LOGGER.info(
+    if region.currency.name != hass.config.currency:
+        _LOGGER.warning(
             "Official currency for %s is %s but Home Assistant reports %s from config",
             region.country,
             region.currency.name,
             hass.config.currency,
         )
 
-    sens = EnergidataserviceSensor(config, hass)
+    sens = EnergidataserviceSensor(config, hass, region)
 
     add_devices([sens])
 
@@ -119,11 +118,16 @@ def _async_migrate_unique_id(hass: HomeAssistant, entity: str, new_id: str) -> N
 class EnergidataserviceSensor(EnergidataserviceEntity):
     """Representation of Energi Data Service data."""
 
-    def __init__(self, config: ConfigEntry, hass: HomeAssistant) -> None:
+    def __init__(
+        self, config: ConfigEntry, hass: HomeAssistant, region: RegionHandler
+    ) -> None:
         """Initialize Energidataservice sensor."""
         self._config = config
+        self.region = region
         self._entry_id = config.entry_id
-        self._area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
+        self._area = (
+            region.description
+        )  # config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
         self._currency = hass.config.currency
         self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(
             CONF_PRICETYPE
@@ -313,7 +317,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return f"{self._currency}/{self._price_type}"
+        return f"{self.region.currency.name}/{self._price_type}"
 
     @property
     def device_class(self):

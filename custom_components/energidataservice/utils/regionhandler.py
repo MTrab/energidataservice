@@ -5,13 +5,39 @@ from ..const import _REGIONS
 _LOGGER = logging.getLogger(__name__)
 
 
+class Currency:
+    """Define currency class."""
+
+    def __init__(self, currency: dict) -> None:
+        """Initialize a new Currency object."""
+        _LOGGER.debug(self)
+        self._name = currency["name"]
+        self._symbol = currency["symbol"]
+        self._cent = currency["cent"]
+
+    @property
+    def name(self) -> str:
+        """Return name of currency."""
+        return self._name
+
+    @property
+    def symbol(self) -> str:
+        """Return symbol for currency."""
+        return self._symbol
+
+    @property
+    def cent(self) -> str:
+        """Return cent unit for currency."""
+        return self._cent
+
+
 class RegionHandler:
     """Region handler class."""
 
     def __init__(self, region: str = None) -> None:
         """Initialize the handler."""
         self._country = None
-        self._currency = None
+        self.currency = None
         self._region = None
         self._description = None
 
@@ -27,25 +53,30 @@ class RegionHandler:
         self._country = self.country_from_region(region)
         self._currency = self.get_country_currency(self._country)
         self._description = self.region_to_description(region)
+        self.currency = Currency(self._currency)
 
-    def currency(self):
-        """Return currency."""
-        _LOGGER.debug(self._currency)
+    # def currency(self):
+    #     """Return currency."""
+    #     _LOGGER.debug(self._currency)
 
-        def name() -> str:
-            return self._currency["name"]
+    #     def name() -> str:
+    #         return self._currency["name"]
 
-        def symbol() -> str:
-            return self._currency["symbol"]
+    #     def symbol() -> str:
+    #         return self._currency["symbol"]
 
-        def cent() -> str:
-            return self._currency["cent"]
+    #     def cent() -> str:
+    #         return self._currency["cent"]
 
-        RegionHandler.currency.name = name
-        RegionHandler.currency.symbol = symbol
-        RegionHandler.currency.cent = cent
+    #     RegionHandler.currency.name = name()
+    #     RegionHandler.currency.symbol = symbol()
+    #     RegionHandler.currency.cent = cent()
 
-        # return self._currency
+    #     _LOGGER.debug("RH name: %s", RegionHandler.currency.name)
+
+    # currency.name = None
+    # currency.symbol = None
+    # currency.cent = None
 
     @staticmethod
     def get_countries(sort: bool = False, descending: bool = False) -> list:
@@ -129,5 +160,3 @@ class RegionHandler:
     def name(self) -> str:
         """Returns the region name."""
         return self._region
-
-    currency = None

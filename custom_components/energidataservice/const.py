@@ -52,7 +52,7 @@ _CENT_MULTIPLIER = 100
 
 _CURRENCY = {
     "DKK": {
-        "name": "FU",
+        "name": "DKK",
         "symbol": "Kr",
         "cent": "Øre",
     },
