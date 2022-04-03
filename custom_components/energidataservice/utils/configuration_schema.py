@@ -15,9 +15,9 @@ from ..const import (
     CONF_PRICETYPE,
     CONF_TEMPLATE,
     CONF_VAT,
-    UNIT_TO_MULTIPLIER,
     MULTIPLIER_TO_UNIT,
     REGIONS,
+    UNIT_TO_MULTIPLIER,
 )
 
 _LOGGER = logging.getLogger(__name__)
