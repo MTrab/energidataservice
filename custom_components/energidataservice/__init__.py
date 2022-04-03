@@ -180,7 +180,7 @@ class EDSConnector:
         try:
             await eds.get_spotprices()
             self.today = eds.today
-            # self.tomorrow = eds.tomorrow
+            self.tomorrow = eds.tomorrow
 
             self.today_calculated = False
             self.tomorrow_calculated = False
