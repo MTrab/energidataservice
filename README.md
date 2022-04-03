@@ -12,7 +12,7 @@ For Tips & Tricks, see the [wiki pages](https://github.com/MTrab/energidataservi
 #### HACS
 
 - Ensure that HACS is installed.
-- Add this repository as a custom repository
+- Add this repository as a [custom repository](https://hacs.xyz/docs/faq/custom_repositories)
 - Search for and install the "Energidataaservice" integration.
 - Restart Home Assistant.
 
