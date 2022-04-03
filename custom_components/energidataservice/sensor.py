@@ -28,6 +28,7 @@ from .const import (
     UPDATE_EDS,
 )
 from .entity import EnergidataserviceEntity
+from .utils.regionhandler import RegionHandler
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,10 +54,24 @@ def mean(data: list) -> float:
 
 def _setup(hass, config: ConfigEntry, add_devices):
     """Setup the platform."""
-    _LOGGER.debug("Dumping config %r", config)
-    _LOGGER.debug("Timezone set in ha %r", hass.config.time_zone)
-    _LOGGER.debug("Currency set in ha %r", hass.config.currency)
+    area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
+    region = RegionHandler(area)
+    _LOGGER.debug("Config area: %s", area)
+    _LOGGER.debug("Country: %s", region.country)
+    _LOGGER.debug("Area: %s", region.name)
+    _LOGGER.debug("Area description: %s", region.description)
+    _LOGGER.debug("Timezone set in ha %s", hass.config.time_zone)
+    _LOGGER.debug("Currency set in ha %s", hass.config.currency)
+    _LOGGER.debug("Currency set in integration %s", region.currency.name())
     _LOGGER.debug("Domain %s", DOMAIN)
+
+    if region.currency.name() != hass.config.currency:
+        _LOGGER.info(
+            "Official currency for %s is %s but Home Assistant reports %s from config",
+            region.country,
+            region.currency.name,
+            hass.config.currency,
+        )
 
     sens = EnergidataserviceSensor(config, hass)
 

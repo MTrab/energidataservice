@@ -49,29 +49,53 @@ UNIT_TO_MULTIPLIER = {"MWh": 0, "kWh": 1000, "Wh": 1000000}
 MULTIPLIER_TO_UNIT = {0: "MWh", 1000: "kWh", 1000000: "Wh"}
 
 _CENT_MULTIPLIER = 100
-_CURRENTY_TO_CENTS = {"DKK": "Øre", "NOK": "Øre", "SEK": "Öre", "EUR": "c"}
 
+_CURRENCY = {
+    "DKK": {
+        "name": "FU",
+        "symbol": "Kr",
+        "cent": "Øre",
+    },
+    "NOK": {
+        "name": "NOK",
+        "symbol": "Kr",
+        "cent": "Øre",
+    },
+    "SEK": {
+        "name": "SEK",
+        "symbol": "Kr",
+        "cent": "Öre",
+    },
+    "EUR": {
+        "name": "EUR",
+        "symbol": "€",
+        "cent": "c",
+    },
+}
+
+# Format:
+#   "Region": [_CURRENCY, "Country", "Region description", VAT]
 _REGIONS = {
-    "DK1": ["DKK", "Denmark", "West of the great belt", 0.25],
-    "DK2": ["DKK", "Denmark", "West of the great belt", 0.25],
-    "FI": ["EUR", "Finland", "Finland", 0.24],
-    "EE": ["EUR", "Estonia", "Estonia", 0.20],
-    "LT": ["EUR", "Lithuania", "Lithuania", 0.21],
-    "LV": ["EUR", "Latvia", "Latvia", 0.21],
-    "NO1": ["NOK", "Norway", "Oslo", 0.25],
-    "NO2": ["NOK", "Norway", "Kristiansand", 0.25],
-    "NO3": ["NOK", "Norway", "Molde, Trondheim", 0.25],
-    "NO4": ["NOK", "Norway", "Tromsø", 0.25],
-    "NO5": ["NOK", "Norway", "Bergen", 0.25],
-    "SE1": ["SEK", "Sweden", "Luleå", 0.25],
-    "SE2": ["SEK", "Sweden", "Sundsvall", 0.25],
-    "SE3": ["SEK", "Sweden", "Stockholm", 0.25],
-    "SE4": ["SEK", "Sweden", "Malmö", 0.25],
-    "FR": ["EUR", "France", "France", 0.055],
-    "NL": ["EUR", "Netherlands", "Netherlands", 0.21],
-    "BE": ["EUR", "Belgium", "Belgium", 0.21],
-    "AT": ["EUR", "Austria", "Austria", 0.20],
-    "DE": ["EUR", "Germany", "Germany", 0.19],
+    "DK1": [_CURRENCY["DKK"], "Denmark", "West of the great belt", 0.25],
+    "DK2": [_CURRENCY["DKK"], "Denmark", "West of the great belt", 0.25],
+    "FI": [_CURRENCY["EUR"], "Finland", "Finland", 0.24],
+    "EE": [_CURRENCY["EUR"], "Estonia", "Estonia", 0.20],
+    "LT": [_CURRENCY["EUR"], "Lithuania", "Lithuania", 0.21],
+    "LV": [_CURRENCY["EUR"], "Latvia", "Latvia", 0.21],
+    "NO1": [_CURRENCY["NOK"], "Norway", "Oslo", 0.25],
+    "NO2": [_CURRENCY["NOK"], "Norway", "Kristiansand", 0.25],
+    "NO3": [_CURRENCY["NOK"], "Norway", "Molde, Trondheim", 0.25],
+    "NO4": [_CURRENCY["NOK"], "Norway", "Tromsø", 0.25],
+    "NO5": [_CURRENCY["NOK"], "Norway", "Bergen", 0.25],
+    "SE1": [_CURRENCY["SEK"], "Sweden", "Luleå", 0.25],
+    "SE2": [_CURRENCY["SEK"], "Sweden", "Sundsvall", 0.25],
+    "SE3": [_CURRENCY["SEK"], "Sweden", "Stockholm", 0.25],
+    "SE4": [_CURRENCY["SEK"], "Sweden", "Malmö", 0.25],
+    "FR": [_CURRENCY["EUR"], "France", "France", 0.055],
+    "NL": [_CURRENCY["EUR"], "Netherlands", "Netherlands", 0.21],
+    "BE": [_CURRENCY["EUR"], "Belgium", "Belgium", 0.21],
+    "AT": [_CURRENCY["EUR"], "Austria", "Austria", 0.20],
+    "DE": [_CURRENCY["EUR"], "Germany", "Germany", 0.19],
 }
 
 REGIONS = sorted(list(AREA_MAP.keys()))

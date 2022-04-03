@@ -18,13 +18,7 @@ from .api import Energidataservice
 from .const import (
     AREA_MAP,
     CONF_AREA,
-    CONF_DECIMALS,
-    CONF_PRICETYPE,
-    CONF_TEMPLATE,
-    CONF_VAT,
     DOMAIN,
-    UNIT_TO_MULTIPLIER,
-    REGIONS,
     STARTUP,
     UPDATE_EDS,
 )
@@ -38,19 +32,6 @@ RETRY_MINUTES = 10
 MAX_RETRY_MINUTES = 120
 
 _LOGGER = logging.getLogger(__name__)
-
-DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(
-            CONF_AREA,
-            default=None,
-        ): vol.In(REGIONS),
-        vol.Required(CONF_VAT, default=True): bool,
-        vol.Optional(CONF_DECIMALS, default=3): vol.Coerce(int),
-        vol.Optional(CONF_PRICETYPE, default="kWh"): vol.In(UNIT_TO_MULTIPLIER),
-        vol.Optional(CONF_TEMPLATE, default=""): str,
-    }
-)
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -111,6 +92,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     integration = await async_get_integration(hass, DOMAIN)
     _LOGGER.info(STARTUP, integration.version)
     converter = Currency(hass)
+
     api = EDSConnector(
         hass,
         AREA_MAP[(entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA))],
