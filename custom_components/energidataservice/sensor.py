@@ -243,39 +243,6 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         await self.validate_data()
         async_dispatcher_connect(self._hass, UPDATE_EDS, self.validate_data)
 
-    def _calculate(self, value=None, fake_dt=None) -> float:
-        """Do price calculations"""
-        if value is None:
-            value = self._state
-
-        # Convert currency from EUR
-        if self._currency != "EUR":
-            value = self._api.converter.convert(value, self._currency)
-
-        # Used to inject the current hour.
-        # so template can be simplified using now
-        if fake_dt is not None:
-
-            def faker():
-                def inner(*args, **kwargs):  # type: ignore pylint: disable=unused-argument
-                    return fake_dt
-
-                return pass_context(inner)
-
-            template_value = self._cost_template.async_render(now=faker())
-        else:
-            template_value = self._cost_template.async_render()
-
-        # The api returns prices in MWh
-        if self._price_type in ("MWh", "mWh"):
-            price = template_value / 1000 + value * float(1 + self._vat)
-        else:
-            price = template_value + value / UNIT_TO_MULTIPLIER[self._price_type] * (
-                float(1 + self._vat)
-            )
-
-        return round(price, self._decimals)
-
     @property
     def unique_id(self):
         """Return the unique id."""
@@ -429,16 +396,38 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         """Return the state class of this entity."""
         return SensorStateClass.MEASUREMENT
 
-    def _docalc(self, interval: namedtuple, price: str, hour: str) -> namedtuple:
-        """Initialize calculations"""
-        price = self._calculate(price, fake_dt=dt_utils.as_local(hour))
-        _LOGGER.debug(
-            "%s was calculation for %s finished",
-            datetime.now().strftime("%H:%M:%S.%f"),
-            hour,
-        )
+    def _calculate(self, value=None, fake_dt=None) -> float:
+        """Do price calculations"""
+        if value is None:
+            value = self._state
 
-        return interval(price, hour)
+        # Convert currency from EUR
+        if self._currency != "EUR":
+            value = self._api.converter.convert(value, self._currency)
+
+        # Used to inject the current hour.
+        # so template can be simplified using now
+        if fake_dt is not None:
+
+            def faker():
+                def inner(*args, **kwargs):  # type: ignore pylint: disable=unused-argument
+                    return fake_dt
+
+                return pass_context(inner)
+
+            template_value = self._cost_template.async_render(now=faker())
+        else:
+            template_value = self._cost_template.async_render()
+
+        # The api returns prices in MWh
+        if self._price_type in ("MWh", "mWh"):
+            price = template_value / 1000 + value * float(1 + self._vat)
+        else:
+            price = template_value + value / UNIT_TO_MULTIPLIER[self._price_type] * (
+                float(1 + self._vat)
+            )
+
+        return round(price, self._decimals)
 
     def _format_list(self, data, tomorrow=False) -> None:
         """Format data as list with prices localized."""
