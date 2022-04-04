@@ -13,7 +13,8 @@
                     "vat": "Vis priser med moms",
                     "decimals": "Decimaler",
                     "pricetype": "Pris beregnes i",
-                    "cost_template": "Skabelon til ekstra omkostninger"
+                    "cost_template": "Skabelon til ekstra omkostninger",
+                    "in_cent": "Vis priser i øre"
                 },
                 "description": "Henter el spot priser fra Energi Data Service"
             }
@@ -33,7 +34,8 @@
                     "vat": "Vis priser med moms",
                     "decimals": "Decimaler",
                     "pricetype": "Pris beregnes i",
-                    "cost_template": "Skabelon til ekstra omkostninger"
+                    "cost_template": "Skabelon til ekstra omkostninger",
+                    "in_cent": "Vis priser i øre"
                 },
                 "description": "Rediger Energi Data Service sensor"
             }

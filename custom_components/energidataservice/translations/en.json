@@ -13,7 +13,8 @@
                     "vat": "Show prices including VAT",
                     "decimals": "Decimals",
                     "pricetype": "Price calculated in",
-                    "cost_template": "Template for additional costs"
+                    "cost_template": "Template for additional costs",
+                    "in_cent": "Show prices in cent"
                 },
                 "description": "Fetch spot prices from Energi Data Service"
             }
@@ -33,7 +34,8 @@
                     "vat": "Show prices including VAT",
                     "decimals": "Decimals",
                     "pricetype": "Price calculated in",
-                    "cost_template": "Template for additional costs"
+                    "cost_template": "Template for additional costs",
+                    "in_cent": "Show prices in cent"
                 },
                 "description": "Edit Energi Data Service sensor"
             }

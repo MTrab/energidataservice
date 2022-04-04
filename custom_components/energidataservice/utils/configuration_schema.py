@@ -11,6 +11,7 @@ import voluptuous as vol
 
 from ..const import (
     CONF_AREA,
+    CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
     CONF_PRICETYPE,
     CONF_TEMPLATE,
@@ -33,18 +34,22 @@ def energidataservice_config_option_schema(
     """Return a shcema for configuration options."""
     if not options:
         options = {
-            CONF_NAME: "Energi Data Service",
             CONF_AREA: None,
-            CONF_VAT: True,
+            CONF_CURRENCY_IN_CENT: False,
             CONF_DECIMALS: 3,
+            CONF_NAME: "Energi Data Service",
             CONF_PRICETYPE: "kWh",
             CONF_TEMPLATE: "",
+            CONF_VAT: True,
         }
 
     schema = {
         vol.Optional(CONF_NAME, default=options.get(CONF_NAME)): str,
         vol.Required(CONF_AREA, default=options.get(CONF_AREA)): vol.In(REGIONS),
         vol.Required(CONF_VAT, default=options.get(CONF_VAT)): bool,
+        vol.Required(
+            CONF_CURRENCY_IN_CENT, default=options.get(CONF_CURRENCY_IN_CENT) or False
+        ): bool,
         vol.Optional(CONF_DECIMALS, default=options.get(CONF_DECIMALS)): vol.Coerce(
             int
         ),
