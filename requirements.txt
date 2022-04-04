@@ -1,1 +1,1 @@
-CurrencyConverter==0.16.10
+CurrencyConverter==0.16.11
