@@ -66,7 +66,7 @@ def _setup(hass, config: ConfigEntry, add_devices):
 
     if region.currency.name != hass.config.currency:
         _LOGGER.warning(
-            "Official currency for %s is %s but Home Assistant reports %s from config and will show prices in %s",
+            "Official currency for %s is %s but Home Assistant reports %s from config and will show prices in %s",  # pylint: disable=line-too-long
             region.country,
             region.currency.name,
             hass.config.currency,
