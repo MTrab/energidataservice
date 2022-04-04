@@ -71,6 +71,11 @@ _CURRENCY = {
         "symbol": "€",
         "cent": "c",
     },
+    "USD": {
+        "name": "USD",
+        "symbol": "$",
+        "cent": "¢",
+    },
 }
 
 # Format:

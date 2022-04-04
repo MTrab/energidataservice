@@ -66,11 +66,13 @@ def _setup(hass, config: ConfigEntry, add_devices):
 
     if region.currency.name != hass.config.currency:
         _LOGGER.warning(
-            "Official currency for %s is %s but Home Assistant reports %s from config",
+            "Official currency for %s is %s but Home Assistant reports %s from config and will show prices in %s",
             region.country,
             region.currency.name,
             hass.config.currency,
+            hass.config.currency,
         )
+        region.set_region(area, hass.config.currency)
 
     sens = EnergidataserviceSensor(config, hass, region)
 
@@ -422,7 +424,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
 
         # Convert currency from EUR
         if self._currency != "EUR":
-            value = self._api.converter.convert(value, self._currency)
+            value = self.region.currency.convert(value, self._currency)
 
         # Used to inject the current hour.
         # so template can be simplified using now

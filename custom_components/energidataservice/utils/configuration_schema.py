@@ -15,7 +15,6 @@ from ..const import (
     CONF_PRICETYPE,
     CONF_TEMPLATE,
     CONF_VAT,
-    MULTIPLIER_TO_UNIT,
     REGIONS,
     UNIT_TO_MULTIPLIER,
 )

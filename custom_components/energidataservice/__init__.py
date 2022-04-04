@@ -23,7 +23,6 @@ from .const import (
     UPDATE_EDS,
 )
 from .events import async_track_time_change_in_tz  # type: ignore
-from .utils.currency import Currency
 
 RANDOM_MINUTE = randint(0, 10)
 RANDOM_SECOND = randint(0, 59)
@@ -91,13 +90,11 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Setup the integration using a config entry."""
     integration = await async_get_integration(hass, DOMAIN)
     _LOGGER.info(STARTUP, integration.version)
-    converter = Currency(hass)
 
     api = EDSConnector(
         hass,
         AREA_MAP[(entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA))],
         entry.entry_id,
-        converter,
     )
     hass.data[DOMAIN][entry.entry_id] = api
 
@@ -152,14 +149,13 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class EDSConnector:
     """An object to store Energi Data Service data."""
 
-    def __init__(self, hass, area, entry_id, converter):
+    def __init__(self, hass, area, entry_id):
         """Initialize Energi Data Service Connector."""
         self._hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
         self._entry_id = entry_id
 
-        self.converter = converter
         self.today = None
         self.tomorrow = None
         self.today_calculated = False
