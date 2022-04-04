@@ -17,7 +17,9 @@ from jinja2 import pass_context
 
 from .const import (
     AREA_MAP,
+    CENT_MULTIPLIER,
     CONF_AREA,
+    CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
     CONF_PRICETYPE,
     CONF_TEMPLATE,
@@ -62,6 +64,9 @@ def _setup(hass, config: ConfigEntry, add_devices):
     _LOGGER.debug("Region: %s", region.name)
     _LOGGER.debug("Region description: %s", region.description)
     _LOGGER.debug("Region currency %s", region.currency.name)
+    _LOGGER.debug(
+        "Show in cent: %s", config.options.get(CONF_CURRENCY_IN_CENT) or False
+    )
     _LOGGER.debug("Domain %s", DOMAIN)
 
     if region.currency.name != hass.config.currency:
@@ -127,6 +132,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
         self._config = config
         self.region = region
         self._entry_id = config.entry_id
+        self._cent = config.options.get(CONF_CURRENCY_IN_CENT) or False
         self._area = (
             region.description
         )  # config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
@@ -319,7 +325,11 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return f"{self.region.currency.name}/{self._price_type}"
+        return (
+            f"{self.region.currency.cent}/{self._price_type}"
+            if self._cent
+            else f"{self.region.currency.name}/{self._price_type}"
+        )
 
     @property
     def device_class(self):
@@ -447,6 +457,9 @@ class EnergidataserviceSensor(EnergidataserviceEntity):
             price = template_value + value / UNIT_TO_MULTIPLIER[self._price_type] * (
                 float(1 + self._vat)
             )
+
+        if self._cent:
+            price = price * CENT_MULTIPLIER
 
         return round(price, self._decimals)
 
