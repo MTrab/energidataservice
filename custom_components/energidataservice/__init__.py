@@ -23,7 +23,6 @@ from .const import (
     UPDATE_EDS,
 )
 from .events import async_track_time_change_in_tz  # type: ignore
-from .utils.currency import Currency
 
 RANDOM_MINUTE = randint(0, 10)
 RANDOM_SECOND = randint(0, 59)
@@ -91,17 +90,15 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Setup the integration using a config entry."""
     integration = await async_get_integration(hass, DOMAIN)
     _LOGGER.info(STARTUP, integration.version)
-    converter = Currency(hass)
 
     api = EDSConnector(
         hass,
         AREA_MAP[(entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA))],
         entry.entry_id,
-        converter,
     )
     hass.data[DOMAIN][entry.entry_id] = api
 
-    async def new_day(n):  # type: ignore pylint: disable=unused-argument
+    async def new_day(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Handle data on new day."""
         _LOGGER.debug("New day function called")
         api.today = api.tomorrow
@@ -110,12 +107,12 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         api.tomorrow_calculated = False
         async_dispatcher_send(hass, UPDATE_EDS)
 
-    async def new_hour(n):  # type: ignore pylint: disable=unused-argument
+    async def new_hour(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Callback to tell the sensors to update on a new hour."""
         _LOGGER.debug("New hour, updating state")
         async_dispatcher_send(hass, UPDATE_EDS)
 
-    async def get_new_data(n):  # type: ignore pylint: disable=unused-argument
+    async def get_new_data(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Fetch new data for tomorrows prices at 13:00ish CET."""
         _LOGGER.debug("Getting latest dataset")
         await api.update()
@@ -152,14 +149,13 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class EDSConnector:
     """An object to store Energi Data Service data."""
 
-    def __init__(self, hass, area, entry_id, converter):
+    def __init__(self, hass, area, entry_id):
         """Initialize Energi Data Service Connector."""
         self._hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
         self._entry_id = entry_id
 
-        self.converter = converter
         self.today = None
         self.tomorrow = None
         self.today_calculated = False
@@ -214,7 +210,7 @@ class EDSConnector:
                     retry_update(self)
                 else:
                     _LOGGER.debug(
-                        "Not forcing refresh, as we are past midnight and haven't reached next update time"
+                        "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
                     )
             else:
                 self._retry_count = 0

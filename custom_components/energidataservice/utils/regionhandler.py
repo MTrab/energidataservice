@@ -1,6 +1,8 @@
 """Utils for handling regions."""
 import logging
-from ..const import _REGIONS
+from currency_converter import CurrencyConverter
+
+from ..const import _REGIONS, _CURRENCY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -8,12 +10,26 @@ _LOGGER = logging.getLogger(__name__)
 class Currency:
     """Define currency class."""
 
+    _converter: CurrencyConverter
+
     def __init__(self, currency: dict) -> None:
         """Initialize a new Currency object."""
-        _LOGGER.debug(self)
         self._name = currency["name"]
         self._symbol = currency["symbol"]
         self._cent = currency["cent"]
+        self._converter = CurrencyConverter()
+
+    def convert(
+        self, value: float, to_currency: str, from_currency: str = "EUR"
+    ) -> float:
+        """Do the conversion."""
+        try:
+            return self._converter.convert(value, from_currency, to_currency)
+        except ValueError:
+            _LOGGER.warning(
+                "Invalid currency for conversion, returning prices in %s", self._name
+            )
+            return value
 
     @property
     def name(self) -> str:
@@ -44,7 +60,7 @@ class RegionHandler:
         if region:
             self.set_region(region)
 
-    def set_region(self, region: str) -> None:
+    def set_region(self, region: str, currency_override: str = None) -> None:
         """Set region."""
         if " " in region:
             region = self.description_to_region(region)
@@ -53,30 +69,10 @@ class RegionHandler:
         self._country = self.country_from_region(region)
         self._currency = self.get_country_currency(self._country)
         self._description = self.region_to_description(region)
-        self.currency = Currency(self._currency)
-
-    # def currency(self):
-    #     """Return currency."""
-    #     _LOGGER.debug(self._currency)
-
-    #     def name() -> str:
-    #         return self._currency["name"]
-
-    #     def symbol() -> str:
-    #         return self._currency["symbol"]
-
-    #     def cent() -> str:
-    #         return self._currency["cent"]
-
-    #     RegionHandler.currency.name = name()
-    #     RegionHandler.currency.symbol = symbol()
-    #     RegionHandler.currency.cent = cent()
-
-    #     _LOGGER.debug("RH name: %s", RegionHandler.currency.name)
-
-    # currency.name = None
-    # currency.symbol = None
-    # currency.cent = None
+        if not currency_override is None:
+            self.currency = Currency(_CURRENCY[currency_override])
+        else:
+            self.currency = Currency(self._currency)
 
     @staticmethod
     def get_countries(sort: bool = False, descending: bool = False) -> list:
