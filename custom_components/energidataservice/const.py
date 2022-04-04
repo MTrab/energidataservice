@@ -77,7 +77,7 @@ _CURRENCY = {
 #   "Region": [_CURRENCY, "Country", "Region description", VAT]
 _REGIONS = {
     "DK1": [_CURRENCY["DKK"], "Denmark", "West of the great belt", 0.25],
-    "DK2": [_CURRENCY["DKK"], "Denmark", "West of the great belt", 0.25],
+    "DK2": [_CURRENCY["DKK"], "Denmark", "East of the great belt", 0.25],
     "FI": [_CURRENCY["EUR"], "Finland", "Finland", 0.24],
     "EE": [_CURRENCY["EUR"], "Estonia", "Estonia", 0.20],
     "LT": [_CURRENCY["EUR"], "Lithuania", "Lithuania", 0.21],
