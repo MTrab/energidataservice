@@ -1,8 +1,9 @@
 """Utils for handling regions."""
 import logging
+
 from currency_converter import CurrencyConverter
 
-from ..const import _REGIONS, _CURRENCY
+from ..const import _CURRENCY, _REGIONS
 
 _LOGGER = logging.getLogger(__name__)
 

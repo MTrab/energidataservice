@@ -15,13 +15,7 @@ from pytz import timezone
 import voluptuous as vol
 
 from .api import Energidataservice
-from .const import (
-    AREA_MAP,
-    CONF_AREA,
-    DOMAIN,
-    STARTUP,
-    UPDATE_EDS,
-)
+from .const import AREA_MAP, CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
 from .events import async_track_time_change_in_tz  # type: ignore
 
 RANDOM_MINUTE = randint(0, 10)
