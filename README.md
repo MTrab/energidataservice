@@ -1,4 +1,4 @@
-[![Current Release](https://img.shields.io/github/release/mtrab/energidataservice/all.svg?style=plastic)](https://github.com/mtrab/energidataservice/releases) [![Github All Releases](https://img.shields.io/github/downloads/mtrab/energidataservice/total.svg?style=plastic)]()
+[![Current Release](https://img.shields.io/github/release/mtrab/energidataservice/all.svg?style=plastic)](https://github.com/mtrab/energidataservice/releases) [![Github All Releases](https://img.shields.io/github/downloads/mtrab/energidataservice/total.svg?style=plastic)]()[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=plastic)](https://github.com/custom-components/hacs)
 
 <a href="https://www.buymeacoffee.com/mtrab" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 # Energidataservice
@@ -12,7 +12,6 @@ For Tips & Tricks, see the [wiki pages](https://github.com/MTrab/energidataservi
 #### HACS
 
 - Ensure that HACS is installed.
-- Add this repository as a [custom repository](https://hacs.xyz/docs/faq/custom_repositories)
 - Search for and install the "Energidataaservice" integration.
 - Restart Home Assistant.
 
