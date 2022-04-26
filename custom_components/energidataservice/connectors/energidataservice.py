@@ -1,4 +1,4 @@
-"""Energi Data Service API handler"""
+"""Energi Data Service connector"""
 from collections import namedtuple
 from datetime import datetime, timedelta
 import logging
