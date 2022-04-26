@@ -15,8 +15,9 @@ from pytz import timezone
 import voluptuous as vol
 
 from .api import Energidataservice
-from .const import AREA_MAP, CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
+from .const import CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
 from .events import async_track_time_change_in_tz  # type: ignore
+from .utils.regionhandler import RegionHandler
 
 RANDOM_MINUTE = randint(0, 10)
 RANDOM_SECOND = randint(0, 59)
@@ -87,7 +88,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     api = EDSConnector(
         hass,
-        AREA_MAP[(entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA))],
+        entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA),
         entry.entry_id,
     )
     hass.data[DOMAIN][entry.entry_id] = api
@@ -143,7 +144,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class EDSConnector:
     """An object to store Energi Data Service data."""
 
-    def __init__(self, hass, area, entry_id):
+    def __init__(self, hass, region, entry_id):
         """Initialize Energi Data Service Connector."""
         self._hass = hass
         self._last_tick = None
@@ -160,8 +161,9 @@ class EDSConnector:
         self._retry_count = 0
 
         client = async_get_clientsession(hass)
-        self._eds = Energidataservice(area, client, hass.config.time_zone)
-        _LOGGER.debug("Initializing Energi Data Service for area %s", area)
+        rh = RegionHandler(region)
+        self._eds = Energidataservice(rh, client, hass.config.time_zone)
+        _LOGGER.debug("Initializing Energi Data Service for region %s", region)
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from Energi Data Service API"""

@@ -8,6 +8,15 @@
         },
         "step": {
             "user": {
+                "title": "Basis info",
+                "data": {
+                    "name": "Navn",
+                    "country": "Vælg land"
+                },
+                "description": "Indstil basis settings for sensoren"
+            },
+            "region": {
+                "title": "Detaljerede oplysninger",
                 "data": {
                     "area": "Pris område",
                     "vat": "Vis priser med moms",
@@ -16,7 +25,7 @@
                     "cost_template": "Skabelon til ekstra omkostninger",
                     "in_cent": "Vis priser i øre"
                 },
-                "description": "Henter el spot priser fra Energi Data Service"
+                "description": "Set detaljer for {name} i {country}"
             }
         }
     },

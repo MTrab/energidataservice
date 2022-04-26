@@ -63,13 +63,10 @@ class RegionHandler:
 
     def set_region(self, region: str, currency_override: str = None) -> None:
         """Set region."""
-        if " " in region:
-            region = self.description_to_region(region)
-
-        self._region = region
-        self._country = self.country_from_region(region)
+        self._region = self.description_to_region(region)
+        self._country = self.country_from_region(self._region)
         self._currency = self.get_country_currency(self._country)
-        self._description = self.region_to_description(region)
+        self._description = self.region_to_description(self._region)
         if not currency_override is None:
             self.currency = Currency(_CURRENCY[currency_override])
         else:
@@ -86,6 +83,17 @@ class RegionHandler:
                 countries.append(country)
 
         return countries if not sort else sorted(countries, reverse=descending)
+
+    @staticmethod
+    def get_regions(country: str, sort: bool = False, descending: bool = False) -> list:
+        """Get list of available regions in country."""
+        regions = []
+
+        for region in _REGIONS.items():
+            if country == region[1][1]:
+                regions.append(RegionHandler.region_to_description(region[0]))
+
+        return regions if not sort else sorted(regions, reverse=descending)
 
     @staticmethod
     def regions_in_country(country: str) -> str:
@@ -114,11 +122,12 @@ class RegionHandler:
             if region[1][2] == description:
                 return region[0]
 
-        return None
+        return description
 
     @staticmethod
     def country_from_region(region: str) -> str:
         """Resolve actual country from given region."""
+        _LOGGER.debug("Looking up: %s", region)
         for reg in _REGIONS.items():
             if reg[0] == region:
                 return reg[1][1]
@@ -147,6 +156,11 @@ class RegionHandler:
     def country(self) -> str:
         """Return country."""
         return self._country
+
+    @property
+    def region(self) -> str:
+        """Return region code."""
+        return self._region
 
     @property
     def description(self) -> str:

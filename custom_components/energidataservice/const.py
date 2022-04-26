@@ -14,9 +14,10 @@ AREA_DK_EAST = "East of the great belt"
 AREA_DK_WEST = "West of the great belt"
 
 CONF_AREA = "area"
+CONF_COUNTRY = "country"
+CONF_CURRENCY_IN_CENT = "in_cent"
 CONF_DECIMALS = "decimals"
 CONF_PRICETYPE = "pricetype"
-CONF_CURRENCY_IN_CENT = "in_cent"
 CONF_TEMPLATE = "cost_template"
 CONF_VAT = "vat"
 
@@ -103,5 +104,6 @@ CURRENCIES = {  # Currencies
     "Danske Kroner": "DKK",
     "Euro": "EUR",
 }
-REGIONS = sorted(list(AREA_MAP.keys()))
+
+# REGIONS = sorted(list(AREA_MAP.keys()))
 CURRENCY = sorted(list(CURRENCIES.keys()))

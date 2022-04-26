@@ -29,9 +29,10 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
 class Energidataservice:
     """Energi Data Service API"""
 
-    def __init__(self, area, client, tz):  # pylint: disable=invalid-name
+    def __init__(self, regionhandler, client, tz):  # pylint: disable=invalid-name
         """Init API connection to Energi Data Service"""
-        self._area = area
+        self.regionhandler = regionhandler
+        # self._area = area
         self.client = client
         self._result = {}
         self._tz = tz
@@ -41,7 +42,7 @@ class Energidataservice:
         headers = self._header()
         body = self._body()
         url = "https://data-api.energidataservice.dk/v1/graphql"
-        _LOGGER.debug("Request body: %s", body)
+        _LOGGER.debug("Request body for %s: %s", self.regionhandler.region, body)
         resp = await self.client.post(url, data=body, headers=headers)
 
         if resp.status == 400:
@@ -54,7 +55,7 @@ class Energidataservice:
             res = await resp.json()
             self._result = res["data"]["elspotprices"]
 
-            _LOGGER.debug("Response:")
+            _LOGGER.debug("Response for %s:", self.regionhandler.region)
             _LOGGER.debug(self._result)
         else:
             _LOGGER.error("API returned error %s", str(resp.status))
@@ -77,7 +78,7 @@ class Energidataservice:
             + '\\", _lt: \\"'
             + str(date_to)
             + '\\"} PriceArea: {_eq: \\"'
-            + str(self._area)
+            + str(self.regionhandler.region)
             + '\\"}} order_by: {HourUTC: asc} limit: 100 offset: 0){HourUTC SpotPriceEUR }}"}'
         )
         return data
