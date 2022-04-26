@@ -16,7 +16,6 @@ from homeassistant.util import dt as dt_utils, slugify as util_slugify
 from jinja2 import pass_context
 
 from .const import (
-    AREA_MAP,
     CENT_MULTIPLIER,
     CONF_AREA,
     CONF_CURRENCY_IN_CENT,

@@ -12,9 +12,8 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 from homeassistant.loader import async_get_integration
 from pytz import timezone
-import voluptuous as vol
 
-from .api import Energidataservice
+from .connectors.energidataservice import Energidataservice
 from .const import CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
 from .events import async_track_time_change_in_tz  # type: ignore
 from .utils.regionhandler import RegionHandler
