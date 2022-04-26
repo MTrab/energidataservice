@@ -9,6 +9,8 @@ _LOGGER = logging.getLogger(__name__)
 
 BASE_URL = "https://data-api.energidataservice.dk/v1/graphql"
 
+SOURCE_NAME = "Energi Data Service"
+
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""

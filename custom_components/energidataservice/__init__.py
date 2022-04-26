@@ -166,15 +166,10 @@ class APIConnector:
         self._client = async_get_clientsession(hass)
         self._region = RegionHandler(region)
         self._tz = hass.config.time_zone
-        # self._eds = EnergidataserviceConnector(
-        #     self.region, client, hass.config.time_zone
-        # )
-        # self._npg = NordpoolConnector(self.region, client, hass.config.time_zone)
-        # _LOGGER.debug("Initializing Energi Data Service for region %s", region)
+        self._source = None
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from Energi Data Service API"""
-        # eds = self._eds
         _LOGGER.debug(
             "Valid API endpoints for %s: %s",
             self._region.region,
@@ -195,6 +190,7 @@ class APIConnector:
                         self._region.region,
                         endpoint,
                     )
+                    self._source = module.SOURCE_NAME
                     break
 
             self.today_calculated = False
@@ -241,6 +237,11 @@ class APIConnector:
     def tomorrow_valid(self):
         """Is tomorrows prices valid?"""
         return self._tomorrow_valid
+
+    @property
+    def source(self) -> str:
+        """Is tomorrows prices valid?"""
+        return self._source
 
     @property
     def next_data_refresh(self):

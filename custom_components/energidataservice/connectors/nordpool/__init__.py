@@ -14,6 +14,8 @@ BASE_URL = (
     "https://www.nordpoolgroup.com/api/marketdata/page/10?currency=EUR&endDate=%s"
 )
 
+SOURCE_NAME = "Nord Pool"
+
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
