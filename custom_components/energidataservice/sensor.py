@@ -201,7 +201,10 @@ class EnergidataserviceSensor(EnergidataserviceEntity, SensorEntity):
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
             # self._api.today =
-            await self._hass.async_add_executor_job(self._format_list, self._api.today)
+            if not self._api.today is None:
+                await self._hass.async_add_executor_job(
+                    self._format_list, self._api.today
+                )
 
         if self.tomorrow_valid:
             if not self._api.tomorrow_calculated:
@@ -215,7 +218,7 @@ class EnergidataserviceSensor(EnergidataserviceEntity, SensorEntity):
             self._tomorrow_raw = None
             self._api.tomorrow_calculated = False
 
-        if not self._api.today_calculated:
+        if not self._api.today_calculated and not self._api.today is None:
             await self._hass.async_add_executor_job(self._format_list, self._api.today)
 
         # Updates price for this hour.
@@ -355,8 +358,10 @@ class EnergidataserviceSensor(EnergidataserviceEntity, SensorEntity):
         Returns:
             list: sorted list where today[0] is the price of hour 00.00 - 01.00
         """
-
-        return [i.price for i in self._api.today if i]
+        if not self._api.today is None:
+            return [i.price for i in self._api.today if i]
+        else:
+            return None
 
     @property
     def tomorrow(self) -> list:

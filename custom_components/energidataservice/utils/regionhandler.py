@@ -67,6 +67,7 @@ class RegionHandler:
         self._country = self.country_from_region(self._region)
         self._currency = self.get_country_currency(self._country)
         self._description = self.region_to_description(self._region)
+        self._api = self._get_valid_apis(self._region)
         if not currency_override is None:
             self.currency = Currency(_CURRENCY[currency_override])
         else:
@@ -152,6 +153,15 @@ class RegionHandler:
 
         return None
 
+    @staticmethod
+    def _get_valid_apis(region: str) -> dict:
+        """Get the valid API endpoints for this region."""
+        for reg in _REGIONS.items():
+            if reg[0] == region:
+                return reg[1][4]
+
+        return None
+
     @property
     def country(self) -> str:
         """Return country."""
@@ -171,3 +181,8 @@ class RegionHandler:
     def name(self) -> str:
         """Returns the region name."""
         return self._region
+
+    @property
+    def valid_apis(self) -> dict:
+        """Return valid API endpoints for region."""
+        return self._api

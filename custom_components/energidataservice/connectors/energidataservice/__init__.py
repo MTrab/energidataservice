@@ -7,6 +7,8 @@ import pytz
 
 _LOGGER = logging.getLogger(__name__)
 
+BASE_URL = "https://data-api.energidataservice.dk/v1/graphql"
+
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
@@ -26,13 +28,12 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     return reslist
 
 
-class Energidataservice:
+class Connector:
     """Energi Data Service API"""
 
     def __init__(self, regionhandler, client, tz):  # pylint: disable=invalid-name
         """Init API connection to Energi Data Service"""
         self.regionhandler = regionhandler
-        # self._area = area
         self.client = client
         self._result = {}
         self._tz = tz
@@ -41,8 +42,12 @@ class Energidataservice:
         """Fetch latest spotprices, excl. VAT and tariff."""
         headers = self._header()
         body = self._body()
-        url = "https://data-api.energidataservice.dk/v1/graphql"
-        _LOGGER.debug("Request body for %s: %s", self.regionhandler.region, body)
+        url = BASE_URL
+        _LOGGER.debug(
+            "Request body for %s via Energi Data Service: %s",
+            self.regionhandler.region,
+            body,
+        )
         resp = await self.client.post(url, data=body, headers=headers)
 
         if resp.status == 400:
@@ -93,5 +98,4 @@ class Energidataservice:
     def tomorrow(self):
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        _LOGGER.debug("Date: %s", date)
         return prepare_data(self._result, date, self._tz)

@@ -1,10 +1,13 @@
 """Adds support for Energi Data Service spot prices."""
 from datetime import datetime, timedelta
 from functools import partial
+import importlib
+from importlib.resources import Package
 import logging
 from random import randint
 
 import aiohttp
+
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -13,7 +16,8 @@ from homeassistant.helpers.event import async_call_later, async_track_time_chang
 from homeassistant.loader import async_get_integration
 from pytz import timezone
 
-from .connectors.energidataservice import Energidataservice
+from .connectors import *
+
 from .const import CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
 from .events import async_track_time_change_in_tz  # type: ignore
 from .utils.regionhandler import RegionHandler
@@ -85,7 +89,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     integration = await async_get_integration(hass, DOMAIN)
     _LOGGER.info(STARTUP, integration.version)
 
-    api = EDSConnector(
+    api = APIConnector(
         hass,
         entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA),
         entry.entry_id,
@@ -140,7 +144,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-class EDSConnector:
+class APIConnector:
     """An object to store Energi Data Service data."""
 
     def __init__(self, hass, region, entry_id):
@@ -159,23 +163,42 @@ class EDSConnector:
         self._next_retry_delay = RETRY_MINUTES
         self._retry_count = 0
 
-        client = async_get_clientsession(hass)
-        rh = RegionHandler(region)
-        self._eds = Energidataservice(rh, client, hass.config.time_zone)
-        _LOGGER.debug("Initializing Energi Data Service for region %s", region)
+        self._client = async_get_clientsession(hass)
+        self._region = RegionHandler(region)
+        self._tz = hass.config.time_zone
+        # self._eds = EnergidataserviceConnector(
+        #     self.region, client, hass.config.time_zone
+        # )
+        # self._npg = NordpoolConnector(self.region, client, hass.config.time_zone)
+        # _LOGGER.debug("Initializing Energi Data Service for region %s", region)
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from Energi Data Service API"""
-        eds = self._eds
-
+        # eds = self._eds
+        _LOGGER.debug(
+            "Valid API endpoints for %s: %s",
+            self._region.region,
+            self._region.valid_apis,
+        )
         try:
-            await eds.get_spotprices()
-            self.today = eds.today
-            self.tomorrow = eds.tomorrow
+            for endpoint in sorted(self._region.valid_apis):
+                _LOGGER.debug("%s: %s", self._region.region, endpoint)
+                api_ns = f".connectors.{endpoint}"
+                module = importlib.import_module(api_ns, __name__)
+                api = module.Connector(self._region, self._client, self._tz)
+                await api.get_spotprices()
+                if api.today:
+                    self.today = api.today
+                    self.tomorrow = api.tomorrow
+                    _LOGGER.debug(
+                        "%s got values from %s, breaking loop",
+                        self._region.region,
+                        endpoint,
+                    )
+                    break
 
             self.today_calculated = False
             self.tomorrow_calculated = False
-
             if not self.tomorrow:
                 self._tomorrow_valid = False
                 self.tomorrow = None
