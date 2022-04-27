@@ -1,13 +1,15 @@
 """Energi Data Service connector"""
+from __future__ import annotations
+
 from collections import namedtuple
 from datetime import datetime, timedelta
-import logging
+from logging import getLogger
 
 import pytz
 
 from .regions import REGIONS
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = getLogger(__name__)
 
 BASE_URL = "https://data-api.energidataservice.dk/v1/graphql"
 

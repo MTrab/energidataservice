@@ -1,11 +1,12 @@
 """Adds support for Energi Data Service spot prices."""
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from functools import partial
-import importlib
-import logging
+from logging import getLogger
 from random import randint
-
-import aiohttp
+from importlib import import_module
+from aiohttp import ServerDisconnectedError
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -27,7 +28,7 @@ RANDOM_SECOND = randint(0, 59)
 RETRY_MINUTES = 10
 MAX_RETRY_MINUTES = 120
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = getLogger(__name__)
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -172,7 +173,7 @@ class APIConnector:
 
         try:
             for endpoint in connectors:
-                module = importlib.import_module(endpoint.namespace, __name__)
+                module = import_module(endpoint.namespace, __name__)
                 api = module.Connector(self._region, self._client, self._tz)
                 await api.get_spotprices()
                 if api.today:
@@ -223,7 +224,7 @@ class APIConnector:
             else:
                 self.retry_count = 0
                 self._tomorrow_valid = True
-        except aiohttp.client_exceptions.ServerDisconnectedError:
+        except ServerDisconnectedError:
             _LOGGER.warning("Server disconnected.")
             retry_update(self)
 

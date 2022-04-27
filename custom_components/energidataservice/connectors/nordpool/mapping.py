@@ -1,4 +1,6 @@
 """Do some mappings for region naming."""
+from __future__ import annotations
+
 from ...utils.regionhandler import RegionHandler
 
 _REGION_MAP = {

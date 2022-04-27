@@ -1,4 +1,6 @@
 """Config flow for Energi Data Service spot prices."""
+from __future__ import annotations
+
 import logging
 import re
 
