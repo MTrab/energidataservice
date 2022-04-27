@@ -32,8 +32,17 @@ def list_to_str(data: list[Any]) -> str:
 
 def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> dict:
     """Return a schema for info configuration options."""
-    options = {
-        CONF_COUNTRY: options.get(CONF_COUNTRY) or None,
+    _LOGGER.debug(options.get(CONF_AREA))
+    info_options = {
+        CONF_NAME: options.get(CONF_NAME),
+        CONF_COUNTRY: (
+            options.get(CONF_COUNTRY)
+            or RegionHandler.country_from_region(options.get(CONF_AREA))
+        )
+        or RegionHandler.country_from_region(
+            RegionHandler.description_to_region(options.get(CONF_AREA))
+        )
+        or None,
         CONF_AREA: options.get(CONF_AREA) or None,
         CONF_CURRENCY_IN_CENT: options.get(CONF_CURRENCY_IN_CENT) or False,
         CONF_DECIMALS: options.get(CONF_DECIMALS) or 3,
@@ -43,20 +52,21 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
     }
 
     schema = {
-        vol.Required(CONF_AREA, default=options.get(CONF_AREA)): vol.In(
-            RegionHandler.get_regions(options.get(CONF_COUNTRY), True)
+        vol.Required(CONF_AREA, default=info_options.get(CONF_AREA)): vol.In(
+            RegionHandler.get_regions(info_options.get(CONF_COUNTRY), True)
         ),
-        vol.Required(CONF_VAT, default=options.get(CONF_VAT)): bool,
+        vol.Required(CONF_VAT, default=info_options.get(CONF_VAT)): bool,
         vol.Required(
-            CONF_CURRENCY_IN_CENT, default=options.get(CONF_CURRENCY_IN_CENT) or False
+            CONF_CURRENCY_IN_CENT,
+            default=info_options.get(CONF_CURRENCY_IN_CENT) or False,
         ): bool,
-        vol.Optional(CONF_DECIMALS, default=options.get(CONF_DECIMALS)): vol.Coerce(
-            int
-        ),
-        vol.Optional(CONF_PRICETYPE, default=options.get(CONF_PRICETYPE)): vol.In(
+        vol.Optional(
+            CONF_DECIMALS, default=info_options.get(CONF_DECIMALS)
+        ): vol.Coerce(int),
+        vol.Optional(CONF_PRICETYPE, default=info_options.get(CONF_PRICETYPE)): vol.In(
             list(UNIT_TO_MULTIPLIER.keys())
         ),
-        vol.Optional(CONF_TEMPLATE, default=options.get(CONF_TEMPLATE)): str,
+        vol.Optional(CONF_TEMPLATE, default=info_options.get(CONF_TEMPLATE)): str,
     }
 
     _LOGGER.debug("Schema: %s", schema)

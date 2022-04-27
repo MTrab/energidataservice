@@ -57,6 +57,7 @@ class RegionHandler:
         self.currency = None
         self._region = None
         self._description = None
+        self._api_region = None
 
         if region:
             self.set_region(region)
@@ -72,6 +73,10 @@ class RegionHandler:
             self.currency = Currency(_CURRENCY[currency_override])
         else:
             self.currency = Currency(self._currency)
+
+    def set_api_region(self, region: str) -> None:
+        """Set API specific region."""
+        self._api_region = region
 
     @staticmethod
     def get_countries(sort: bool = False, descending: bool = False) -> list:
@@ -118,21 +123,27 @@ class RegionHandler:
 
     @staticmethod
     def description_to_region(description: str) -> str:
-        """Get normal human readable description from region."""
+        """Get region from description."""
+        _LOGGER.debug("Looking up region for description: %s", description)
+
         for region in _REGIONS.items():
             if region[1][2] == description:
+                _LOGGER.debug(" - Found description in %s", region[0])
                 return region[0]
 
+        _LOGGER.debug("Couldn't match description, %s, to region!", description)
         return description
 
     @staticmethod
     def country_from_region(region: str) -> str:
         """Resolve actual country from given region."""
-        _LOGGER.debug("Looking up: %s", region)
+        _LOGGER.debug("Looking up country from region: %s", region)
         for reg in _REGIONS.items():
             if reg[0] == region:
+                _LOGGER.debug(" - Found region in %s", reg[1][1])
                 return reg[1][1]
 
+        _LOGGER.debug("Couldn't match region, %s, to country!", region)
         return None
 
     @staticmethod
@@ -171,6 +182,11 @@ class RegionHandler:
     def region(self) -> str:
         """Return region code."""
         return self._region
+
+    @property
+    def api_region(self) -> str:
+        """Return the api specific region code."""
+        return self._api_region
 
     @property
     def description(self) -> str:

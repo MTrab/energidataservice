@@ -8,6 +8,8 @@ from dateutil.parser import parse as parse_dt
 
 import pytz
 
+from .mapping import map_region
+
 _LOGGER = logging.getLogger(__name__)
 
 BASE_URL = (
@@ -40,7 +42,7 @@ class Connector:
 
     def __init__(self, regionhandler, client, tz):  # pylint: disable=invalid-name
         """Init API connection to Nordpool Group"""
-        self.regionhandler = regionhandler
+        self.regionhandler = map_region(regionhandler)
         self.client = client
         self._result = {}
         self._tz = tz
@@ -48,10 +50,11 @@ class Connector:
     async def get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
         # yesterday = datetime.now() - timedelta(days=1)
+        yesterday = datetime.now() - timedelta(days=1)
         today = datetime.now()
         tomorrow = datetime.now() + timedelta(days=1)
         jobs = [
-            # self._fetch(yesterday),
+            self._fetch(yesterday),
             self._fetch(today),
             self._fetch(tomorrow),
         ]
@@ -60,8 +63,6 @@ class Connector:
         raw = []
         for i in res:
             raw = raw + self._parse_json(i)
-        # raw = [self._parse_json(i) for i in res]
-        # raw = self._parse_json(res)
 
         self._result = raw
 
@@ -72,7 +73,7 @@ class Connector:
         """Fetch data from API."""
         url = BASE_URL % enddate.strftime("%d-%m-%Y")
         _LOGGER.debug(
-            "Request URL for %s via Nordpool: %s", self.regionhandler.region, url
+            "Request URL for %s via Nordpool: %s", (self.regionhandler.api_region or self.regionhandler.region), url
         )
         resp = await self.client.get(url)
 
@@ -97,6 +98,11 @@ class Connector:
 
         region_data = []
 
+        if self.regionhandler.api_region:
+            region = self.regionhandler.api_region
+        else:
+            region = self.regionhandler.region
+
         # Loop through response rows
         for row in data["Rows"]:
             row_start_time = row["StartTime"]
@@ -105,13 +111,17 @@ class Connector:
             for col in row["Columns"]:
                 name = col["Name"]
                 # If areas is defined and name isn't in areas, skip column
-                if self.regionhandler.region and name not in self.regionhandler.region:
+                if region and name not in region:
+                    continue
+
+                value = self._conv_to_float(col["Value"])
+                if not value:
                     continue
 
                 region_data.append(
                     {
-                        "HourUTC": row_start_time,
-                        "SpotPriceEUR": self._conv_to_float(col["Value"]),
+                        "HourUTC": f"{row_start_time}+00:00",
+                        "SpotPriceEUR": value,
                     }
                 )
 
@@ -119,11 +129,11 @@ class Connector:
 
     @staticmethod
     def _conv_to_float(value):
-        """ Convert numbers to float. Return infinity, if conversion fails. """
+        """Convert numbers to float. Return infinity, if conversion fails."""
         try:
             return float(value.replace(",", ".").replace(" ", ""))
         except ValueError:
-            return float("inf")
+            return None
 
     @property
     def today(self):
@@ -135,7 +145,11 @@ class Connector:
     def tomorrow(self):
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        return prepare_data(self._result, date, self._tz)
+        data = prepare_data(self._result, date, self._tz)
+        if len(data) > 20:
+            return data
+        else:
+            return None
 
 
 class BadRequest(Exception):

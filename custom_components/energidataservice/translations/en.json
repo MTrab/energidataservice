@@ -37,7 +37,8 @@
             "already_configured": "The specified name exists!"
         },
         "step": {
-            "init": {
+            "region": {
+                "title": "Detailed setup",
                 "data": {
                     "area": "Price area",
                     "vat": "Show prices including VAT",
@@ -46,7 +47,7 @@
                     "cost_template": "Template for additional costs",
                     "in_cent": "Show prices in cent"
                 },
-                "description": "Edit Energi Data Service sensor"
+                "description": "Set details for {name} in {country}"
             }
         }
     }

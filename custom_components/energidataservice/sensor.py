@@ -28,7 +28,6 @@ from .const import (
     UNIT_TO_MULTIPLIER,
     UPDATE_EDS,
 )
-from .entity import EnergidataserviceEntity
 from .utils.regionhandler import RegionHandler
 
 _LOGGER = logging.getLogger(__name__)
@@ -121,7 +120,7 @@ def _async_migrate_unique_id(hass: HomeAssistant, entity: str, new_id: str) -> N
         _LOGGER.debug("- Check didn't find anything")
 
 
-class EnergidataserviceSensor(EnergidataserviceEntity, SensorEntity):
+class EnergidataserviceSensor(SensorEntity):
     """Representation of Energi Data Service data."""
 
     def __init__(

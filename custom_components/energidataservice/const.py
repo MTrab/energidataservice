@@ -1,4 +1,4 @@
-""" Energidataservice consts """
+"""Energidataservice consts."""
 STARTUP = """
 -------------------------------------------------------------------
 Energi Data Service integration
@@ -9,9 +9,6 @@ If you have any issues with this you need to open an issue here:
 https://github.com/mtrab/energidataservice/issues
 -------------------------------------------------------------------
 """
-
-AREA_DK_EAST = "East of the great belt"
-AREA_DK_WEST = "West of the great belt"
 
 CONF_AREA = "area"
 CONF_COUNTRY = "country"
@@ -25,8 +22,6 @@ DATA = "data"
 DEFAULT_NAME = "Energidataservice"
 DEFAULT_TEMPLATE = "{{0.0|float}}"
 DOMAIN = "energidataservice"
-
-LIMIT = "48"
 
 UNIQUE_ID = "unique_id"
 UPDATE_EDS = "eds_update"
@@ -87,17 +82,17 @@ _REGIONS = {
     "EE": [_CURRENCY["EUR"], "Estonia", "Estonia", 0.20, {"nordpool"}],
     "LT": [_CURRENCY["EUR"], "Lithuania", "Lithuania", 0.21, {"nordpool"}],
     "LV": [_CURRENCY["EUR"], "Latvia", "Latvia", 0.21, {"nordpool"}],
-    "Oslo": [_CURRENCY["NOK"], "Norway", "Oslo", 0.25, {"nordpool"}],
-    "Kr.Sand": [
+    "NO1": [_CURRENCY["NOK"], "Norway", "Oslo", 0.25, {"nordpool"}],
+    "NO2": [
         _CURRENCY["NOK"],
         "Norway",
         "Kristiansand",
         0.25,
         {"energidataservice", "nordpool"},
     ],
-    "Molde": [_CURRENCY["NOK"], "Norway", "Molde, Trondheim", 0.25, {"nordpool"}],
-    "Tromsø": [_CURRENCY["NOK"], "Norway", "Tromsø", 0.25, {"nordpool"}],
-    "Bergen": [_CURRENCY["NOK"], "Norway", "Bergen", 0.25, {"nordpool"}],
+    "NO3": [_CURRENCY["NOK"], "Norway", "Molde, Trondheim", 0.25, {"nordpool"}],
+    "NO4": [_CURRENCY["NOK"], "Norway", "Tromsø", 0.25, {"nordpool"}],
+    "NO5": [_CURRENCY["NOK"], "Norway", "Bergen", 0.25, {"nordpool"}],
     "SE1": [_CURRENCY["SEK"], "Sweden", "Luleå", 0.25, {"nordpool"}],
     "SE2": [_CURRENCY["SEK"], "Sweden", "Sundsvall", 0.25, {"nordpool"}],
     "SE3": [
@@ -125,21 +120,11 @@ _REGIONS = {
         0.19,
         {"energidataservice", "nordpool"},
     ],
+    "LU": [
+        _CURRENCY["EUR"],
+        "Luxemburg",
+        "Luxemburg",
+        0.08,
+        {"nordpool"},
+    ],
 }
-
-# Mappings - OLD STYLE
-AREA_MAP = {  # Text-to-area
-    AREA_DK_WEST: "DK1",
-    AREA_DK_EAST: "DK2",
-}
-AREA_TO_TEXT = {  # Area-to-text
-    "DK1": AREA_DK_WEST,
-    "DK2": AREA_DK_EAST,
-}
-CURRENCIES = {  # Currencies
-    "Danske Kroner": "DKK",
-    "Euro": "EUR",
-}
-
-# REGIONS = sorted(list(AREA_MAP.keys()))
-CURRENCY = sorted(list(CURRENCIES.keys()))
