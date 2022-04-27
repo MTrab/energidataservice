@@ -1,13 +1,13 @@
 """Energi Data Service connector"""
 from __future__ import annotations
 
-from collections import namedtuple
 from datetime import datetime, timedelta
 from logging import getLogger
 
 import pytz
 
-from .regions import REGIONS
+from .regions import REGIONS, EXTRA_REGIONS
+from ...const import INTERVAL
 
 _LOGGER = getLogger(__name__)
 
@@ -21,13 +21,12 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     local_tz = pytz.timezone(tz)
     reslist = []
     for dataset in indata:
-        Interval = namedtuple("Interval", "price hour")
         tmpdate = (
             datetime.fromisoformat(dataset["HourUTC"])
             .replace(tzinfo=pytz.utc)
             .astimezone(local_tz)
         )
-        tmp = Interval(dataset["SpotPriceEUR"], local_tz.normalize(tmpdate))
+        tmp = INTERVAL(dataset["SpotPriceEUR"], local_tz.normalize(tmpdate))
         if date in tmp.hour.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
@@ -44,7 +43,7 @@ class Connector:
         self._result = {}
         self._tz = tz
 
-    async def get_spotprices(self) -> None:
+    async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
         headers = self._header()
         body = self._body()

@@ -16,9 +16,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_chang
 from homeassistant.loader import async_get_integration
 from pytz import timezone
 
-# from .connectors import *
 from .connectors import Connectors
-
 from .const import CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
 from .utils.regionhandler import RegionHandler
 
@@ -147,6 +145,7 @@ class APIConnector:
 
     def __init__(self, hass, region, entry_id):
         """Initialize Energi Data Service Connector."""
+        self._connectors = Connectors()
         self.hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
@@ -165,7 +164,6 @@ class APIConnector:
         self._region = RegionHandler(region)
         self._tz = hass.config.time_zone
         self._source = None
-        self._connectors = Connectors()
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from Energi Data Service API"""
@@ -175,7 +173,7 @@ class APIConnector:
             for endpoint in connectors:
                 module = import_module(endpoint.namespace, __name__)
                 api = module.Connector(self._region, self._client, self._tz)
-                await api.get_spotprices()
+                await api.async_get_spotprices()
                 if api.today:
                     self.today = api.today
                     self.tomorrow = api.tomorrow

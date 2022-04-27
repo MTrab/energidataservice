@@ -24,6 +24,8 @@ from .utils.configuration_schema import (
     energidataservice_config_option_initial_schema,
     energidataservice_config_option_info_schema,
 )
+
+from .connectors import Connectors
 from .utils.regionhandler import RegionHandler
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,6 +36,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize Energidataservice options flow."""
+        self.connectors = Connectors()
         self.config_entry = config_entry
         self._errors = {}
         # Cast from MappingProxy to dict to allow update.
@@ -123,6 +126,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self):
         """Initialize the config flow."""
+        self.connectors = Connectors()
         self._errors = {}
 
     async def async_step_user(self, user_input=None) -> FlowResult:

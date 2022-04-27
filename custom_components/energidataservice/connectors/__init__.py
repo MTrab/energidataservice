@@ -8,6 +8,7 @@ from importlib import import_module
 from logging import getLogger
 from genericpath import isdir
 
+from ..const import REGIONS
 
 _LOGGER = getLogger(__name__)
 
@@ -27,6 +28,9 @@ class Connectors:
                 api_ns = f".{module}"
                 mod = import_module(api_ns, __name__)
                 con = Connector(module, f".connectors{api_ns}", mod.REGIONS)
+
+                if hasattr(mod, 'EXTRA_REGIONS'):
+                    REGIONS.update(mod.EXTRA_REGIONS)
 
                 self._connectors.append(con)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from currency_converter import CurrencyConverter
 
-from ..const import _CURRENCY, _REGIONS
+from ..const import CURRENCY_LIST, REGIONS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class RegionHandler:
         self._currency = self.get_country_currency(self._country)
         self._description = self.region_to_description(self._region)
         if not currency_override is None:
-            self.currency = Currency(_CURRENCY[currency_override])
+            self.currency = Currency(CURRENCY_LIST[currency_override])
         else:
             self.currency = Currency(self._currency)
 
@@ -83,7 +83,7 @@ class RegionHandler:
         """Get list of available countries."""
         countries = []
 
-        for region in _REGIONS.items():
+        for region in REGIONS.items():
             country = region[1][1]
             if not country in countries:
                 countries.append(country)
@@ -95,7 +95,7 @@ class RegionHandler:
         """Get list of available regions in country."""
         regions = []
 
-        for region in _REGIONS.items():
+        for region in REGIONS.items():
             if country == region[1][1]:
                 regions.append(RegionHandler.region_to_description(region[0]))
 
@@ -106,7 +106,7 @@ class RegionHandler:
         """Get available regions in country."""
         regions = []
 
-        for region in _REGIONS.items():
+        for region in REGIONS.items():
             if country == region[1][1]:
                 regions.append(region[0])
 
@@ -115,7 +115,7 @@ class RegionHandler:
     @staticmethod
     def region_to_description(region: str) -> str:
         """Get normal human readable description from region."""
-        for reg in _REGIONS.items():
+        for reg in REGIONS.items():
             if reg[0] == region:
                 return reg[1][2]
 
@@ -126,7 +126,7 @@ class RegionHandler:
         """Get region from description."""
         _LOGGER.debug("Looking up region for description: %s", description)
 
-        for region in _REGIONS.items():
+        for region in REGIONS.items():
             if region[1][2] == description:
                 _LOGGER.debug(" - Found description in %s", region[0])
                 return region[0]
@@ -138,7 +138,7 @@ class RegionHandler:
     def country_from_region(region: str) -> str:
         """Resolve actual country from given region."""
         _LOGGER.debug("Looking up country from region: %s", region)
-        for reg in _REGIONS.items():
+        for reg in REGIONS.items():
             if reg[0] == region:
                 _LOGGER.debug(" - Found region in %s", reg[1][1])
                 return reg[1][1]
@@ -149,7 +149,7 @@ class RegionHandler:
     @staticmethod
     def get_country_currency(country: str) -> dict:
         """Get official currency of country."""
-        for region in _REGIONS.items():
+        for region in REGIONS.items():
             if country == region[1][1]:
                 return region[1][0]
 
@@ -158,7 +158,7 @@ class RegionHandler:
     @staticmethod
     def get_country_vat(country: str) -> float:
         """Get VAT amount for country."""
-        for region in _REGIONS.items():
+        for region in REGIONS.items():
             if country == region[1][1]:
                 return region[1][3]
 
