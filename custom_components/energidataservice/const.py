@@ -69,6 +69,7 @@ CURRENCY_LIST = {
 # Format:
 #   "Region": [CURRENCY_LIST, "Country", "Region description", VAT]
 REGIONS = {
+    "DK1": [CURRENCY_LIST["DKK"], "Denmark", "West of the great belt", 0.25],
     "DK2": [CURRENCY_LIST["DKK"], "Denmark", "East of the great belt", 0.25],
     "FI": [CURRENCY_LIST["EUR"], "Finland", "Finland", 0.24],
     "EE": [CURRENCY_LIST["EUR"], "Estonia", "Estonia", 0.20],

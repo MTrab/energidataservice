@@ -1,4 +1,4 @@
-"""Dynamically load all connectors."""
+"""Dynamically load all available connectors."""
 from __future__ import annotations
 
 from collections import namedtuple
@@ -8,7 +8,7 @@ from importlib import import_module
 from logging import getLogger
 from genericpath import isdir
 
-from ..const import REGIONS
+from ..const import CURRENCY_LIST, REGIONS
 
 _LOGGER = getLogger(__name__)
 
@@ -29,8 +29,11 @@ class Connectors:
                 mod = import_module(api_ns, __name__)
                 con = Connector(module, f".connectors{api_ns}", mod.REGIONS)
 
-                if hasattr(mod, 'EXTRA_REGIONS'):
+                if hasattr(mod, "EXTRA_REGIONS"):
                     REGIONS.update(mod.EXTRA_REGIONS)
+
+                if hasattr(mod, "EXTRA_CURRENCIES"):
+                    CURRENCY_LIST.update(mod.EXTRA_CURRENCIES)
 
                 self._connectors.append(con)
 
