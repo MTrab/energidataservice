@@ -2,7 +2,6 @@
 from datetime import datetime, timedelta
 from functools import partial
 import importlib
-from importlib.resources import Package
 import logging
 from random import randint
 
@@ -16,7 +15,8 @@ from homeassistant.helpers.event import async_call_later, async_track_time_chang
 from homeassistant.loader import async_get_integration
 from pytz import timezone
 
-from .connectors import *
+# from .connectors import *
+from .connectors import Connectors
 
 from .const import CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
 from .utils.regionhandler import RegionHandler
@@ -146,7 +146,7 @@ class APIConnector:
 
     def __init__(self, hass, region, entry_id):
         """Initialize Energi Data Service Connector."""
-        self._hass = hass
+        self.hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
         self._entry_id = entry_id
@@ -157,35 +157,32 @@ class APIConnector:
         self.tomorrow_calculated = False
         self.listeners = []
 
-        self._next_retry_delay = RETRY_MINUTES
-        self._retry_count = 0
+        self.next_retry_delay = RETRY_MINUTES
+        self.retry_count = 0
 
         self._client = async_get_clientsession(hass)
         self._region = RegionHandler(region)
         self._tz = hass.config.time_zone
         self._source = None
+        self._connectors = Connectors()
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from Energi Data Service API"""
-        _LOGGER.debug(
-            "Valid API endpoints for %s: %s",
-            self._region.region,
-            self._region.valid_apis,
-        )
+        connectors = self._connectors.get_connectors(self._region.region)
+
         try:
-            for endpoint in sorted(self._region.valid_apis):
-                _LOGGER.debug("%s: %s", self._region.region, endpoint)
-                api_ns = f".connectors.{endpoint}"
-                module = importlib.import_module(api_ns, __name__)
+            for endpoint in connectors:
+                module = importlib.import_module(endpoint.namespace, __name__)
                 api = module.Connector(self._region, self._client, self._tz)
                 await api.get_spotprices()
                 if api.today:
                     self.today = api.today
                     self.tomorrow = api.tomorrow
                     _LOGGER.debug(
-                        "%s got values from %s, breaking loop",
+                        "%s got values from %s (namespace='%s'), breaking loop",
                         self._region.region,
-                        endpoint,
+                        endpoint.module,
+                        endpoint.namespace,
                     )
                     self._source = module.SOURCE_NAME
                     break
@@ -198,7 +195,7 @@ class APIConnector:
 
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
                 refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
-                local_tz = timezone(self._hass.config.time_zone)
+                local_tz = timezone(self.hass.config.time_zone)
                 now = datetime.now().astimezone(local_tz)
                 _LOGGER.debug(
                     "Now: %s:%s:%s",
@@ -224,7 +221,7 @@ class APIConnector:
                         "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
                     )
             else:
-                self._retry_count = 0
+                self.retry_count = 0
                 self._tomorrow_valid = True
         except aiohttp.client_exceptions.ServerDisconnectedError:
             _LOGGER.warning("Server disconnected.")
@@ -253,18 +250,18 @@ class APIConnector:
 
 def retry_update(self):
     """Retry update on error."""
-    self._retry_count += 1
-    self._next_retry_delay = RETRY_MINUTES * self._retry_count
-    if self._next_retry_delay > MAX_RETRY_MINUTES:
-        self._next_retry_delay = MAX_RETRY_MINUTES
+    self.retry_count += 1
+    self.next_retry_delay = RETRY_MINUTES * self.retry_count
+    if self.next_retry_delay > MAX_RETRY_MINUTES:
+        self.next_retry_delay = MAX_RETRY_MINUTES
 
     _LOGGER.warning(
         "Couldn't get data from Energi Data Service, retrying in %s minutes.",
-        self._next_retry_delay,
+        self.next_retry_delay,
     )
 
-    local_tz = timezone(self._hass.config.time_zone)
-    now = (datetime.now() + timedelta(minutes=self._next_retry_delay)).astimezone(
+    local_tz = timezone(self.hass.config.time_zone)
+    now = (datetime.now() + timedelta(minutes=self.next_retry_delay)).astimezone(
         local_tz
     )
     _LOGGER.debug(
@@ -274,7 +271,7 @@ def retry_update(self):
         f"{now.second:02d}",
     )
     async_call_later(
-        self._hass,
-        timedelta(minutes=self._next_retry_delay),
+        self.hass,
+        timedelta(minutes=self.next_retry_delay),
         partial(self.update),
     )

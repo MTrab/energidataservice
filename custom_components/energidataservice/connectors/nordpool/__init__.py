@@ -9,6 +9,7 @@ from dateutil.parser import parse as parse_dt
 import pytz
 
 from .mapping import map_region
+from .regions import REGIONS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,7 +74,9 @@ class Connector:
         """Fetch data from API."""
         url = BASE_URL % enddate.strftime("%d-%m-%Y")
         _LOGGER.debug(
-            "Request URL for %s via Nordpool: %s", (self.regionhandler.api_region or self.regionhandler.region), url
+            "Request URL for %s via Nordpool: %s",
+            (self.regionhandler.api_region or self.regionhandler.region),
+            url,
         )
         resp = await self.client.get(url)
 

@@ -5,6 +5,8 @@ import logging
 
 import pytz
 
+from .regions import REGIONS
+
 _LOGGER = logging.getLogger(__name__)
 
 BASE_URL = "https://data-api.energidataservice.dk/v1/graphql"
