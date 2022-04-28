@@ -14,7 +14,6 @@ _REGION_MAP = {
 }
 
 
-@staticmethod
 def map_region(region: RegionHandler) -> RegionHandler():
     """Map integration region to API region."""
     if region.region in _REGION_MAP:
