@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+
 from currency_converter import CurrencyConverter
 
 from ..const import CURRENCY_LIST, REGIONS

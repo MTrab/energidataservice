@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from os import listdir
-from posixpath import dirname
 from importlib import import_module
 from logging import getLogger
+from os import listdir
+from posixpath import dirname
+
 from genericpath import isdir
 
 from ..const import CURRENCY_LIST, REGIONS

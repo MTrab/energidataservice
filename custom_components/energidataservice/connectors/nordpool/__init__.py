@@ -2,16 +2,15 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timedelta
 import logging
 
-from datetime import datetime, timedelta
 from dateutil.parser import parse as parse_dt
-
 import pytz
 
+from ...const import INTERVAL
 from .mapping import map_region
 from .regions import REGIONS
-from ...const import INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
