@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest a new feature/idea for this project
 title: "[FR]: <title>"
-labels: enhancement
+labels: feature request
 ---
 
 **Is your feature request related to a problem? Please describe.**
