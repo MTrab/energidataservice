@@ -124,17 +124,27 @@ class Connector:
                 if region and name not in region:
                     continue
 
-                if not start_hour in set().union(*region_data):
-                    value = self._conv_to_float(col["Value"])
-                    if not value:
-                        continue
+                # Check if we already have this hour in dict
+                known = False
+                for i, val in enumerate(region_data):  # pylint: disable=unused-variable
+                    if start_hour == val["HourUTC"]:
+                        known = True
+                        break
 
-                    region_data.append(
-                        {
-                            "HourUTC": start_hour,
-                            "SpotPriceEUR": value,
-                        }
-                    )
+                if known:
+                    # We already have this hour in dict, skip to next
+                    continue
+
+                value = self._conv_to_float(col["Value"])
+                if not value:
+                    continue
+
+                region_data.append(
+                    {
+                        "HourUTC": start_hour,
+                        "SpotPriceEUR": value,
+                    }
+                )
 
         return region_data
 
@@ -166,10 +176,6 @@ class Connector:
 class BadRequest(Exception):
     """Representation of a Bad Request exception."""
 
-    pass
-
 
 class InvalidRequest(Exception):
     """Representation of an Invalid Request."""
-
-    pass
