@@ -1,10 +1,13 @@
 """Adds support for Energi Data Service spot prices."""
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from functools import partial
-import logging
+from logging import getLogger
 from random import randint
+from importlib import import_module
+from aiohttp import ServerDisconnectedError
 
-import aiohttp
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -12,11 +15,10 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 from homeassistant.loader import async_get_integration
 from pytz import timezone
-import voluptuous as vol
 
-from .api import Energidataservice
-from .const import AREA_MAP, CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
-from .events import async_track_time_change_in_tz  # type: ignore
+from .connectors import Connectors
+from .const import CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
+from .utils.regionhandler import RegionHandler
 
 RANDOM_MINUTE = randint(0, 10)
 RANDOM_SECOND = randint(0, 59)
@@ -24,7 +26,7 @@ RANDOM_SECOND = randint(0, 59)
 RETRY_MINUTES = 10
 MAX_RETRY_MINUTES = 120
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = getLogger(__name__)
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
@@ -85,9 +87,9 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     integration = await async_get_integration(hass, DOMAIN)
     _LOGGER.info(STARTUP, integration.version)
 
-    api = EDSConnector(
+    api = APIConnector(
         hass,
-        AREA_MAP[(entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA))],
+        entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA),
         entry.entry_id,
     )
     hass.data[DOMAIN][entry.entry_id] = api
@@ -113,22 +115,20 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_dispatcher_send(hass, UPDATE_EDS)
 
     # Handle dataset updates
-    update_tomorrow = async_track_time_change_in_tz(
+    update_tomorrow = async_track_time_change(
         hass,
         get_new_data,
         hour=13,
         minute=RANDOM_MINUTE,
         second=RANDOM_SECOND,
-        tz=timezone("Europe/Copenhagen"),
     )
 
-    update_new_day = async_track_time_change_in_tz(
+    update_new_day = async_track_time_change(
         hass,
         new_day,
         hour=0,
         minute=0,
         second=0,
-        tz=timezone("Europe/Copenhagen"),
     )
 
     update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
@@ -140,12 +140,13 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-class EDSConnector:
+class APIConnector:
     """An object to store Energi Data Service data."""
 
-    def __init__(self, hass, area, entry_id):
+    def __init__(self, hass, region, entry_id):
         """Initialize Energi Data Service Connector."""
-        self._hass = hass
+        self._connectors = Connectors()
+        self.hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
         self._entry_id = entry_id
@@ -156,32 +157,44 @@ class EDSConnector:
         self.tomorrow_calculated = False
         self.listeners = []
 
-        self._next_retry_delay = RETRY_MINUTES
-        self._retry_count = 0
+        self.next_retry_delay = RETRY_MINUTES
+        self.retry_count = 0
 
-        client = async_get_clientsession(hass)
-        self._eds = Energidataservice(area, client, hass.config.time_zone)
-        _LOGGER.debug("Initializing Energi Data Service for area %s", area)
+        self._client = async_get_clientsession(hass)
+        self._region = RegionHandler(region)
+        self._tz = hass.config.time_zone
+        self._source = None
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from Energi Data Service API"""
-        eds = self._eds
+        connectors = self._connectors.get_connectors(self._region.region)
 
         try:
-            await eds.get_spotprices()
-            self.today = eds.today
-            self.tomorrow = eds.tomorrow
+            for endpoint in connectors:
+                module = import_module(endpoint.namespace, __name__)
+                api = module.Connector(self._region, self._client, self._tz)
+                await api.async_get_spotprices()
+                if api.today:
+                    self.today = api.today
+                    self.tomorrow = api.tomorrow
+                    _LOGGER.debug(
+                        "%s got values from %s (namespace='%s'), breaking loop",
+                        self._region.region,
+                        endpoint.module,
+                        endpoint.namespace,
+                    )
+                    self._source = module.SOURCE_NAME
+                    break
 
             self.today_calculated = False
             self.tomorrow_calculated = False
-
             if not self.tomorrow:
                 self._tomorrow_valid = False
                 self.tomorrow = None
 
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
                 refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
-                local_tz = timezone(self._hass.config.time_zone)
+                local_tz = timezone(self.hass.config.time_zone)
                 now = datetime.now().astimezone(local_tz)
                 _LOGGER.debug(
                     "Now: %s:%s:%s",
@@ -207,9 +220,9 @@ class EDSConnector:
                         "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
                     )
             else:
-                self._retry_count = 0
+                self.retry_count = 0
                 self._tomorrow_valid = True
-        except aiohttp.client_exceptions.ServerDisconnectedError:
+        except ServerDisconnectedError:
             _LOGGER.warning("Server disconnected.")
             retry_update(self)
 
@@ -217,6 +230,11 @@ class EDSConnector:
     def tomorrow_valid(self):
         """Is tomorrows prices valid?"""
         return self._tomorrow_valid
+
+    @property
+    def source(self) -> str:
+        """Is tomorrows prices valid?"""
+        return self._source
 
     @property
     def next_data_refresh(self):
@@ -231,18 +249,18 @@ class EDSConnector:
 
 def retry_update(self):
     """Retry update on error."""
-    self._retry_count += 1
-    self._next_retry_delay = RETRY_MINUTES * self._retry_count
-    if self._next_retry_delay > MAX_RETRY_MINUTES:
-        self._next_retry_delay = MAX_RETRY_MINUTES
+    self.retry_count += 1
+    self.next_retry_delay = RETRY_MINUTES * self.retry_count
+    if self.next_retry_delay > MAX_RETRY_MINUTES:
+        self.next_retry_delay = MAX_RETRY_MINUTES
 
     _LOGGER.warning(
         "Couldn't get data from Energi Data Service, retrying in %s minutes.",
-        self._next_retry_delay,
+        self.next_retry_delay,
     )
 
-    local_tz = timezone(self._hass.config.time_zone)
-    now = (datetime.now() + timedelta(minutes=self._next_retry_delay)).astimezone(
+    local_tz = timezone(self.hass.config.time_zone)
+    now = (datetime.now() + timedelta(minutes=self.next_retry_delay)).astimezone(
         local_tz
     )
     _LOGGER.debug(
@@ -252,7 +270,7 @@ def retry_update(self):
         f"{now.second:02d}",
     )
     async_call_later(
-        self._hass,
-        timedelta(minutes=self._next_retry_delay),
+        self.hass,
+        timedelta(minutes=self.next_retry_delay),
         partial(self.update),
     )

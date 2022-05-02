@@ -1,7 +1,6 @@
 {
     "name": "Energi Data Service",
     "render_readme": true,
-    "country": "DK",
     "domains": [
         "sensor"
     ],

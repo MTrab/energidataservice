@@ -1,4 +1,6 @@
 """Config flow for Energi Data Service spot prices."""
+from __future__ import annotations
+
 import logging
 import re
 
@@ -11,8 +13,20 @@ from homeassistant.helpers.template import Template
 import voluptuous as vol
 
 from . import async_setup_entry, async_unload_entry
-from .const import CONF_TEMPLATE, DEFAULT_TEMPLATE, DOMAIN
-from .utils.configuration_schema import energidataservice_config_option_schema
+from .const import (
+    CONF_AREA,
+    CONF_COUNTRY,
+    CONF_TEMPLATE,
+    DEFAULT_TEMPLATE,
+    DOMAIN,
+)
+from .utils.configuration_schema import (
+    energidataservice_config_option_initial_schema,
+    energidataservice_config_option_info_schema,
+)
+
+from .connectors import Connectors
+from .utils.regionhandler import RegionHandler
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,13 +36,38 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize Energidataservice options flow."""
+        self.connectors = Connectors()
         self.config_entry = config_entry
         self._errors = {}
+        # Cast from MappingProxy to dict to allow update.
+        self.options = dict(config_entry.options)
         config = self.config_entry.options or self.config_entry.data
         _LOGGER.debug("Config: %s", config)
 
     async def async_step_init(self, user_input=None):
-        """Handle an options flow."""
+        """Handle options flow."""
+        schema = energidataservice_config_option_info_schema(self.config_entry.options)
+        country = self.config_entry.options.get(
+            CONF_COUNTRY,
+            RegionHandler.country_from_region(self.config_entry.options.get(CONF_AREA))
+            or RegionHandler.country_from_region(
+                RegionHandler.description_to_region(
+                    self.config_entry.options.get(CONF_AREA)
+                )
+            ),
+        )
+        return self.async_show_form(
+            step_id="region",
+            data_schema=vol.Schema(schema),
+            errors=self._errors,
+            description_placeholders={
+                "name": self.config_entry.data[CONF_NAME],
+                "country": country,
+            },
+        )
+
+    async def async_step_region(self, user_input=None):
+        """Handle region options flow."""
 
         async def _do_update(_=None):
             """Update after settings change."""
@@ -38,6 +77,8 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         self._errors = {}
 
         if user_input is not None:
+            self.options.update(user_input)
+            _LOGGER.debug(self.options)
             template_ok = False
             if user_input[CONF_TEMPLATE] in (None, ""):
                 user_input[CONF_TEMPLATE] = DEFAULT_TEMPLATE
@@ -50,18 +91,22 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
             # self._async_abort_entries_match({CONF_NAME: user_input[CONF_NAME]})
             if template_ok:
-                async_call_later(self.hass, 1, _do_update)
+                async_call_later(self.hass, 2, _do_update)
                 return self.async_create_entry(
-                    title=user_input[CONF_NAME], data=user_input
+                    title=self.options.get(CONF_NAME),
+                    data=self.options,
                 )
             else:
                 self._errors["base"] = "invalid_template"
-        _LOGGER.debug("Config: %s", self.config_entry.options)
-        schema = energidataservice_config_option_schema(
-            self.config_entry.options or self.config_entry.data
-        )
+        schema = energidataservice_config_option_info_schema(self.config_entry.options)
         return self.async_show_form(
-            step_id="init", data_schema=vol.Schema(schema), errors=self._errors
+            step_id="region",
+            data_schema=vol.Schema(schema),
+            errors=self._errors,
+            description_placeholders={
+                "name": self.config_entry.data[CONF_NAME],
+                "country": self.config_entry.options[CONF_COUNTRY],
+            },
         )
 
 
@@ -81,6 +126,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self):
         """Initialize the config flow."""
+        self.connectors = Connectors()
         self._errors = {}
 
     async def async_step_user(self, user_input=None) -> FlowResult:
@@ -88,6 +134,24 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
 
         if user_input is not None:
+            self.user_input = user_input
+            return await self.async_step_region()
+
+        schema = energidataservice_config_option_initial_schema()
+        return self.async_show_form(
+            step_id="user", data_schema=vol.Schema(schema), errors=self._errors
+        )
+
+    async def async_step_region(self, user_input=None) -> FlowResult:
+        """Handle step 2, setting region and templates."""
+        self._errors = {}
+
+        if user_input is not None:
+            user_input = {**user_input, **self.user_input}
+            await self.async_set_unique_id(user_input[CONF_NAME])
+
+            _LOGGER.debug(user_input)
+
             template_ok = False
             if user_input[CONF_TEMPLATE] in (None, ""):
                 user_input[CONF_TEMPLATE] = DEFAULT_TEMPLATE
@@ -108,9 +172,16 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 self._errors["base"] = "invalid_template"
 
-        schema = energidataservice_config_option_schema(user_input)
+        schema = energidataservice_config_option_info_schema(self.user_input)
         return self.async_show_form(
-            step_id="user", data_schema=vol.Schema(schema), errors=self._errors
+            step_id="region",
+            data_schema=vol.Schema(schema),
+            errors=self._errors,
+            last_step=True,
+            description_placeholders={
+                "name": self.user_input[CONF_NAME],
+                "country": self.user_input[CONF_COUNTRY],
+            },
         )
 
     async def async_step_import(self, user_input):  # pylint: disable=unused-argument
