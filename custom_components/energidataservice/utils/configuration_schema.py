@@ -9,8 +9,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 import voluptuous as vol
 
-from .regionhandler import RegionHandler
-
 from ..const import (
     CONF_AREA,
     CONF_COUNTRY,
@@ -21,6 +19,7 @@ from ..const import (
     CONF_VAT,
     UNIT_TO_MULTIPLIER,
 )
+from .regionhandler import RegionHandler
 
 _LOGGER = logging.getLogger(__name__)
 

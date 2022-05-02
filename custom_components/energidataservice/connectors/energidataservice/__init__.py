@@ -6,8 +6,8 @@ from logging import getLogger
 
 import pytz
 
-from .regions import REGIONS
 from ...const import INTERVAL
+from .regions import REGIONS
 
 _LOGGER = getLogger(__name__)
 

@@ -1,7 +1,6 @@
 """Energidataservice consts."""
 from collections import namedtuple
 
-
 STARTUP = """
 -------------------------------------------------------------------
 Energi Data Service integration
