@@ -29,7 +29,7 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     for dataset in indata:
         tmpdate = (
             datetime.fromisoformat(dataset["HourUTC"])
-            .replace(tzinfo=pytz.utc)
+            # .replace(tzinfo=pytz.utc)
             .astimezone(local_tz)
         )
         tmp = INTERVAL(dataset["SpotPriceEUR"], local_tz.normalize(tmpdate))
@@ -93,6 +93,8 @@ class Connector:
 
     def _parse_json(self, data):
         """Parse json response"""
+        # Timezone for data from Nord Pool Group are "Europe/Stockholm"
+        timezone = pytz.timezone("Europe/Stockholm")
 
         if not "data" in data:
             return []
@@ -109,7 +111,11 @@ class Connector:
 
         # Loop through response rows
         for row in data["Rows"]:
-            row_start_time = row["StartTime"]
+            start_hour = datetime.isoformat(
+                timezone.localize(datetime.fromisoformat(row["StartTime"])).astimezone(
+                    pytz.utc
+                )
+            )
 
             # Loop through columns
             for col in row["Columns"]:
@@ -118,16 +124,17 @@ class Connector:
                 if region and name not in region:
                     continue
 
-                value = self._conv_to_float(col["Value"])
-                if not value:
-                    continue
+                if not start_hour in set().union(*region_data):
+                    value = self._conv_to_float(col["Value"])
+                    if not value:
+                        continue
 
-                region_data.append(
-                    {
-                        "HourUTC": f"{row_start_time}+00:00",
-                        "SpotPriceEUR": value,
-                    }
-                )
+                    region_data.append(
+                        {
+                            "HourUTC": start_hour,
+                            "SpotPriceEUR": value,
+                        }
+                    )
 
         return region_data
 
