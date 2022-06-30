@@ -42,7 +42,7 @@ The easiest way to get one is to [click here](https://lokalise.com/login/) then 
 <br/>
 When you have created your account, [clich here](https://app.lokalise.com/public/370626426292237b07f563.55061871/) to join the project on Lokalise.<br/>
 <br/>
-Chect Lokalise documentation [here](https://docs.lokalise.com/en/) - it's really good.<br/>
+Check Lokalise documentation [here](https://docs.lokalise.com/en/) - it's really good.<br/>
 <br/>
 All languages for the countries currently supported by the integration, should be added to Lokalise - if you are missing a language, then please [submit a feature request](https://github.com/MTrab/energidataservice/issues/new?assignees=&labels=feature+request&template=feature_request.md&title=%5BFR%5D%3A+%3Ctitle%3E)<br/>
 <br/>
