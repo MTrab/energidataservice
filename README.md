@@ -31,3 +31,19 @@ Shortcut:<br>
 * Select area
 
 Voila
+
+## Translation
+
+To handle submissions of translated strings I'm using [Lokalise](https://lokalise.com/).<br/>
+They provide an amazing platform that is easy to use and maintain.<br/>
+<br/>
+To help out with the translation of this custom_component you need an account on Lokalise.<br/>
+The easiest way to get one is to [click here](https://lokalise.com/login/) then select "Log in with GitHub".<br/>
+<br/>
+When you have created your account, [clich here](https://app.lokalise.com/public/370626426292237b07f563.55061871/) to join the project on Lokalise.<br/>
+<br/>
+Chect Lokalise documentation [here](https://docs.lokalise.com/en/) - it's really good.<br/>
+<br/>
+All languages for the countries currently supported by the integration, should be added to Lokalise - if you are missing a language, then please [submit a feature request](https://github.com/MTrab/energidataservice/issues/new?assignees=&labels=feature+request&template=feature_request.md&title=%5BFR%5D%3A+%3Ctitle%3E)<br/>
+<br/>
+Contributions to the translations will be updated on every release of this component.
