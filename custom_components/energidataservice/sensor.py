@@ -87,13 +87,14 @@ def _setup(hass, config: ConfigEntry, add_devices):
 
     this_sensor = SensorEntityDescription(
         key="EnergiDataService_{}_{}_{}_{}_{}_{}_{}".format(  # pylint: disable=consider-using-f-string
-            config.options[CONF_AREA],
-            config.options[CONF_VAT],
-            config.options[CONF_CURRENCY_IN_CENT],
-            config.options[CONF_DECIMALS],
-            config.options[CONF_PRICETYPE],
-            config.options[CONF_NAME],
-            config.options[CONF_COUNTRY],
+            config.options.get(CONF_AREA) or config.data.get(CONF_AREA),
+            config.options.get(CONF_VAT) or config.data.get(CONF_VAT),
+            config.options.get(CONF_CURRENCY_IN_CENT)
+            or config.data.get(CONF_CURRENCY_IN_CENT),
+            config.options.get(CONF_DECIMALS) or config.data.get(CONF_DECIMALS),
+            config.options.get(CONF_PRICETYPE) or config.data.get(CONF_PRICETYPE),
+            config.options.get(CONF_NAME) or config.data.get(CONF_NAME),
+            config.options.get(CONF_COUNTRY) or config.data.get(CONF_COUNTRY),
         ),
         device_class=SensorDeviceClass.MONETARY,
         icon="mdi:flash",
