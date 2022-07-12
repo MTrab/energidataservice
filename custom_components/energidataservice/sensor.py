@@ -253,9 +253,6 @@ class EnergidataserviceSensor(SensorEntity):
         if not self._api.today_calculated and not self._api.today is None:
             await self._hass.async_add_executor_job(self._format_list, self._api.today)
 
-        # Updates price for this hour.
-        self._get_current_price()
-
         # Update attributes
         if self._api.today:
             self._today_raw = self._add_raw(self._api.today)
@@ -275,6 +272,9 @@ class EnergidataserviceSensor(SensorEntity):
             )
         else:
             self._tomorrow_mean = None
+
+        # Updates price for this hour.
+        self._get_current_price()
 
         self.async_write_ha_state()
 
@@ -308,14 +308,14 @@ class EnergidataserviceSensor(SensorEntity):
                 "next_data_update": self._api.next_data_refresh,
                 "today": self.today,
                 "tomorrow": self.tomorrow or None,
-                "raw_today": self.raw_today,
-                "raw_tomorrow": self.raw_tomorrow or None,
-                "today_min": self.today_min,
-                "today_max": self.today_max,
-                "today_mean": self.today_mean,
-                "tomorrow_min": self.tomorrow_min or None,
-                "tomorrow_max": self.tomorrow_max or None,
-                "tomorrow_mean": self.tomorrow_mean or None,
+                "raw_today": self._today_raw or None,
+                "raw_tomorrow": self._tomorrow_raw or None,
+                "today_min": self._today_min,
+                "today_max": self._today_max,
+                "today_mean": self._today_mean,
+                "tomorrow_min": self._tomorrow_min or None,
+                "tomorrow_max": self._tomorrow_max or None,
+                "tomorrow_mean": self._tomorrow_mean or None,
                 "attribution": f"Data sourced from {self._api.source}",
             }
         else:
