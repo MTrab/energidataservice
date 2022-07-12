@@ -198,18 +198,19 @@ class EnergidataserviceSensor(SensorEntity):
         """Validate sensor data."""
         _LOGGER.debug("Validating sensor %s", self.name)
 
+        # Do we have valid data for today? If not, try fetching new dataset
         if not self._api.today:
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
-            # self._api.today =
             if not self._api.today is None:
                 await self._hass.async_add_executor_job(
                     self._format_list, self._api.today
                 )
 
+        # Do we have valid data for tomorrow? If we do, calculate prices in local currency
+        # If not, set attributes to None
         if self.tomorrow_valid:
             if not self._api.tomorrow_calculated:
-                # self._api.tomorrow =
                 await self._hass.async_add_executor_job(
                     self._format_list, self._api.tomorrow, True
                 )
@@ -219,6 +220,7 @@ class EnergidataserviceSensor(SensorEntity):
             self._tomorrow_raw = None
             self._api.tomorrow_calculated = False
 
+        # If we haven't already calculated todays prices in local currency, do so now
         if not self._api.today_calculated and not self._api.today is None:
             await self._hass.async_add_executor_job(self._format_list, self._api.today)
 
@@ -237,6 +239,7 @@ class EnergidataserviceSensor(SensorEntity):
             self._tomorrow_min = self._get_specific("min", self._api.tomorrow)
             self._tomorrow_max = self._get_specific("max", self._api.tomorrow)
 
+        # If we have valid data for tomorrow, then find the mean value
         if self.tomorrow_valid:
             self._tomorrow_mean = round(
                 self._get_specific("mean", self._api.tomorrow), self._decimals
@@ -248,7 +251,6 @@ class EnergidataserviceSensor(SensorEntity):
 
     def _get_current_price(self) -> None:
         """Get price for current hour"""
-        # now = dt_utils.now()
         current_state_time = datetime.fromisoformat(
             dt_utils.now()
             .replace(microsecond=0)
@@ -256,7 +258,6 @@ class EnergidataserviceSensor(SensorEntity):
             .replace(minute=0)
             .isoformat()
         )
-        # _LOGGER.debug(self._api.today)
         if self._api.today:
             for dataset in self._api.today:
                 if dataset.hour == current_state_time:
@@ -319,15 +320,15 @@ class EnergidataserviceSensor(SensorEntity):
             "tomorrow_valid": self.tomorrow_valid,
             "next_data_update": self._api.next_data_refresh,
             "today": self.today,
-            "tomorrow": self.tomorrow,
+            "tomorrow": self.tomorrow or None,
             "raw_today": self.raw_today,
-            "raw_tomorrow": self.raw_tomorrow,
+            "raw_tomorrow": self.raw_tomorrow or None,
             "today_min": self.today_min,
             "today_max": self.today_max,
             "today_mean": self.today_mean,
-            "tomorrow_min": self.tomorrow_min,
-            "tomorrow_max": self.tomorrow_max,
-            "tomorrow_mean": self.tomorrow_mean,
+            "tomorrow_min": self.tomorrow_min or None,
+            "tomorrow_max": self.tomorrow_max or None,
+            "tomorrow_mean": self.tomorrow_mean or None,
             "attribution": f"Data sourced from {self._api.source}",
         }
 
