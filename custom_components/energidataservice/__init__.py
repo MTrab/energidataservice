@@ -29,7 +29,7 @@ MAX_RETRY_MINUTES = 120
 _LOGGER = getLogger(__name__)
 
 
-async def async_setup(hass: HomeAssistant, config: dict):
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the component."""
 
     hass.data.setdefault(DOMAIN, {})
@@ -143,7 +143,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class APIConnector:
     """An object to store Energi Data Service data."""
 
-    def __init__(self, hass, region, entry_id):
+    def __init__(self, hass, region, entry_id) -> None:
         """Initialize Energi Data Service Connector."""
         self._connectors = Connectors()
         self.hass = hass
@@ -227,7 +227,7 @@ class APIConnector:
             retry_update(self)
 
     @property
-    def tomorrow_valid(self):
+    def tomorrow_valid(self) -> bool:
         """Is tomorrows prices valid?"""
         return self._tomorrow_valid
 
@@ -237,17 +237,17 @@ class APIConnector:
         return self._source
 
     @property
-    def next_data_refresh(self):
+    def next_data_refresh(self) -> str:
         """When is next data update?"""
         return f"13:{RANDOM_MINUTE:02d}:{RANDOM_SECOND:02d}"
 
     @property
-    def entry_id(self):
+    def entry_id(self) -> str:
         """Return entry_id."""
         return self._entry_id
 
 
-def retry_update(self):
+def retry_update(self) -> None:
     """Retry update on error."""
     self.retry_count += 1
     self.next_retry_delay = RETRY_MINUTES * self.retry_count

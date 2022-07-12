@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import Any
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
-from homeassistant.core import callback
+from homeassistant.core import callback, HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.template import Template
@@ -37,7 +38,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         config = self.config_entry.options or self.config_entry.data
         _LOGGER.debug("Config: %s", config)
 
-    async def async_step_init(self, user_input=None):
+    async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
         """Handle options flow."""
         schema = energidataservice_config_option_info_schema(self.config_entry.options)
         country = self.config_entry.options.get(
@@ -59,10 +60,10 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             },
         )
 
-    async def async_step_region(self, user_input=None):
+    async def async_step_region(self, user_input: Any | None = None) -> FlowResult:
         """Handle region options flow."""
 
-        async def _do_update(_=None):
+        async def _do_update(_=None) -> None:
             """Update after settings change."""
             await async_unload_entry(self.hass, self.config_entry)
             await async_setup_entry(self.hass, self.config_entry)
@@ -117,12 +118,12 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Get the options flow for this handler."""
         return EnergidataserviceOptionsFlowHandler(config_entry)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the config flow."""
         self.connectors = Connectors()
         self._errors = {}
 
-    async def async_step_user(self, user_input=None) -> FlowResult:
+    async def async_step_user(self, user_input: Any | None = None) -> FlowResult:
         """Handle the initial config flow step."""
         self._errors = {}
 
@@ -135,7 +136,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=vol.Schema(schema), errors=self._errors
         )
 
-    async def async_step_region(self, user_input=None) -> FlowResult:
+    async def async_step_region(self, user_input: Any | None = None) -> FlowResult:
         """Handle step 2, setting region and templates."""
         self._errors = {}
 
@@ -177,7 +178,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_import(self, user_input):  # pylint: disable=unused-argument
+    async def async_step_import(
+        self, user_input: Any | None
+    ) -> Any:  # pylint: disable=unused-argument
         """Import a config entry.
         Special type of import, we're not actually going to store any data.
         Instead, we're going to rely on the values that are in config file.
@@ -187,7 +190,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
 
-async def _validate_template(hass, user_template):
+async def _validate_template(hass: HomeAssistant, user_template: Any) -> bool:
     """Validate template to eliminate most user errors."""
     try:
         _LOGGER.debug("Template:")

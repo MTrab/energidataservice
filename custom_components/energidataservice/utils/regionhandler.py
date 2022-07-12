@@ -53,7 +53,7 @@ class Currency:
 class RegionHandler:
     """Region handler class."""
 
-    def __init__(self, region: str = None) -> None:
+    def __init__(self, region: str | None = None) -> None:
         """Initialize the handler."""
         self._country = None
         self.currency = None
@@ -64,7 +64,7 @@ class RegionHandler:
         if region:
             self.set_region(region)
 
-    def set_region(self, region: str, currency_override: str = None) -> None:
+    def set_region(self, region: str, currency_override: str | None = None) -> None:
         """Set region."""
         self._region = self.description_to_region(region)
         self._country = self.country_from_region(self._region)
@@ -114,7 +114,7 @@ class RegionHandler:
         return regions
 
     @staticmethod
-    def region_to_description(region: str) -> str:
+    def region_to_description(region: str) -> str | None:
         """Get normal human readable description from region."""
         for reg in REGIONS.items():
             if reg[0] == region:
@@ -136,7 +136,7 @@ class RegionHandler:
         return description
 
     @staticmethod
-    def country_from_region(region: str) -> str:
+    def country_from_region(region: str) -> str | None:
         """Resolve actual country from given region."""
         _LOGGER.debug("Looking up country from region: %s", region)
         for reg in REGIONS.items():
@@ -148,7 +148,7 @@ class RegionHandler:
         return None
 
     @staticmethod
-    def get_country_currency(country: str) -> dict:
+    def get_country_currency(country: str) -> dict | None:
         """Get official currency of country."""
         for region in REGIONS.items():
             if country == region[1][1]:
@@ -157,7 +157,7 @@ class RegionHandler:
         return None
 
     @staticmethod
-    def get_country_vat(country: str) -> float:
+    def get_country_vat(country: str) -> float | None:
         """Get VAT amount for country."""
         for region in REGIONS.items():
             if country == region[1][1]:
