@@ -7,12 +7,15 @@ from logging import getLogger
 import pytz
 
 from ...const import INTERVAL
+from .regions import REGIONS
 
 _LOGGER = getLogger(__name__)
 
 BASE_URL = "https://api.energidataservice.dk/dataset/elspotprices"
 
 SOURCE_NAME = "Energi Data Service"
+
+__all__ = ["REGIONS", "Connector"]
 
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name

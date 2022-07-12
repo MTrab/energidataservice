@@ -9,6 +9,7 @@ import pytz
 
 from ...const import INTERVAL
 from .mapping import map_region
+from .regions import REGIONS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ BASE_URL = (
 )
 
 SOURCE_NAME = "Nord Pool"
+
+__all__ = ["REGIONS", "Connector"]
 
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
