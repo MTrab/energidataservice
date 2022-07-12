@@ -100,9 +100,6 @@ def _setup(hass, config: ConfigEntry, add_devices):
         icon="mdi:flash",
         name=config.data.get(CONF_NAME),
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=f"{region.currency.cent}/{config.options[CONF_PRICETYPE]}"
-        if config.options[CONF_CURRENCY_IN_CENT]
-        else f"{region.currency.name}/{config.options[CONF_PRICETYPE]}",
     )
     sens = EnergidataserviceSensor(config, hass, region, this_sensor)
 
@@ -193,7 +190,16 @@ class EnergidataserviceSensor(SensorEntity):
 
         # Holds current price
         self._attr_native_value = None
-
+        if CONF_CURRENCY_IN_CENT in config.options:
+            self._attr_native_unit_of_measurement = (
+                f"{region.currency.cent}/{config.options[CONF_PRICETYPE]}"
+                if config.options[CONF_CURRENCY_IN_CENT]
+                else f"{region.currency.name}/{config.options[CONF_PRICETYPE]}"
+            )
+        else:
+            self._attr_native_unit_of_measurement = (
+                f"{region.currency.name}/{config.options[CONF_PRICETYPE]}"
+            )
         # Holds the raw data
         self._today_raw = None
         self._tomorrow_raw = None
