@@ -6,7 +6,12 @@ from datetime import datetime
 import logging
 
 from homeassistant.components import sensor
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorStateClass,
+    SensorEntityDescription,
+    SensorDeviceClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME, DEVICE_CLASS_MONETARY
 from homeassistant.core import HomeAssistant, callback
@@ -20,6 +25,7 @@ from jinja2 import pass_context
 from .const import (
     CENT_MULTIPLIER,
     CONF_AREA,
+    CONF_COUNTRY,
     CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
     CONF_PRICETYPE,
@@ -79,7 +85,25 @@ def _setup(hass, config: ConfigEntry, add_devices):
         )
         region.set_region(area, hass.config.currency)
 
-    sens = EnergidataserviceSensor(config, hass, region)
+    this_sensor = SensorEntityDescription(
+        key="EnergiDataService_{}_{}_{}_{}_{}_{}_{}".format(  # pylint: disable=consider-using-f-string
+            config.options[CONF_AREA],
+            config.options[CONF_VAT],
+            config.options[CONF_CURRENCY_IN_CENT],
+            config.options[CONF_DECIMALS],
+            config.options[CONF_PRICETYPE],
+            config.options[CONF_NAME],
+            config.options[CONF_COUNTRY],
+        ),
+        device_class=SensorDeviceClass.MONETARY,
+        icon="mdi:flash",
+        name=config.data.get(CONF_NAME),
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=f"{region.currency.cent}/{config.options[CONF_PRICETYPE]}"
+        if config.options[CONF_CURRENCY_IN_CENT]
+        else f"{region.currency.name}/{config.options[CONF_PRICETYPE]}",
+    )
+    sens = EnergidataserviceSensor(config, hass, region, this_sensor)
 
     add_devices([sens])
 
@@ -126,10 +150,15 @@ class EnergidataserviceSensor(SensorEntity):
     """Representation of Energi Data Service data."""
 
     def __init__(
-        self, config: ConfigEntry, hass: HomeAssistant, region: RegionHandler
+        self,
+        config: ConfigEntry,
+        hass: HomeAssistant,
+        region: RegionHandler,
+        description: SensorEntityDescription,
     ) -> None:
         """Initialize Energidataservice sensor."""
-        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self.entity_description = description
+        self._attr_name = self.entity_description.name
         self._config = config
         self.region = region
         self._entry_id = config.entry_id
@@ -147,7 +176,6 @@ class EnergidataserviceSensor(SensorEntity):
             CONF_TEMPLATE
         )
         self._hass = hass
-        self._name = config.data.get(CONF_NAME)
         self._friendly_name = config.options.get(CONF_NAME) or config.data.get(
             CONF_NAME
         )
@@ -157,13 +185,13 @@ class EnergidataserviceSensor(SensorEntity):
             self._vat = 0
 
         self._entity_id = sensor.ENTITY_ID_FORMAT.format(
-            util_slugify(f"{self._name} {self._area}")
+            util_slugify(f"{self._attr_name} {self._area}")
         )
-        self._unique_id = util_slugify(f"{self._name}_{self._entry_id}")
+        self._unique_id = util_slugify(f"{self._attr_name}_{self._entry_id}")
         _async_migrate_unique_id(hass, self._entity_id, self._unique_id)
 
         # Holds current price
-        self._state = None
+        self._attr_native_value = None
 
         # Holds the raw data
         self._today_raw = None
@@ -261,15 +289,36 @@ class EnergidataserviceSensor(SensorEntity):
         if self._api.today:
             for dataset in self._api.today:
                 if dataset.hour == current_state_time:
-                    self._state = dataset.price
+                    self._attr_native_value = dataset.price
                     _LOGGER.debug(
                         "Current price updated to %f for %s",
-                        self._state,
+                        self._attr_native_value,
                         self.region.region,
                     )
                     break
+
+            self._attr_extra_state_attributes = {
+                "current_price": self.state,
+                "unit": self.unit,
+                "currency": self._currency,
+                "region": self._area,
+                "region_code": self.region.region,
+                "tomorrow_valid": self.tomorrow_valid,
+                "next_data_update": self._api.next_data_refresh,
+                "today": self.today,
+                "tomorrow": self.tomorrow or None,
+                "raw_today": self.raw_today,
+                "raw_tomorrow": self.raw_tomorrow or None,
+                "today_min": self.today_min,
+                "today_max": self.today_max,
+                "today_mean": self.today_mean,
+                "tomorrow_min": self.tomorrow_min or None,
+                "tomorrow_max": self.tomorrow_max or None,
+                "tomorrow_mean": self.tomorrow_mean or None,
+                "attribution": f"Data sourced from {self._api.source}",
+            }
         else:
-            self._state = None
+            self._attr_native_value = None
             _LOGGER.debug("No data found for %s", self.region.region)
 
     async def async_added_to_hass(self):
@@ -285,10 +334,6 @@ class EnergidataserviceSensor(SensorEntity):
         return self._unique_id
 
     @property
-    def icon(self) -> str:
-        return "mdi:flash"
-
-    @property
     def name(self):
         """Return the name of the sensor."""
         return self._friendly_name
@@ -299,52 +344,9 @@ class EnergidataserviceSensor(SensorEntity):
         return False
 
     @property
-    def state(self):
-        """Return sensor state."""
-        return self._state
-
-    @property
     def unit(self) -> str:
         """Return currency unit."""
         return self._price_type
-
-    @property
-    def extra_state_attributes(self):
-        """Return the state attributes."""
-        return {
-            "current_price": self.state,
-            "unit": self.unit,
-            "currency": self._currency,
-            "region": self._area,
-            "region_code": self.region.region,
-            "tomorrow_valid": self.tomorrow_valid,
-            "next_data_update": self._api.next_data_refresh,
-            "today": self.today,
-            "tomorrow": self.tomorrow or None,
-            "raw_today": self.raw_today,
-            "raw_tomorrow": self.raw_tomorrow or None,
-            "today_min": self.today_min,
-            "today_max": self.today_max,
-            "today_mean": self.today_mean,
-            "tomorrow_min": self.tomorrow_min or None,
-            "tomorrow_max": self.tomorrow_max or None,
-            "tomorrow_mean": self.tomorrow_mean or None,
-            "attribution": f"Data sourced from {self._api.source}",
-        }
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement."""
-        return (
-            f"{self.region.currency.cent}/{self._price_type}"
-            if self._cent
-            else f"{self.region.currency.name}/{self._price_type}"
-        )
-
-    @property
-    def device_class(self):
-        """Return the class of this sensor."""
-        return DEVICE_CLASS_MONETARY
 
     @property
     def device_info(self):
@@ -400,11 +402,6 @@ class EnergidataserviceSensor(SensorEntity):
         return self._tomorrow_raw
 
     @property
-    def state_class(self) -> str:
-        """Return the state class of the sensor."""
-        return self._attr_state_class
-
-    @property
     def tomorrow_valid(self):
         """Return state of tomorrow_valid."""
         return self._api.tomorrow_valid
@@ -442,7 +439,7 @@ class EnergidataserviceSensor(SensorEntity):
     def _calculate(self, value=None, fake_dt=None) -> float:
         """Do price calculations"""
         if value is None:
-            value = self._state
+            value = self._attr_native_value
 
         # Convert currency from EUR
         if self._currency != "EUR":
