@@ -5,12 +5,10 @@ import asyncio
 from datetime import datetime, timedelta
 import logging
 
-from dateutil.parser import parse as parse_dt
 import pytz
 
 from ...const import INTERVAL
 from .mapping import map_region
-from .regions import REGIONS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,11 +24,7 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     local_tz = pytz.timezone(tz)
     reslist = []
     for dataset in indata:
-        tmpdate = (
-            datetime.fromisoformat(dataset["HourUTC"])
-            # .replace(tzinfo=pytz.utc)
-            .astimezone(local_tz)
-        )
+        tmpdate = datetime.fromisoformat(dataset["HourUTC"]).astimezone(local_tz)
         tmp = INTERVAL(dataset["SpotPriceEUR"], local_tz.normalize(tmpdate))
         if date in tmp.hour.strftime("%Y-%m-%d"):
             reslist.append(tmp)
@@ -41,7 +35,9 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
 class Connector:
     """Define Nordpool Connector Class."""
 
-    def __init__(self, regionhandler, client, tz):  # pylint: disable=invalid-name
+    def __init__(
+        self, regionhandler, client, tz  # pylint: disable=invalid-name
+    ) -> None:
         """Init API connection to Nordpool Group"""
         self.regionhandler = map_region(regionhandler)
         self.client = client
@@ -82,15 +78,20 @@ class Connector:
 
         if resp.status == 400:
             _LOGGER.error("API returned error 400, Bad Request!")
-            raise BadRequest from None
+            return {}
         elif resp.status == 411:
             _LOGGER.error("API returned error 411, Invalid Request!")
-            raise InvalidRequest from None
+            return {}
+        elif resp.status == 200:
+            res = await resp.json()
+            _LOGGER.debug("Response for %s:", self.regionhandler.region)
+            _LOGGER.debug(self._result)
+            return res
+        else:
+            _LOGGER.error("API returned error %s", str(resp.status))
+            return {}
 
-        res = await resp.json()
-        return res
-
-    def _parse_json(self, data):
+    def _parse_json(self, data) -> list:
         """Parse json response"""
         # Timezone for data from Nord Pool Group are "Europe/Stockholm"
         timezone = pytz.timezone("Europe/Stockholm")
@@ -148,7 +149,7 @@ class Connector:
         return region_data
 
     @staticmethod
-    def _conv_to_float(value):
+    def _conv_to_float(value) -> float | None:
         """Convert numbers to float. Return infinity, if conversion fails."""
         try:
             return float(value.replace(",", ".").replace(" ", ""))
@@ -156,13 +157,13 @@ class Connector:
             return None
 
     @property
-    def today(self):
+    def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
         return prepare_data(self._result, date, self._tz)
 
     @property
-    def tomorrow(self):
+    def tomorrow(self) -> list:
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         data = prepare_data(self._result, date, self._tz)
@@ -170,11 +171,3 @@ class Connector:
             return data
         else:
             return None
-
-
-class BadRequest(Exception):
-    """Representation of a Bad Request exception."""
-
-
-class InvalidRequest(Exception):
-    """Representation of an Invalid Request."""

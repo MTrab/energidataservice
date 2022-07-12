@@ -7,7 +7,6 @@ from logging import getLogger
 import pytz
 
 from ...const import INTERVAL
-from .regions import REGIONS
 
 _LOGGER = getLogger(__name__)
 
@@ -36,7 +35,9 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
 class Connector:
     """Energi Data Service API"""
 
-    def __init__(self, regionhandler, client, tz):  # pylint: disable=invalid-name
+    def __init__(
+        self, regionhandler, client, tz  # pylint: disable=invalid-name
+    ) -> None:
         """Init API connection to Energi Data Service"""
         self.regionhandler = regionhandler
         self.client = client
@@ -91,13 +92,13 @@ class Connector:
         return f"{url}?{start}&{end}&{objfilter}&{sort}&{columns}&{limit}"
 
     @property
-    def today(self):
+    def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
         return prepare_data(self._result, date, self._tz)
 
     @property
-    def tomorrow(self):
+    def tomorrow(self) -> list:
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         return prepare_data(self._result, date, self._tz)
