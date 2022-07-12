@@ -11,7 +11,7 @@ from .regions import REGIONS
 
 _LOGGER = getLogger(__name__)
 
-BASE_URL = "https://data-api.energidataservice.dk/v1/graphql"
+BASE_URL = "https://api.energidataservice.dk/dataset/elspotprices"
 
 SOURCE_NAME = "Energi Data Service"
 
@@ -46,14 +46,13 @@ class Connector:
     async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
         headers = self._header()
-        body = self._body()
-        url = BASE_URL
+        url = self._prepare_url(BASE_URL)
         _LOGGER.debug(
-            "Request body for %s via Energi Data Service: %s",
+            "Request body for %s via Energi Data Service API URL: %s",
             self.regionhandler.region,
-            body,
+            url,
         )
-        resp = await self.client.post(url, data=body, headers=headers)
+        resp = await self.client.get(url, headers=headers)
 
         if resp.status == 400:
             _LOGGER.error("API returned error 400, Bad Request!")
@@ -63,7 +62,7 @@ class Connector:
             self._result = {}
         elif resp.status == 200:
             res = await resp.json()
-            self._result = res["data"]["elspotprices"]
+            self._result = res["records"]
 
             _LOGGER.debug("Response for %s:", self.regionhandler.region)
             _LOGGER.debug(self._result)
@@ -71,27 +70,25 @@ class Connector:
             _LOGGER.error("API returned error %s", str(resp.status))
 
     @staticmethod
-    def _header():
+    def _header() -> dict:
         """Create default request header"""
         data = {"Content-Type": "application/json"}
         return data
 
-    def _body(self):
-        """Create GraphQL request body"""
-        date_from = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
-        date_to = (datetime.utcnow() + timedelta(days=2)).strftime("%Y-%m-%d")
-        _LOGGER.debug("Start Date: %s", date_from)
-        _LOGGER.debug("End Data: %s", date_to)
-        data = (
-            '{"query": "query Dataset {elspotprices(where: {HourUTC: {_gte: \\"'
-            + str(date_from)
-            + '\\", _lt: \\"'
-            + str(date_to)
-            + '\\"} PriceArea: {_eq: \\"'
-            + str(self.regionhandler.region)
-            + '\\"}} order_by: {HourUTC: asc} limit: 100 offset: 0){HourUTC SpotPriceEUR }}"}'
+    def _prepare_url(self, url: str) -> str:
+        """Prepare and format the URL for the API request."""
+        start_date = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+        end_date = (datetime.utcnow() + timedelta(days=2)).strftime("%Y-%m-%d")
+        start = f"start={str(start_date)}"
+        end = f"end={str(end_date)}"
+        limit = "limit=150"
+        objfilter = (
+            f"filter=%7B%22PriceArea%22:%22{str(self.regionhandler.region)}%22%7D"
         )
-        return data
+        sort = "sort=HourUTC%20asc"
+        columns = "columns=HourUTC,PriceArea,SpotPriceEUR"
+
+        return f"{url}?{start}&{end}&{objfilter}&{sort}&{columns}&{limit}"
 
     @property
     def today(self):
