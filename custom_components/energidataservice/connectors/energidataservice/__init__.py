@@ -87,7 +87,7 @@ class Connector:
             f"filter=%7B%22PriceArea%22:%22{str(self.regionhandler.region)}%22%7D"
         )
         sort = "sort=HourUTC%20asc"
-        columns = "columns=HourUTC,PriceArea,SpotPriceEUR"
+        columns = "columns=HourUTC,SpotPriceEUR"
 
         return f"{url}?{start}&{end}&{objfilter}&{sort}&{columns}&{limit}"
 
