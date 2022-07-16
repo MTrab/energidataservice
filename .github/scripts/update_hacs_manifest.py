@@ -3,7 +3,6 @@ import json
 import os
 import sys
 
-
 def update_manifest():
     """Update the manifest file."""
     version = "0.0.0"
@@ -12,14 +11,32 @@ def update_manifest():
             version = sys.argv[index + 1]
 
     with open(
-        f"{os.getcwd()}/custom_components/energidataservice/manifest.json"
+        f"{os.getcwd()}/custom_components/energidataservice/manifest.json",
+        encoding="UTF-8",
     ) as manifestfile:
         manifest = json.load(manifestfile)
 
-    manifest["version"] = version
+    manifest["version"] = version.removeprefix("v")
+
+    requirements = []
+    with open(
+        f"{os.getcwd()}/requirements.txt",
+        encoding="UTF-8",
+    ) as file:
+        for line in file:
+            requirements.append(line.rstrip())
+
+    new_requirements = []
+    for requirement in requirements:
+        req = requirement.split("==")[0].lower()
+        new_requirements = [requirement for x in manifest["requirements"] if x.lower().startswith(req)]
+        new_requirements += [x for x in manifest["requirements"] if not x.lower().startswith(req)]
+        manifest["requirements"] = new_requirements
 
     with open(
-        f"{os.getcwd()}/custom_components/energidataservice/manifest.json", "w"
+        f"{os.getcwd()}/custom_components/energidataservice/manifest.json",
+        "w",
+        encoding="UTF-8",
     ) as manifestfile:
         manifestfile.write(json.dumps(manifest, indent=4, sort_keys=True))
 
