@@ -23,7 +23,11 @@ class Forecast:
         self._forecasts = []
         for module in listdir(f"{dirname(__file__)}"):
             mod_path = f"{dirname(__file__)}/{module}"
-            if isdir(mod_path) and not module.endswith("__pycache__"):
+            if (
+                isdir(mod_path)
+                and not module.endswith("__pycache__")
+                and not mod_path.endswith(".disabled")
+            ):
                 Endpoint = namedtuple("Endpoint", "module namespace regions")
                 _LOGGER.debug("Adding module %s", module)
                 api_ns = f".{module}"
