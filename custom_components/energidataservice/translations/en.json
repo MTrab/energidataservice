@@ -26,6 +26,20 @@
                     "in_cent": "Show prices in cent"
                 },
                 "description": "Set details for {name} in {country}"
+            },
+            "enable_forecast": {
+                "title": "Enable forecasts?",
+                "data": {
+                    "enable_forecast": "Enable forecasts"
+                },
+                "description": "Should {name} in {country} show AI predicted prices for the next 7 days as an attribute?"
+            },
+            "carnot_credentials": {
+                "title": "API credentials for Carnot platform (https://www.carnot.dk/)",
+                "data": {
+                    "email": "Email",
+                    "api_key": "API-key"
+                }
             }
         }
     },
@@ -48,6 +62,20 @@
                     "in_cent": "Show prices in cent"
                 },
                 "description": "Set details for {name} in {country}"
+            },
+            "enable_forecast": {
+                "title": "Enable forecasts?",
+                "data": {
+                    "enable_forecast": "Enable forecasts"
+                },
+                "description": "Should {name} in {country} show a AI predicted prices for the next 7 days?"
+            },
+            "carnot_credentials": {
+                "title": "API credentials for Carnot platform (https://www.carnot.dk/)",
+                "data": {
+                    "email": "Email",
+                    "api_key": "API-key"
+                }
             }
         }
     }

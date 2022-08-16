@@ -13,7 +13,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, CONF_EMAIL, CONF_API_KEY
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 import homeassistant.helpers.config_validation as cv
@@ -28,6 +28,7 @@ from .const import (
     CONF_COUNTRY,
     CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
+    CONF_ENABLE_FORECAST,
     CONF_PRICETYPE,
     CONF_TEMPLATE,
     CONF_VAT,
@@ -72,6 +73,9 @@ def _setup(hass, config: ConfigEntry, add_devices):
     _LOGGER.debug("Region currency %s", region.currency.name)
     _LOGGER.debug(
         "Show in cent: %s", config.options.get(CONF_CURRENCY_IN_CENT) or False
+    )
+    _LOGGER.debug(
+        "Get AI predictions? %s", config.options.get(CONF_ENABLE_FORECAST) or False
     )
     _LOGGER.debug("Domain %s", DOMAIN)
 
@@ -161,6 +165,9 @@ class EnergidataserviceSensor(SensorEntity):
         self.region = region
         self._entry_id = config.entry_id
         self._cent = config.options.get(CONF_CURRENCY_IN_CENT) or False
+        self._forecast = config.options.get(CONF_ENABLE_FORECAST) or False
+        self._carnot_user = config.options.get(CONF_EMAIL) or None
+        self._carnot_apikey = config.options.get(CONF_API_KEY) or None
         self._area = region.description
         self._currency = hass.config.currency
         self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(
@@ -177,6 +184,7 @@ class EnergidataserviceSensor(SensorEntity):
         self._friendly_name = config.options.get(CONF_NAME) or config.data.get(
             CONF_NAME
         )
+
         if config.options.get(CONF_VAT) is True:
             self._vat = 0.25
         else:
@@ -256,8 +264,18 @@ class EnergidataserviceSensor(SensorEntity):
             self._api.tomorrow_calculated = False
 
         # If we haven't already calculated todays prices in local currency, do so now
-        if not self._api.today_calculated and not self._api.today is None:
+        if not self._api.today_calculated and not isinstance(
+            self._api.today, type(None)
+        ):
             await self._hass.async_add_executor_job(self._format_list, self._api.today)
+
+        # If predictions is enabled but not calculated, do so now
+        if not self._api.predictions_calculated and not isinstance(
+            self._api.predictions, type(None)
+        ):
+            await self._hass.async_add_executor_job(
+                self._format_list, self._api.predictions, False, True
+            )
 
         # Update attributes
         if self._api.today:
@@ -324,6 +342,14 @@ class EnergidataserviceSensor(SensorEntity):
                 "tomorrow_mean": self._tomorrow_mean or None,
                 "attribution": f"Data sourced from {self._api.source}",
             }
+
+            if not isinstance(self.predictions, type(None)):
+                self._attr_extra_state_attributes.update(
+                    {
+                        "forecast": self._add_raw(self.predictions),
+                        "attribution": f"Data sourced from {self._api.source} and forecast from Carnot",
+                    }
+                )
         else:
             self._attr_native_value = None
             _LOGGER.debug("No data found for %s", self.region.region)
@@ -370,10 +396,11 @@ class EnergidataserviceSensor(SensorEntity):
         Returns:
             list: sorted list where today[0] is the price of hour 00.00 - 01.00
         """
-        if not self._api.today is None:
-            return [i.price for i in self._api.today if i]
-        else:
-            return None
+        return (
+            [i.price for i in self._api.today if i]
+            if not isinstance(self._api.today, type(None))
+            else None
+        )
 
     @property
     def tomorrow(self) -> list:
@@ -385,6 +412,12 @@ class EnergidataserviceSensor(SensorEntity):
             return [i.price for i in self._api.tomorrow if i]
         else:
             return None
+
+    @property
+    def predictions(self) -> list | None:
+        """Return predictions (forecasts) if enabled, else None."""
+        if self._forecast:
+            return self._api.predictions
 
     @staticmethod
     def _add_raw(data) -> list:
@@ -479,13 +512,13 @@ class EnergidataserviceSensor(SensorEntity):
 
         return round(price, self._decimals)
 
-    def _format_list(self, data, tomorrow=False) -> None:
+    def _format_list(self, data, tomorrow=False, predictions=False) -> None:
         """Format data as list with prices localized."""
         formatted_pricelist = []
 
         _start = datetime.now().timestamp()
+        Interval = namedtuple("Interval", "price hour")
         for i in data:
-            Interval = namedtuple("Interval", "price hour")
             price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
             formatted_pricelist.append(Interval(price, i.hour))
 
@@ -496,6 +529,10 @@ class EnergidataserviceSensor(SensorEntity):
             _calc_for = "TOMORROW"
             self._api.tomorrow_calculated = True
             self._api.tomorrow = formatted_pricelist
+        elif predictions:
+            _calc_for = "PREDICTIONS"
+            self._api.predictions_calculated = True
+            self._api.predictions = formatted_pricelist
         else:
             _calc_for = "TODAY"
             self._api.today_calculated = True

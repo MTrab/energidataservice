@@ -15,9 +15,12 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 from homeassistant.loader import async_get_integration
 from pytz import timezone
+from homeassistant.const import CONF_EMAIL, CONF_API_KEY
+
+from .forecasts import Forecast
 
 from .connectors import Connectors
-from .const import CONF_AREA, DOMAIN, STARTUP, UPDATE_EDS
+from .const import CONF_AREA, CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
 from .utils.regionhandler import RegionHandler
 
 RANDOM_MINUTE = randint(0, 10)
@@ -89,8 +92,9 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     api = APIConnector(
         hass,
-        entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA),
-        entry.entry_id,
+        entry,
+        # entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA),
+        # entry.entry_id,
     )
     hass.data[DOMAIN][entry.entry_id] = api
 
@@ -143,27 +147,35 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class APIConnector:
     """An object to store Energi Data Service data."""
 
-    def __init__(self, hass, region, entry_id) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize Energi Data Service Connector."""
         self._connectors = Connectors()
+        self._forecasts = Forecast()
         self.hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
-        self._entry_id = entry_id
+        self._entry_id = entry.entry_id
 
         self.today = None
         self.tomorrow = None
+        self.predictions = None
         self.today_calculated = False
         self.tomorrow_calculated = False
+        self.predictions_calculated = False
         self.listeners = []
 
         self.next_retry_delay = RETRY_MINUTES
         self.retry_count = 0
 
         self._client = async_get_clientsession(hass)
-        self._region = RegionHandler(region)
+        self._region = RegionHandler(
+            entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA)
+        )
         self._tz = hass.config.time_zone
         self._source = None
+        self._forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
+        self._carnot_user = entry.options.get(CONF_EMAIL) or None
+        self._carnot_apikey = entry.options.get(CONF_API_KEY) or None
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from Energi Data Service API"""
@@ -222,6 +234,18 @@ class APIConnector:
             else:
                 self.retry_count = 0
                 self._tomorrow_valid = True
+
+            if self._forecast:
+                self.predictions_calculated = False
+                forecast_endpoint = self._forecasts.get_endpoint(self._region.region)
+                forecast_module = import_module(
+                    forecast_endpoint[0].namespace, __name__
+                )
+                carnot = forecast_module.Connector(self._region, self._client, self._tz)
+                self.predictions = await carnot.async_get_forecast(
+                    self._carnot_apikey, self._carnot_user
+                )
+
         except ServerDisconnectedError:
             _LOGGER.warning("Server disconnected.")
             retry_update(self)
@@ -233,7 +257,7 @@ class APIConnector:
 
     @property
     def source(self) -> str:
-        """Is tomorrows prices valid?"""
+        """Who was the source for the data?"""
         return self._source
 
     @property
