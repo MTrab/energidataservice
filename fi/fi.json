@@ -1,0 +1,54 @@
+{
+    "config": {
+        "error": {
+            "invalid_template": ""
+        },
+        "abort": {
+            "already_configured": ""
+        },
+        "step": {
+            "user": {
+                "title": "",
+                "data": {
+                    "name": "",
+                    "country": ""
+                },
+                "description": ""
+            },
+            "region": {
+                "title": "",
+                "data": {
+                    "area": "",
+                    "vat": "",
+                    "decimals": "",
+                    "pricetype": "",
+                    "cost_template": "",
+                    "in_cent": ""
+                },
+                "description": ""
+            }
+        }
+    },
+    "options": {
+        "error": {
+            "invalid_template": ""
+        },
+        "abort": {
+            "already_configured": ""
+        },
+        "step": {
+            "region": {
+                "title": "",
+                "data": {
+                    "area": "",
+                    "vat": "",
+                    "decimals": "",
+                    "pricetype": "",
+                    "cost_template": "",
+                    "in_cent": ""
+                },
+                "description": ""
+            }
+        }
+    }
+}
