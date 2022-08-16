@@ -1,53 +1,37 @@
 {
     "config": {
-        "error": {
-            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https://github.com/mtrab/energidataservice"
-        },
-        "abort": {
-            "already_configured": "Det angivede navn eksisterer allerede!"
-        },
         "step": {
-            "user": {
-                "title": "Basis info",
+            "enable_forecast": {
+                "title": "Aktiver prognoser?",
                 "data": {
-                    "name": "Navn",
-                    "country": "Vælg land"
+                    "enable_forecast": "Aktiver prognoser"
                 },
-                "description": "Indstil basis settings for sensoren"
+                "description": "Skal {name} i {country} vise AI genererede prognoser?"
             },
-            "region": {
-                "title": "Detaljerede oplysninger",
+            "carnot_credentials": {
+                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
                 "data": {
-                    "area": "Pris område",
-                    "vat": "Vis priser med moms",
-                    "decimals": "Decimaler",
-                    "pricetype": "Pris beregnes i",
-                    "cost_template": "Skabelon til ekstra omkostninger",
-                    "in_cent": "Vis priser i øre"
-                },
-                "description": "Set detaljer for {name} i {country}"
+                    "email": "Email",
+                    "api_key": "API-key"
+                }
             }
         }
     },
     "options": {
-        "error": {
-            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https://github.com/mtrab/energidataservice"
-        },
-        "abort": {
-            "already_configured": "Det angivede navn eksisterer allerede!"
-        },
         "step": {
-            "region": {
-                "title": "Detaljerede oplysninger",
+            "enable_forecast": {
+                "title": "Aktiver prognoser?",
                 "data": {
-                    "area": "Pris område",
-                    "vat": "Vis priser med moms",
-                    "decimals": "Decimaler",
-                    "pricetype": "Pris beregnes i",
-                    "cost_template": "Skabelon til ekstra omkostninger",
-                    "in_cent": "Vis priser i øre"
+                    "enable_forecast": "Aktiver prognoser"
                 },
-                "description": "Set detaljer for {name} i {country}"
+                "description": "Skal {name} i {country} vise AI genererede prognoser?"
+            },
+            "carnot_credentials": {
+                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "data": {
+                    "email": "Email",
+                    "api_key": "API-key"
+                }
             }
         }
     }
