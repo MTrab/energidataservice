@@ -50,10 +50,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         _LOGGER.debug("Config: %s", config)
         _LOGGER.debug("Options: %s", self.options)
 
-    async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
-        """Handle options flow."""
-        schema = energidataservice_config_option_info_schema(self.config_entry.options)
-        country = self.config_entry.options.get(
+    def get_country(self) -> str:
+        """Get country value."""
+        return self.config_entry.options.get(
             CONF_COUNTRY,
             RegionHandler.country_from_region(self.config_entry.options.get(CONF_AREA))
             or RegionHandler.country_from_region(
@@ -62,13 +61,18 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                 )
             ),
         )
+
+    async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
+        """Handle options flow."""
+        schema = energidataservice_config_option_info_schema(self.config_entry.options)
+
         return self.async_show_form(
             step_id="region",
             data_schema=vol.Schema(schema),
             errors=self._errors,
             description_placeholders={
                 "name": self.config_entry.data[CONF_NAME],
-                "country": country,
+                "country": self.get_country(),
             },
         )
 
@@ -97,7 +101,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                     errors=self._errors,
                     description_placeholders={
                         "name": self.config_entry.data[CONF_NAME],
-                        "country": self.config_entry.options[CONF_COUNTRY],
+                        "country": self.get_country(),
                     },
                 )
             else:
@@ -116,7 +120,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             errors=self._errors,
             description_placeholders={
                 "name": self.config_entry.options[CONF_NAME],
-                "country": self.config_entry.options[CONF_COUNTRY],
+                "country": self.get_country(),
             },
         )
 
@@ -146,7 +150,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             errors=self._errors,
             description_placeholders={
                 "name": self.config_entry.data[CONF_NAME],
-                "country": self.config_entry.options[CONF_COUNTRY],
+                "country": self.get_country(),
             },
         )
 
@@ -188,7 +192,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                         errors=self._errors,
                         description_placeholders={
                             "name": self.config_entry.data[CONF_NAME],
-                            "country": self.config_entry.options[CONF_COUNTRY],
+                            "country": self.get_country(),
                         },
                     )
                 else:
@@ -206,7 +210,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             errors=self._errors,
             description_placeholders={
                 "name": self.config_entry.data[CONF_NAME],
-                "country": self.config_entry.options[CONF_COUNTRY],
+                "country": self.get_country(),
             },
         )
 
