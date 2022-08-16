@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, CONF_EMAIL, CONF_API_KEY
 import voluptuous as vol
 
 from ..const import (
@@ -14,6 +14,7 @@ from ..const import (
     CONF_COUNTRY,
     CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
+    CONF_ENABLE_FORECAST,
     CONF_PRICETYPE,
     CONF_TEMPLATE,
     CONF_VAT,
@@ -91,6 +92,37 @@ def energidataservice_config_option_initial_schema(options: ConfigEntry = {}) ->
         vol.Required(CONF_COUNTRY, default=options.get(CONF_COUNTRY)): vol.In(
             RegionHandler.get_countries(True)
         ),
+    }
+
+    _LOGGER.debug("Schema: %s", schema)
+    return schema
+
+
+def energidataservice_config_option_enable_forecasts(options: ConfigEntry = {}) -> dict:
+    """Return a schema for enabling forecasts."""
+    if not options:
+        options = {CONF_ENABLE_FORECAST: False}
+
+    schema = {
+        vol.Required(
+            CONF_ENABLE_FORECAST, default=options.get(CONF_ENABLE_FORECAST) or False
+        ): bool,
+    }
+
+    _LOGGER.debug("Schema: %s", schema)
+    return schema
+
+
+def energidataservice_config_option_carnot_credentials(
+    options: ConfigEntry = {},
+) -> dict:
+    """Return a schema for Carnot credentials."""
+    if not options:
+        options = {CONF_EMAIL: None, CONF_API_KEY: None}
+
+    schema = {
+        vol.Required(CONF_EMAIL, default=options.get(CONF_EMAIL) or None): str,
+        vol.Required(CONF_API_KEY, default=options.get(CONF_API_KEY) or None): str,
     }
 
     _LOGGER.debug("Schema: %s", schema)
