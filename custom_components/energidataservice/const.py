@@ -19,6 +19,7 @@ CONF_DECIMALS = "decimals"
 CONF_PRICETYPE = "pricetype"
 CONF_TEMPLATE = "cost_template"
 CONF_VAT = "vat"
+CONF_ENABLE_FORECAST = "enable_forecast"
 
 DATA = "data"
 DEFAULT_NAME = "Energidataservice"
