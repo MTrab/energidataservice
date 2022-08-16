@@ -31,8 +31,9 @@ def prepare_data(indata, tz) -> list | None:  # pylint: disable=invalid-name
                 .replace(tzinfo=pytz.utc)
                 .astimezone(local_tz)
             )
-            tmp = INTERVAL(dataset["prediction"], local_tz.normalize(tmpdate))
-            reslist.append(tmp)
+            if not tmpdate.day == datetime.now().day:
+                tmp = INTERVAL(dataset["prediction"] / 10, local_tz.normalize(tmpdate))
+                reslist.append(tmp)
 
         return reslist
 
@@ -75,9 +76,6 @@ class Connector:
         elif resp.status == 200:
             res = await resp.json()
             self._result = res["predictions"]
-
-            _LOGGER.debug("Response for %s:", self.regionhandler.region)
-            _LOGGER.debug(self._result)
         else:
             _LOGGER.error("API returned error %s", str(resp.status))
 

@@ -100,6 +100,7 @@ def energidataservice_config_option_initial_schema(options: ConfigEntry = {}) ->
 
 def energidataservice_config_option_enable_forecasts(options: ConfigEntry = {}) -> dict:
     """Return a schema for enabling forecasts."""
+    _LOGGER.debug(options)
     if not options:
         options = {CONF_ENABLE_FORECAST: False}
 

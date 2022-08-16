@@ -264,8 +264,18 @@ class EnergidataserviceSensor(SensorEntity):
             self._api.tomorrow_calculated = False
 
         # If we haven't already calculated todays prices in local currency, do so now
-        if not self._api.today_calculated and not self._api.today is None:
+        if not self._api.today_calculated and not isinstance(
+            self._api.today, type(None)
+        ):
             await self._hass.async_add_executor_job(self._format_list, self._api.today)
+
+        # If predictions is enabled but not calculated, do so now
+        if not self._api.predictions_calculated and not isinstance(
+            self._api.predictions, type(None)
+        ):
+            await self._hass.async_add_executor_job(
+                self._format_list, self._api.predictions, False, True
+            )
 
         # Update attributes
         if self._api.today:
@@ -336,7 +346,7 @@ class EnergidataserviceSensor(SensorEntity):
             if not isinstance(self.predictions, type(None)):
                 self._attr_extra_state_attributes.update(
                     {
-                        "forecast": self.predictions,
+                        "forecast": self._add_raw(self.predictions),
                         "attribution": f"Data sourced from {self._api.source} and forecast from Carnot",
                     }
                 )
@@ -502,13 +512,13 @@ class EnergidataserviceSensor(SensorEntity):
 
         return round(price, self._decimals)
 
-    def _format_list(self, data, tomorrow=False) -> None:
+    def _format_list(self, data, tomorrow=False, predictions=False) -> None:
         """Format data as list with prices localized."""
         formatted_pricelist = []
 
         _start = datetime.now().timestamp()
+        Interval = namedtuple("Interval", "price hour")
         for i in data:
-            Interval = namedtuple("Interval", "price hour")
             price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
             formatted_pricelist.append(Interval(price, i.hour))
 
@@ -519,6 +529,10 @@ class EnergidataserviceSensor(SensorEntity):
             _calc_for = "TOMORROW"
             self._api.tomorrow_calculated = True
             self._api.tomorrow = formatted_pricelist
+        elif predictions:
+            _calc_for = "PREDICTIONS"
+            self._api.predictions_calculated = True
+            self._api.predictions = formatted_pricelist
         else:
             _calc_for = "TODAY"
             self._api.today_calculated = True

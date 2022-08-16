@@ -48,6 +48,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         self.options = dict(config_entry.options)
         config = self.config_entry.options or self.config_entry.data
         _LOGGER.debug("Config: %s", config)
+        _LOGGER.debug("Options: %s", self.options)
 
     async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
         """Handle options flow."""
@@ -82,13 +83,14 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         """Handle forecasts options flow."""
 
         self._errors = {}
+        _LOGGER.debug("Options: %s", self.options)
 
         if user_input is not None:
             self.options.update(user_input)
             _LOGGER.debug(self.options)
-
+            _LOGGER.debug("Going to credentials")
             if user_input[CONF_ENABLE_FORECAST]:
-                creds = energidataservice_config_option_carnot_credentials(user_input)
+                creds = energidataservice_config_option_carnot_credentials(self.options)
                 return self.async_show_form(
                     step_id="carnot_credentials",
                     data_schema=vol.Schema(creds),
@@ -106,7 +108,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                 )
 
         enable_forecast_schema = energidataservice_config_option_enable_forecasts(
-            user_input
+            self.config_entry.options
         )
         return self.async_show_form(
             step_id="enable_forecast",
@@ -135,7 +137,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                 data=self.options,
             )
 
-        creds = energidataservice_config_option_carnot_credentials(user_input)
+        creds = energidataservice_config_option_carnot_credentials(
+            self.config_entry.options
+        )
         return self.async_show_form(
             step_id="carnot_credentials",
             data_schema=vol.Schema(creds),
@@ -176,7 +180,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
                 if len(available_forecasts) > 0:
                     enable_forecast_schema = (
-                        energidataservice_config_option_enable_forecasts(user_input)
+                        energidataservice_config_option_enable_forecasts(self.options)
                     )
                     return self.async_show_form(
                         step_id="enable_forecast",
@@ -247,6 +251,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             user_input = {**user_input, **self.user_input}
+            self.user_input = user_input
             await self.async_set_unique_id(user_input[CONF_NAME])
 
             _LOGGER.debug(user_input)
@@ -263,10 +268,10 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
             self._async_abort_entries_match({CONF_NAME: user_input[CONF_NAME]})
             if template_ok:
-                available_forecasts = {}
+                available_forecasts = []
                 for f_endpoint in self.forecasts.forecast_endpoints:
                     if user_input[CONF_AREA]:
-                        available_forecasts.update(f_endpoint)
+                        available_forecasts.append(f_endpoint)
 
                 if len(available_forecasts) > 0:
                     enable_forecast_schema = (
@@ -274,7 +279,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             self.user_input
                         )
                     )
-                    return await self.async_show_form(
+                    return self.async_show_form(
                         step_id="enable_forecast",
                         data_schema=vol.Schema(enable_forecast_schema),
                         errors=self._errors,
@@ -311,7 +316,8 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             user_input = {**user_input, **self.user_input}
-            if self.user_input[CONF_ENABLE_FORECAST]:
+            self.user_input = user_input
+            if user_input[CONF_ENABLE_FORECAST]:
                 creds = energidataservice_config_option_carnot_credentials(user_input)
                 return self.async_show_form(
                     step_id="carnot_credentials",
@@ -332,7 +338,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         enable_forecast_schema = energidataservice_config_option_enable_forecasts(
             self.user_input
         )
-        return await self.async_show_form(
+        return self.async_show_form(
             step_id="enable_forecast",
             data_schema=vol.Schema(enable_forecast_schema),
             errors=self._errors,
@@ -358,7 +364,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options=user_input,
             )
 
-        creds = energidataservice_config_option_carnot_credentials(user_input)
+        creds = energidataservice_config_option_carnot_credentials(self.user_input)
         return self.async_show_form(
             step_id="carnot_credentials",
             data_schema=vol.Schema(creds),
