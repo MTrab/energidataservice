@@ -1,0 +1,54 @@
+{
+    "config": {
+        "error": {
+            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https:\/\/github.com\/mtrab\/energidataservice"
+        },
+        "abort": {
+            "already_configured": "Det angivede navn eksisterer allerede!"
+        },
+        "step": {
+            "user": {
+                "title": "Basis info",
+                "data": {
+                    "name": "Navn",
+                    "country": "Vælg land"
+                },
+                "description": "Indstil basis settings for sensoren"
+            },
+            "region": {
+                "title": "Detaljerede oplysninger",
+                "data": {
+                    "area": "Pris område",
+                    "vat": "Vis priser med moms",
+                    "decimals": "Decimaler",
+                    "pricetype": "Pris beregnes i",
+                    "cost_template": "Skabelon til ekstra omkostninger",
+                    "in_cent": "Vis priser i øre"
+                },
+                "description": "Set detaljer for {name} i {country}"
+            }
+        }
+    },
+    "options": {
+        "error": {
+            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https:\/\/github.com\/mtrab\/energidataservice"
+        },
+        "abort": {
+            "already_configured": "Det angivede navn eksisterer allerede!"
+        },
+        "step": {
+            "region": {
+                "title": "Detaljerede oplysninger",
+                "data": {
+                    "area": "Pris område",
+                    "vat": "Vis priser med moms",
+                    "decimals": "Decimaler",
+                    "pricetype": "Pris beregnes i",
+                    "cost_template": "Skabelon til ekstra omkostninger",
+                    "in_cent": "Vis priser i øre"
+                },
+                "description": "Set detaljer for {name} i {country}"
+            }
+        }
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "config": {
+        "step": {
+            "enable_forecast": {
+                "title": "Aktiver prognoser?",
+                "data": {
+                    "enable_forecast": "Aktiver prognoser"
+                },
+                "description": "Skal {name} i {country} vise AI genererede prognoser?"
+            },
+            "carnot_credentials": {
+                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "data": {
+                    "email": "Email",
+                    "api_key": "API-key"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "enable_forecast": {
+                "title": "Aktiver prognoser?",
+                "data": {
+                    "enable_forecast": "Aktiver prognoser"
+                },
+                "description": "Skal {name} i {country} vise AI genererede prognoser?"
+            },
+            "carnot_credentials": {
+                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "data": {
+                    "email": "Email",
+                    "api_key": "API-key"
+                }
+            }
+        }
+    }
+}

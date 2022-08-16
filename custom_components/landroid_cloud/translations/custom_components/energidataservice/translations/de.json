@@ -1,0 +1,38 @@
+{
+    "config": {
+        "step": {
+            "enable_forecast": {
+                "title": "",
+                "data": {
+                    "enable_forecast": ""
+                },
+                "description": ""
+            },
+            "carnot_credentials": {
+                "title": "",
+                "data": {
+                    "email": "E-Mail",
+                    "api_key": ""
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "enable_forecast": {
+                "title": "",
+                "data": {
+                    "enable_forecast": ""
+                },
+                "description": ""
+            },
+            "carnot_credentials": {
+                "title": "",
+                "data": {
+                    "email": "E-Mail",
+                    "api_key": ""
+                }
+            }
+        }
+    }
+}
