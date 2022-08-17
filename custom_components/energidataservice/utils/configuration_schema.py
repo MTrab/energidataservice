@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, CONF_EMAIL, CONF_API_KEY
+from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
 import voluptuous as vol
 
 from ..const import (

@@ -7,7 +7,7 @@ from typing import Any
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
-from homeassistant.core import callback, HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.template import Template
@@ -15,7 +15,6 @@ import voluptuous as vol
 
 from . import async_setup_entry, async_unload_entry
 from .connectors import Connectors
-from .forecasts import Forecast
 from .const import (
     CONF_AREA,
     CONF_COUNTRY,
@@ -24,6 +23,7 @@ from .const import (
     DEFAULT_TEMPLATE,
     DOMAIN,
 )
+from .forecasts import Forecast
 from .utils.configuration_schema import (
     energidataservice_config_option_carnot_credentials,
     energidataservice_config_option_enable_forecasts,

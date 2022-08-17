@@ -9,18 +9,17 @@ from random import randint
 
 from aiohttp import ServerDisconnectedError
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 from homeassistant.loader import async_get_integration
 from pytz import timezone
-from homeassistant.const import CONF_EMAIL, CONF_API_KEY
-
-from .forecasts import Forecast
 
 from .connectors import Connectors
 from .const import CONF_AREA, CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
+from .forecasts import Forecast
 from .utils.regionhandler import RegionHandler
 
 RANDOM_MINUTE = randint(0, 10)

@@ -7,13 +7,13 @@ import logging
 
 from homeassistant.components import sensor
 from homeassistant.components.sensor import (
-    SensorEntity,
-    SensorStateClass,
-    SensorEntityDescription,
     SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME, CONF_EMAIL, CONF_API_KEY
+from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 import homeassistant.helpers.config_validation as cv

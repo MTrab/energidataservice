@@ -139,7 +139,7 @@ class Connector:
                     continue
 
                 value = self._conv_to_float(col["Value"])
-                if isinstance(value,type(None)):
+                if isinstance(value, type(None)):
                     continue
 
                 region_data.append(
