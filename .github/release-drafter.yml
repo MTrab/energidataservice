@@ -2,7 +2,13 @@ name-template: 'v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
 change-template: '- #$NUMBER $TITLE @$AUTHOR'
 sort-direction: ascending
+exclude-labels:
+  - 'skip-changelog'
 categories:
+  - title: '🛠 Breaking Changes'
+    labels:
+      - breaking-change
+
   - title: '🚀 Features'
     labels:
       - 'feature request'
