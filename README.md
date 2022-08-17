@@ -40,7 +40,7 @@ They provide an amazing platform that is easy to use and maintain.<br/>
 To help out with the translation of this custom_component you need an account on Lokalise.<br/>
 The easiest way to get one is to [click here](https://lokalise.com/login/) then select "Log in with GitHub".<br/>
 <br/>
-When you have created your account, [clich here](https://app.lokalise.com/public/370626426292237b07f563.55061871/) to join the project on Lokalise.<br/>
+When you have created your account, [clich here](https://app.lokalise.com/public/6177700562fcdf14ea2483.26249049/) to join the project on Lokalise.<br/>
 <br/>
 Check Lokalise documentation [here](https://docs.lokalise.com/en/) - it's really good.<br/>
 <br/>
