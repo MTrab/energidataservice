@@ -1,18 +1,18 @@
 {
-    "domain": "energidataservice",
-    "name": "Energi Data Service",
-    "documentation": "https://github.com/MTrab/energidataservice/blob/master/README.md",
-    "issue_tracker": "https://github.com/MTrab/energidataservice/issues",
-    "requirements": [
-        "CurrencyConverter==0.16.13"
-    ],
     "after_dependencies": [
         "http"
     ],
     "codeowners": [
         "@MTrab"
     ],
-    "version": "0.2.7",
     "config_flow": true,
-    "iot_class": "cloud_polling"
+    "documentation": "https://github.com/MTrab/energidataservice/blob/master/README.md",
+    "domain": "energidataservice",
+    "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/MTrab/energidataservice/issues",
+    "name": "Energi Data Service",
+    "requirements": [
+        "CurrencyConverter==0.16.13"
+    ],
+    "version": "0.3.0"
 }
