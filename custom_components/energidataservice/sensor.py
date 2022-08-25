@@ -247,7 +247,11 @@ class EnergidataserviceSensor(SensorEntity):
             await self._api.update()
             if not self._api.today is None:
                 await self._hass.async_add_executor_job(
-                    self._format_list, self._api.today,False,False,self._api.connector_currency
+                    self._format_list,
+                    self._api.today,
+                    False,
+                    False,
+                    self._api.connector_currency,
                 )
 
         # Do we have valid data for tomorrow? If we do, calculate prices in local currency
@@ -255,7 +259,11 @@ class EnergidataserviceSensor(SensorEntity):
         if self.tomorrow_valid:
             if not self._api.tomorrow_calculated:
                 await self._hass.async_add_executor_job(
-                    self._format_list, self._api.tomorrow, True,False,self._api.connector_currency
+                    self._format_list,
+                    self._api.tomorrow,
+                    True,
+                    False,
+                    self._api.connector_currency,
                 )
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
@@ -274,7 +282,11 @@ class EnergidataserviceSensor(SensorEntity):
             self._api.predictions, type(None)
         ):
             await self._hass.async_add_executor_job(
-                self._format_list, self._api.predictions, False, True,self._api.predictions_currency
+                self._format_list,
+                self._api.predictions,
+                False,
+                True,
+                self._api.predictions_currency,
             )
 
         # Update attributes
@@ -527,7 +539,11 @@ class EnergidataserviceSensor(SensorEntity):
         _start = datetime.now().timestamp()
         Interval = namedtuple("Interval", "price hour")
         for i in data:
-            price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour),default_currency=default_currency)
+            price = self._calculate(
+                i.price,
+                fake_dt=dt_utils.as_local(i.hour),
+                default_currency=default_currency,
+            )
             formatted_pricelist.append(Interval(price, i.hour))
 
         _stop = datetime.now().timestamp()
