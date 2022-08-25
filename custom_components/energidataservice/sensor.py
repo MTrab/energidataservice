@@ -247,7 +247,7 @@ class EnergidataserviceSensor(SensorEntity):
             await self._api.update()
             if not self._api.today is None:
                 await self._hass.async_add_executor_job(
-                    self._format_list, self._api.today
+                    self._format_list, self._api.today,False,False,self._api.connector_currency
                 )
 
         # Do we have valid data for tomorrow? If we do, calculate prices in local currency
@@ -255,7 +255,7 @@ class EnergidataserviceSensor(SensorEntity):
         if self.tomorrow_valid:
             if not self._api.tomorrow_calculated:
                 await self._hass.async_add_executor_job(
-                    self._format_list, self._api.tomorrow, True
+                    self._format_list, self._api.tomorrow, True,False,self._api.connector_currency
                 )
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
@@ -274,7 +274,7 @@ class EnergidataserviceSensor(SensorEntity):
             self._api.predictions, type(None)
         ):
             await self._hass.async_add_executor_job(
-                self._format_list, self._api.predictions, False, True
+                self._format_list, self._api.predictions, False, True,self._api.predictions_currency
             )
 
         # Update attributes
@@ -476,14 +476,18 @@ class EnergidataserviceSensor(SensorEntity):
         """Return mean value for tomorrow."""
         return self._tomorrow_mean
 
-    def _calculate(self, value=None, fake_dt=None) -> float:
+    def _calculate(
+        self, value=None, fake_dt=None, default_currency: str = "EUR"
+    ) -> float:
         """Do price calculations"""
         if value is None:
             value = self._attr_native_value
 
         # Convert currency from EUR
-        if self._currency != "EUR":
-            value = self.region.currency.convert(value, self._currency)
+        if self._currency != default_currency:
+            value = self.region.currency.convert(
+                value, to_currency=self._currency, from_currency=default_currency
+            )
 
         # Used to inject the current hour.
         # so template can be simplified using now
@@ -512,18 +516,24 @@ class EnergidataserviceSensor(SensorEntity):
 
         return round(price, self._decimals)
 
-    def _format_list(self, data, tomorrow=False, predictions=False) -> None:
+    def _format_list(
+        self, data, tomorrow=False, predictions=False, default_currency: str = "EUR"
+    ) -> None:
         """Format data as list with prices localized."""
         formatted_pricelist = []
+
+        _LOGGER.debug("Unformatted list:\n%s", data)
 
         _start = datetime.now().timestamp()
         Interval = namedtuple("Interval", "price hour")
         for i in data:
-            price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour))
+            price = self._calculate(i.price, fake_dt=dt_utils.as_local(i.hour),default_currency=default_currency)
             formatted_pricelist.append(Interval(price, i.hour))
 
         _stop = datetime.now().timestamp()
         _ttf = round(_stop - _start, 2)
+
+        _LOGGER.debug("Formatted list:\n%s", formatted_pricelist)
 
         if tomorrow:
             _calc_for = "TOMORROW"

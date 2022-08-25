@@ -161,6 +161,8 @@ class APIConnector:
         self.today_calculated = False
         self.tomorrow_calculated = False
         self.predictions_calculated = False
+        self.connector_currency = "EUR"
+        self.forecast_currency = "EUR"
         self.listeners = []
 
         self.next_retry_delay = RETRY_MINUTES
@@ -184,6 +186,7 @@ class APIConnector:
             for endpoint in connectors:
                 module = import_module(endpoint.namespace, __name__)
                 api = module.Connector(self._region, self._client, self._tz)
+                self.connector_currency = module.DEFAULT_CURRENCY
                 await api.async_get_spotprices()
                 if api.today:
                     self.today = api.today
@@ -241,6 +244,7 @@ class APIConnector:
                     forecast_endpoint[0].namespace, __name__
                 )
                 carnot = forecast_module.Connector(self._region, self._client, self._tz)
+                self.predictions_currency = forecast_module.DEFAULT_CURRENCY
                 self.predictions = await carnot.async_get_forecast(
                     self._carnot_apikey, self._carnot_user
                 )
