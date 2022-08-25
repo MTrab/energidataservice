@@ -21,7 +21,7 @@ class Forecast:
         """Initialize forecast handler."""
 
         self._forecasts = []
-        for module in listdir(f"{dirname(__file__)}"):
+        for module in sorted(listdir(f"{dirname(__file__)}")):
             mod_path = f"{dirname(__file__)}/{module}"
             if (
                 isdir(mod_path)
