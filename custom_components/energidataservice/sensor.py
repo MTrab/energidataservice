@@ -501,11 +501,11 @@ class EnergidataserviceSensor(SensorEntity):
 
         # The api returns prices in MWh
         if self._price_type in ("MWh", "mWh"):
-            price = template_value / 1000 + value * float(1 + self._vat)
+            price = ((template_value / 1000) + value) * float(1 + self._vat)
         else:
-            price = template_value + value / UNIT_TO_MULTIPLIER[self._price_type] * (
-                float(1 + self._vat)
-            )
+            price = (
+                template_value + (value / UNIT_TO_MULTIPLIER[self._price_type])
+            ) * (float(1 + self._vat))
 
         if self._cent:
             price = price * CENT_MULTIPLIER
