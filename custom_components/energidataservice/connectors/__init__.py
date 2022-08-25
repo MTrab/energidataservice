@@ -21,7 +21,7 @@ class Connectors:
         """Initialize connector handler."""
 
         self._connectors = []
-        for module in listdir(f"{dirname(__file__)}"):
+        for module in sorted(listdir(f"{dirname(__file__)}")):
             mod_path = f"{dirname(__file__)}/{module}"
             if isdir(mod_path) and not module.endswith("__pycache__"):
                 Connector = namedtuple("Connector", "module namespace regions")
