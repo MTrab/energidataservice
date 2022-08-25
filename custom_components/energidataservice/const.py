@@ -20,6 +20,8 @@ CONF_PRICETYPE = "pricetype"
 CONF_TEMPLATE = "cost_template"
 CONF_VAT = "vat"
 CONF_ENABLE_FORECAST = "enable_forecast"
+CONF_ENABLE_HELPER_BEFORE = "enable_helper_before"
+CONF_ENABLE_HELPER_DURATION = "enable_helper_duration"
 
 DATA = "data"
 DEFAULT_NAME = "Energidataservice"

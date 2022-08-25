@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
-import voluptuous as vol
+from homeassistant.helpers.config_validation import (
+    TIME_CONDITION_SCHEMA,
+    NUMERIC_STATE_THRESHOLD_SCHEMA,
+)
 
 from ..const import (
     CONF_AREA,
@@ -15,12 +19,19 @@ from ..const import (
     CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
     CONF_ENABLE_FORECAST,
+    CONF_ENABLE_HELPER_BEFORE,
+    CONF_ENABLE_HELPER_DURATION,
     CONF_PRICETYPE,
     CONF_TEMPLATE,
     CONF_VAT,
     UNIT_TO_MULTIPLIER,
 )
 from .regionhandler import RegionHandler
+
+HELPER_MAPPER = {
+    CONF_ENABLE_HELPER_BEFORE: TIME_CONDITION_SCHEMA,
+    CONF_ENABLE_HELPER_DURATION: NUMERIC_STATE_THRESHOLD_SCHEMA,
+}
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -98,16 +109,38 @@ def energidataservice_config_option_initial_schema(options: ConfigEntry = {}) ->
     return schema
 
 
-def energidataservice_config_option_enable_forecasts(options: ConfigEntry = {}) -> dict:
+def energidataservice_config_option_extras(options: ConfigEntry = {}) -> dict:
     """Return a schema for enabling forecasts."""
     _LOGGER.debug(options)
     if not options:
-        options = {CONF_ENABLE_FORECAST: False}
+        options = {
+            CONF_ENABLE_FORECAST: False,
+            CONF_ENABLE_HELPER_BEFORE: False,
+            CONF_ENABLE_HELPER_DURATION: False,
+        }
 
     schema = {
         vol.Required(
             CONF_ENABLE_FORECAST, default=options.get(CONF_ENABLE_FORECAST) or False
         ): bool,
+        vol.Required(
+            CONF_ENABLE_HELPER_BEFORE,
+            default=options.get(CONF_ENABLE_HELPER_BEFORE) or False,
+        ): bool,
+        vol.Required(
+            CONF_ENABLE_HELPER_DURATION,
+            default=options.get(CONF_ENABLE_HELPER_DURATION) or False,
+        ): bool,
+    }
+
+    _LOGGER.debug("Schema: %s", schema)
+    return schema
+
+
+def energidataservice_config_option_helper(options: ConfigEntry, helper: str) -> dict:
+    """Return a schema for enabling forecasts."""
+    schema = {
+        vol.Required(helper, default=options.get(helper) or None): HELPER_MAPPER[helper],
     }
 
     _LOGGER.debug("Schema: %s", schema)

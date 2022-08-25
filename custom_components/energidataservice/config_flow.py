@@ -19,6 +19,8 @@ from .const import (
     CONF_AREA,
     CONF_COUNTRY,
     CONF_ENABLE_FORECAST,
+    CONF_ENABLE_HELPER_BEFORE,
+    CONF_ENABLE_HELPER_DURATION,
     CONF_TEMPLATE,
     DEFAULT_TEMPLATE,
     DOMAIN,
@@ -26,7 +28,8 @@ from .const import (
 from .forecasts import Forecast
 from .utils.configuration_schema import (
     energidataservice_config_option_carnot_credentials,
-    energidataservice_config_option_enable_forecasts,
+    energidataservice_config_option_extras,
+    energidataservice_config_option_helper,
     energidataservice_config_option_info_schema,
     energidataservice_config_option_initial_schema,
 )
@@ -81,29 +84,50 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         await async_unload_entry(self.hass, self.config_entry)
         await async_setup_entry(self.hass, self.config_entry)
 
-    async def async_step_enable_forecast(
+    async def async_step_enable_extras(
         self, user_input: Any | None = None
     ) -> FlowResult:
-        """Handle forecasts options flow."""
+        """Handle extras options flow."""
 
         self._errors = {}
         _LOGGER.debug("Options: %s", self.options)
 
         if user_input is not None:
             self.options.update(user_input)
-            _LOGGER.debug(self.options)
-            _LOGGER.debug("Going to credentials")
-            if user_input[CONF_ENABLE_FORECAST]:
-                creds = energidataservice_config_option_carnot_credentials(self.options)
-                return self.async_show_form(
-                    step_id="carnot_credentials",
-                    data_schema=vol.Schema(creds),
-                    errors=self._errors,
-                    description_placeholders={
-                        "name": self.config_entry.data[CONF_NAME],
-                        "country": self.get_country(),
-                    },
-                )
+            if user_input in [
+                CONF_ENABLE_FORECAST,
+                CONF_ENABLE_HELPER_BEFORE,
+                CONF_ENABLE_HELPER_DURATION,
+            ]:
+                if user_input[CONF_ENABLE_FORECAST]:
+                    creds = energidataservice_config_option_carnot_credentials(
+                        self.options
+                    )
+                    return self.async_show_form(
+                        step_id="carnot_credentials",
+                        data_schema=vol.Schema(creds),
+                        errors=self._errors,
+                        description_placeholders={
+                            "name": self.config_entry.data[CONF_NAME],
+                            "country": self.get_country(),
+                        },
+                    )
+
+                if user_input[CONF_ENABLE_HELPER_BEFORE]:
+                    creds = energidataservice_config_option_helper(
+                        self.options, CONF_ENABLE_HELPER_BEFORE
+                    )
+                    return self.async_show_form(
+                        step_id="enable_helper_before",
+                        data_schema=vol.Schema(creds),
+                        errors=self._errors,
+                        description_placeholders={
+                            "name": self.config_entry.data[CONF_NAME],
+                            "country": self.get_country(),
+                        },
+                    )
+
+                return True
             else:
                 async_call_later(self.hass, 2, self._do_update)
                 return self.async_create_entry(
@@ -111,12 +135,12 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                     data=self.options,
                 )
 
-        enable_forecast_schema = energidataservice_config_option_enable_forecasts(
+        enable_extra_schema = energidataservice_config_option_extras(
             self.config_entry.options
         )
         return self.async_show_form(
-            step_id="enable_forecast",
-            data_schema=vol.Schema(enable_forecast_schema),
+            step_id="enable_extras",
+            data_schema=vol.Schema(enable_extra_schema),
             errors=self._errors,
             description_placeholders={
                 "name": self.config_entry.options[CONF_NAME],
@@ -128,6 +152,36 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         self, user_input: Any | None = None
     ) -> FlowResult:
         """Handle Carnot credentials."""
+
+        self._errors = {}
+
+        if user_input is not None:
+            self.options.update(user_input)
+            _LOGGER.debug(self.options)
+
+            async_call_later(self.hass, 2, self._do_update)
+            return self.async_create_entry(
+                title=self.options.get(CONF_NAME),
+                data=self.options,
+            )
+
+        creds = energidataservice_config_option_carnot_credentials(
+            self.config_entry.options
+        )
+        return self.async_show_form(
+            step_id="carnot_credentials",
+            data_schema=vol.Schema(creds),
+            errors=self._errors,
+            description_placeholders={
+                "name": self.config_entry.data[CONF_NAME],
+                "country": self.get_country(),
+            },
+        )
+
+    async def async_step_enable_helper_before(
+        self, user_input: Any | None = None
+    ) -> FlowResult:
+        """Handle before helper setup credentials."""
 
         self._errors = {}
 
@@ -183,12 +237,12 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                         available_forecasts.append(f_endpoint)
 
                 if len(available_forecasts) > 0:
-                    enable_forecast_schema = (
-                        energidataservice_config_option_enable_forecasts(self.options)
+                    enable_extra_schema = energidataservice_config_option_extras(
+                        self.options
                     )
                     return self.async_show_form(
                         step_id="enable_forecast",
-                        data_schema=vol.Schema(enable_forecast_schema),
+                        data_schema=vol.Schema(enable_extra_schema),
                         errors=self._errors,
                         description_placeholders={
                             "name": self.config_entry.data[CONF_NAME],
@@ -278,14 +332,12 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         available_forecasts.append(f_endpoint)
 
                 if len(available_forecasts) > 0:
-                    enable_forecast_schema = (
-                        energidataservice_config_option_enable_forecasts(
-                            self.user_input
-                        )
+                    enable_extra_schema = energidataservice_config_option_extras(
+                        self.user_input
                     )
                     return self.async_show_form(
                         step_id="enable_forecast",
-                        data_schema=vol.Schema(enable_forecast_schema),
+                        data_schema=vol.Schema(enable_extra_schema),
                         errors=self._errors,
                         description_placeholders={
                             "name": self.user_input[CONF_NAME],
@@ -339,12 +391,10 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options=user_input,
                 )
 
-        enable_forecast_schema = energidataservice_config_option_enable_forecasts(
-            self.user_input
-        )
+        enable_extra_schema = energidataservice_config_option_extras(self.user_input)
         return self.async_show_form(
             step_id="enable_forecast",
-            data_schema=vol.Schema(enable_forecast_schema),
+            data_schema=vol.Schema(enable_extra_schema),
             errors=self._errors,
             description_placeholders={
                 "name": self.user_input[CONF_NAME],
