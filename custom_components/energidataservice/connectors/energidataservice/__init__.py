@@ -15,7 +15,9 @@ BASE_URL = "https://api.energidataservice.dk/dataset/elspotprices"
 
 SOURCE_NAME = "Energi Data Service"
 
-__all__ = ["REGIONS", "Connector"]
+DEFAULT_CURRENCY = "EUR"
+
+__all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY"]
 
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name

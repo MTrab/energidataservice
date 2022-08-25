@@ -32,7 +32,7 @@ def prepare_data(indata, tz) -> list | None:  # pylint: disable=invalid-name
                 .astimezone(local_tz)
             )
             if not tmpdate.day == datetime.now().day:
-                tmp = INTERVAL(dataset["prediction"] / 10, local_tz.normalize(tmpdate))
+                tmp = INTERVAL(dataset["prediction"], local_tz.normalize(tmpdate))
                 reslist.append(tmp)
 
         return reslist
