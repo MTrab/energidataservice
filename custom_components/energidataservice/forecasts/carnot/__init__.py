@@ -69,9 +69,10 @@ class Connector:
             _LOGGER.error("API returned error 400, Bad request!")
         elif resp.status == 404:
             _LOGGER.error("API returned error 404, Not found!")
-        elif resp.status == 422:
+        elif resp.status == 422 or resp.status == 401:
             _LOGGER.error(
-                "API returned error 422, Validation error - check your credentials!"
+                "API returned error %s, Validation error - check your credentials!",
+                str(resp.status),
             )
         elif resp.status == 200:
             res = await resp.json()
@@ -79,7 +80,11 @@ class Connector:
         else:
             _LOGGER.error("API returned error %s", str(resp.status))
 
-        return prepare_data(self._result, self._tz)
+        return (
+            prepare_data(self._result, self._tz)
+            if not isinstance(self._result, type(None))
+            else None
+        )
 
     @staticmethod
     def _header(apikey: str, email: str) -> dict:
