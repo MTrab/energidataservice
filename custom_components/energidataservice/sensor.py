@@ -359,7 +359,8 @@ class EnergidataserviceSensor(SensorEntity):
                 self._attr_extra_state_attributes.update(
                     {
                         "forecast": self._add_raw(self.predictions),
-                        "attribution": f"Data sourced from {self._api.source} and forecast from Carnot",
+                        "attribution": f"Data sourced from {self._api.source} "
+                        "and forecast from Carnot",
                     }
                 )
         else:
