@@ -277,6 +277,10 @@ class EnergidataserviceSensor(SensorEntity):
         ):
             await self._hass.async_add_executor_job(self._format_list, self._api.today)
 
+        # If predictions is enabled but no data exists, fetch dataset
+        if self._api.forecast and isinstance(self._api.predictions, type(None)):
+            await self._api.update_carnot()
+
         # If predictions is enabled but not calculated, do so now
         if not self._api.predictions_calculated and not isinstance(
             self._api.predictions, type(None)
@@ -287,6 +291,12 @@ class EnergidataserviceSensor(SensorEntity):
                 False,
                 True,
                 self._api.predictions_currency,
+            )
+        else:
+            _LOGGER.debug(
+                "Predictions: %s (%s)",
+                self._api.predictions,
+                type(self._api.predictions),
             )
 
         # Update attributes
@@ -359,7 +369,8 @@ class EnergidataserviceSensor(SensorEntity):
                 self._attr_extra_state_attributes.update(
                     {
                         "forecast": self._add_raw(self.predictions),
-                        "attribution": f"Data sourced from {self._api.source} and forecast from Carnot",
+                        "attribution": f"Data sourced from {self._api.source} "
+                        "and forecast from Carnot",
                     }
                 )
         else:
