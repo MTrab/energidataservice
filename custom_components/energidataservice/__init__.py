@@ -159,7 +159,7 @@ class APIConnector:
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize Energi Data Service Connector."""
         self._connectors = Connectors()
-        self._forecasts = Forecast()
+        self.forecasts = Forecast()
         self.hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
@@ -167,10 +167,11 @@ class APIConnector:
 
         self.today = None
         self.tomorrow = None
-        self.predictions = None
         self.today_calculated = False
         self.tomorrow_calculated = False
+        self.predictions = None
         self.predictions_calculated = False
+        self.predictions_currency = None
         self.connector_currency = "EUR"
         self.forecast_currency = "EUR"
         self.listeners = []
@@ -184,7 +185,7 @@ class APIConnector:
         )
         self._tz = hass.config.time_zone
         self._source = None
-        self._forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
+        self.forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
         self._carnot_user = entry.options.get(CONF_EMAIL) or None
         self._carnot_apikey = entry.options.get(CONF_API_KEY) or None
 
@@ -253,9 +254,9 @@ class APIConnector:
 
     async def update_carnot(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Update Carnot data if enabled."""
-        if self._forecast:
+        if self.forecast:
             self.predictions_calculated = False
-            forecast_endpoint = self._forecasts.get_endpoint(self._region.region)
+            forecast_endpoint = self.forecasts.get_endpoint(self._region.region)
             forecast_module = import_module(forecast_endpoint[0].namespace, __name__)
             carnot = forecast_module.Connector(self._region, self._client, self._tz)
             self.predictions_currency = forecast_module.DEFAULT_CURRENCY
