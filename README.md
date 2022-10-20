@@ -7,6 +7,8 @@ This is a custom component for Home Assistant to integrate Day Ahead spotprices 
 
 For Tips & Tricks, see the [wiki pages](https://github.com/MTrab/energidataservice/wiki)
 
+PLEASE NOTE!! This integration CANNOT be used with fixed price contracts! Perhaps in a future release, but NOT as it is right now.
+
 ### Installation:
 
 #### HACS
