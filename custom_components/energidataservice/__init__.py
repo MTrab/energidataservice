@@ -22,11 +22,11 @@ from .const import CONF_AREA, CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
 from .forecasts import Forecast
 from .utils.regionhandler import RegionHandler
 
-RANDOM_MINUTE = randint(0, 10)
+RANDOM_MINUTE = randint(0, 20)
 RANDOM_SECOND = randint(0, 59)
 
-RETRY_MINUTES = 10
-MAX_RETRY_MINUTES = 120
+RETRY_MINUTES = 5
+MAX_RETRY_MINUTES = 60
 
 CARNOT_UPDATE = timedelta(minutes=30)
 
