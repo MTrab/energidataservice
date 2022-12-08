@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from functools import partial
 from importlib import import_module
+import json
 from logging import getLogger
 from random import randint
 
@@ -96,6 +97,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry,
     )
     hass.data[DOMAIN][entry.entry_id] = api
+    use_forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
 
     async def new_day(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Handle data on new day."""
@@ -144,7 +146,8 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
 
-    async_call_later(hass, CARNOT_UPDATE, update_carnot)
+    if use_forecast:
+        async_call_later(hass, CARNOT_UPDATE, update_carnot)
 
     api.listeners.append(update_tomorrow)
     api.listeners.append(update_new_hour)
@@ -190,7 +193,7 @@ class APIConnector:
         self._carnot_apikey = entry.options.get(CONF_API_KEY) or None
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
-        """Fetch latest prices from Energi Data Service API"""
+        """Fetch latest prices from API"""
         connectors = self._connectors.get_connectors(self._region.region)
 
         try:
@@ -213,7 +216,9 @@ class APIConnector:
 
             self.today_calculated = False
             self.tomorrow_calculated = False
+
             if not self.tomorrow:
+                _LOGGER.debug("No data found for tomorrow")
                 self._tomorrow_valid = False
                 self.tomorrow = None
 
@@ -245,6 +250,7 @@ class APIConnector:
                         "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
                     )
             else:
+                _LOGGER.debug("Tomorrow:\n%s",json.dumps(self.tomorrow,indent=2,default=str))
                 self.retry_count = 0
                 self._tomorrow_valid = True
 
