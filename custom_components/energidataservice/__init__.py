@@ -131,7 +131,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     update_tomorrow = async_track_time_change(
         hass,
         get_new_data,
-        hour=13,
+        hour=12,  # UTC time!!
         minute=RANDOM_MINUTE,
         second=RANDOM_SECOND,
     )
@@ -222,10 +222,14 @@ class APIConnector:
                 self._tomorrow_valid = False
                 self.tomorrow = None
 
-                midnight = datetime.strptime("23:59:59", "%H:%M:%S")
-                refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
                 local_tz = timezone(self.hass.config.time_zone)
-                now = datetime.now().astimezone(local_tz)
+
+                midnight = datetime.strptime("23:59:59", "%H:%M:%S")
+                refresh = datetime.strptime(
+                    self.next_data_refresh, "%H:%M:%S"
+                )#.astimezone(local_tz)
+                now = datetime.now()#.astimezone(local_tz)
+
                 _LOGGER.debug(
                     "Now: %s:%s:%s",
                     f"{now.hour:02d}",
@@ -250,7 +254,9 @@ class APIConnector:
                         "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
                     )
             else:
-                _LOGGER.debug("Tomorrow:\n%s",json.dumps(self.tomorrow,indent=2,default=str))
+                _LOGGER.debug(
+                    "Tomorrow:\n%s", json.dumps(self.tomorrow, indent=2, default=str)
+                )
                 self.retry_count = 0
                 self._tomorrow_valid = True
 
