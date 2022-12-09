@@ -222,7 +222,7 @@ class APIConnector:
                 self._tomorrow_valid = False
                 self.tomorrow = None
 
-                local_tz = timezone(self.hass.config.time_zone)
+                # local_tz = timezone(self.hass.config.time_zone)
 
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
                 refresh = datetime.strptime(
