@@ -202,15 +202,27 @@ class APIConnector:
                 api = module.Connector(self._region, self._client, self._tz)
                 self.connector_currency = module.DEFAULT_CURRENCY
                 await api.async_get_spotprices()
-                if api.today:
+                if api.today and not self.today:
                     self.today = api.today
-                    self.tomorrow = api.tomorrow
                     _LOGGER.debug(
-                        "%s got values from %s (namespace='%s'), breaking loop",
+                        "%s got values from %s (namespace='%s')",
                         self._region.region,
                         endpoint.module,
                         endpoint.namespace,
                     )
+                    self._source = module.SOURCE_NAME
+
+                if api.tomorrow and not self.tomorrow:
+                    self.today = api.today
+                    self.tomorrow = api.tomorrow
+
+                    _LOGGER.debug(
+                        "%s got values from %s (namespace='%s')",
+                        self._region.region,
+                        endpoint.module,
+                        endpoint.namespace,
+                    )
+
                     self._source = module.SOURCE_NAME
                     break
 
@@ -227,8 +239,8 @@ class APIConnector:
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
                 refresh = datetime.strptime(
                     self.next_data_refresh, "%H:%M:%S"
-                )#.astimezone(local_tz)
-                now = datetime.now()#.astimezone(local_tz)
+                )  # .astimezone(local_tz)
+                now = datetime.now()  # .astimezone(local_tz)
 
                 _LOGGER.debug(
                     "Now: %s:%s:%s",
