@@ -12,7 +12,8 @@
     "issue_tracker": "https://github.com/MTrab/energidataservice/issues",
     "name": "Energi Data Service",
     "requirements": [
-        "CurrencyConverter==0.17.3"
+        "CurrencyConverter==0.17.3",
+        "pyeloverblik==0.3.1"
     ],
     "version": "0.4.4"
 }
