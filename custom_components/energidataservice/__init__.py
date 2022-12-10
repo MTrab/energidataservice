@@ -288,6 +288,12 @@ class APIConnector:
                 self._carnot_apikey, self._carnot_user
             )
 
+            self.predictions[:] = (
+                value
+                for value in self.predictions
+                if value.hour.day >= (datetime.now() + timedelta(days=1)).day
+            )
+
             if self._tomorrow_valid:
                 # Remove tomorrows predictions, as we have the actual values
                 self.predictions[:] = (
