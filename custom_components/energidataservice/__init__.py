@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from functools import partial
 from importlib import import_module
+import json
 from logging import getLogger
 from random import randint
 
@@ -22,11 +23,11 @@ from .const import CONF_AREA, CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
 from .forecasts import Forecast
 from .utils.regionhandler import RegionHandler
 
-RANDOM_MINUTE = randint(0, 10)
+RANDOM_MINUTE = randint(0, 20)
 RANDOM_SECOND = randint(0, 59)
 
-RETRY_MINUTES = 10
-MAX_RETRY_MINUTES = 120
+RETRY_MINUTES = 5
+MAX_RETRY_MINUTES = 60
 
 CARNOT_UPDATE = timedelta(minutes=30)
 
@@ -96,6 +97,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry,
     )
     hass.data[DOMAIN][entry.entry_id] = api
+    use_forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
 
     async def new_day(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Handle data on new day."""
@@ -129,7 +131,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     update_tomorrow = async_track_time_change(
         hass,
         get_new_data,
-        hour=13,
+        hour=12,  # UTC time!!
         minute=RANDOM_MINUTE,
         second=RANDOM_SECOND,
     )
@@ -144,7 +146,8 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
 
-    async_call_later(hass, CARNOT_UPDATE, update_carnot)
+    if use_forecast:
+        async_call_later(hass, CARNOT_UPDATE, update_carnot)
 
     api.listeners.append(update_tomorrow)
     api.listeners.append(update_new_hour)
@@ -190,7 +193,7 @@ class APIConnector:
         self._carnot_apikey = entry.options.get(CONF_API_KEY) or None
 
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
-        """Fetch latest prices from Energi Data Service API"""
+        """Fetch latest prices from API"""
         connectors = self._connectors.get_connectors(self._region.region)
 
         try:
@@ -199,28 +202,46 @@ class APIConnector:
                 api = module.Connector(self._region, self._client, self._tz)
                 self.connector_currency = module.DEFAULT_CURRENCY
                 await api.async_get_spotprices()
-                if api.today:
+                if api.today and not self.today:
                     self.today = api.today
-                    self.tomorrow = api.tomorrow
                     _LOGGER.debug(
-                        "%s got values from %s (namespace='%s'), breaking loop",
+                        "%s got values from %s (namespace='%s')",
                         self._region.region,
                         endpoint.module,
                         endpoint.namespace,
                     )
                     self._source = module.SOURCE_NAME
+
+                if api.tomorrow and not self.tomorrow:
+                    self.today = api.today
+                    self.tomorrow = api.tomorrow
+
+                    _LOGGER.debug(
+                        "%s got values from %s (namespace='%s')",
+                        self._region.region,
+                        endpoint.module,
+                        endpoint.namespace,
+                    )
+
+                    self._source = module.SOURCE_NAME
                     break
 
             self.today_calculated = False
             self.tomorrow_calculated = False
+
             if not self.tomorrow:
+                _LOGGER.debug("No data found for tomorrow")
                 self._tomorrow_valid = False
                 self.tomorrow = None
 
+                # local_tz = timezone(self.hass.config.time_zone)
+
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
-                refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
-                local_tz = timezone(self.hass.config.time_zone)
-                now = datetime.now().astimezone(local_tz)
+                refresh = datetime.strptime(
+                    self.next_data_refresh, "%H:%M:%S"
+                )  # .astimezone(local_tz)
+                now = datetime.now()  # .astimezone(local_tz)
+
                 _LOGGER.debug(
                     "Now: %s:%s:%s",
                     f"{now.hour:02d}",
@@ -245,6 +266,9 @@ class APIConnector:
                         "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
                     )
             else:
+                _LOGGER.debug(
+                    "Tomorrow:\n%s", json.dumps(self.tomorrow, indent=2, default=str)
+                )
                 self.retry_count = 0
                 self._tomorrow_valid = True
 

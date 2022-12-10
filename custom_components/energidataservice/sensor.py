@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections import namedtuple
 from datetime import datetime
+import json
 import logging
 
 from homeassistant.components import sensor
@@ -545,7 +546,19 @@ class EnergidataserviceSensor(SensorEntity):
         """Format data as list with prices localized."""
         formatted_pricelist = []
 
-        _LOGGER.debug("Unformatted list:\n%s", data)
+        list_for = "TODAY"
+
+        if tomorrow:
+            list_for = "TOMORROW"
+
+        if predictions:
+            list_for = "FORECASTS"
+
+        _LOGGER.debug(
+            "Unformatted list for '%s':\n%s",
+            list_for,
+            json.dumps(data, indent=2, default=str),
+        )
 
         _start = datetime.now().timestamp()
         Interval = namedtuple("Interval", "price hour")
@@ -560,7 +573,11 @@ class EnergidataserviceSensor(SensorEntity):
         _stop = datetime.now().timestamp()
         _ttf = round(_stop - _start, 2)
 
-        _LOGGER.debug("Formatted list:\n%s", formatted_pricelist)
+        _LOGGER.debug(
+            "Formatted list for '%s':\n%s",
+            list_for,
+            json.dumps(formatted_pricelist, indent=2, default=str),
+        )
 
         if tomorrow:
             _calc_for = "TOMORROW"
