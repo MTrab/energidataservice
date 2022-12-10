@@ -1,104 +1,60 @@
-"""Carnot forecast connector"""
+"""Eloverblik tariff connector"""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 from logging import getLogger
+import sys
 
-import pytz
+from pyeloverblik.eloverblik import Eloverblik
+import requests
 
-from ...const import INTERVAL
-from .regions import REGIONS
 
 _LOGGER = getLogger(__name__)
 
-BASE_URL = "https://whale-app-dquqw.ondigitalocean.app/openapi/get_predict"
+SOURCE_NAME = "eloverblik"
 
-SOURCE_NAME = "Carnot"
-DEFAULT_CURRENCY = "DKK"
-DEFAULT_UNIT = "MWh"
+DATA_SCHEME = ""
 
-__all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "DEFAULT_UNIT"]
-
-
-def prepare_data(indata, tz) -> list | None:  # pylint: disable=invalid-name
-    """Get today prices."""
-    local_tz = pytz.timezone(tz)
-    reslist = []
-    if not isinstance(indata, type(None)):
-        for dataset in indata:
-            tmpdate = (
-                datetime.fromisoformat(dataset["utctime"])
-                .replace(tzinfo=pytz.utc)
-                .astimezone(local_tz)
-            )
-            if not tmpdate.day == datetime.now().day:
-                tmp = INTERVAL(dataset["prediction"], local_tz.normalize(tmpdate))
-                reslist.append(tmp)
-
-        return reslist
-
-    return None
+__all__ = ["Connector","DATA_SCHEME"]
 
 
 class Connector:
-    """Carnot forecast API"""
+    """Eloverblik API"""
 
-    def __init__(
-        self, regionhandler, client, tz  # pylint: disable=invalid-name
-    ) -> None:
-        """Init API connection to Carnot"""
-        self.regionhandler = regionhandler
-        self.client = client
-        self._result = {}
-        self._tz = tz
+    def __init__(self, refresh_token: str, metering_point: str) -> None:
+        """Init API connection to Eloverblik"""
+        self.client = Eloverblik(refresh_token)
+        self._metering_point = metering_point
+        self._tariff_data = None
 
-    async def async_get_forecast(self, apikey: str, email: str) -> list | None:
-        """Fetch forecast data from API."""
-        self._result = None
-        headers = self._header(apikey, email)
-        url = self._prepare_url(BASE_URL)
-        _LOGGER.debug(
-            "Request for '%s' at Carnot API URL: '%s' with headers %s",
-            self.regionhandler.region,
-            url,
-            headers,
-        )
-        resp = await self.client.get(url, headers=headers)
+    @property
+    def tariffs(self):
+        """Return the tariff data."""
+        _LOGGER.debug(self._tariff_data)
+        return self._tariff_data
 
-        if resp.status == 400:
-            _LOGGER.error("API returned error 400, Bad request!")
-        elif resp.status == 404:
-            _LOGGER.error("API returned error 404, Not found!")
-        elif resp.status == 422 or resp.status == 401:
-            _LOGGER.error(
-                "API returned error %s, Validation error - check your credentials!",
-                str(resp.status),
-            )
-        elif resp.status == 200:
-            res = await resp.json()
-            self._result = res["predictions"]
-        else:
-            _LOGGER.error("API returned error %s", str(resp.status))
+    async def async_get_tariffs(self):
+        """Get tariff from Eloverblik API"""
+        try:
+            tariff_data = self.client.get_tariffs(self._metering_point)
+            if tariff_data.status == 200:
+                self._tariff_data = tariff_data
+            else:
+                _LOGGER.warning(
+                    "Error from eloverblik when getting tariff data: %s - %s",
+                    tariff_data.status,
+                    tariff_data.detailed_status,
+                )
+        except requests.exceptions.HTTPError as err:
+            message = None
+            if err.response.status_code == 401:
+                message = "Unauthorized error while accessing the Eloverblik API!"
+            else:
+                exc = sys.exc_info()[1]
+                message = f"Exception: {exc}"
 
-        return (
-            prepare_data(self._result, self._tz)
-            if not isinstance(self._result, type(None))
-            else None
-        )
+            _LOGGER.warning(message)
+        except:  # pylint: disable=bare-except
+            exc = sys.exc_info()[1]
+            _LOGGER.warning("Exception: %s", exc)
 
-    @staticmethod
-    def _header(apikey: str, email: str) -> dict:
-        """Create default request header"""
-        data = {
-            "User-Agent": "HomeAssistant/Energidataservice",
-            "Content-Type": "application/json",
-            "apikey": apikey,
-            "username": email,
-        }
-        return data
-
-    def _prepare_url(self, url: str) -> str:
-        """Prepare and format the URL for the API request."""
-
-        region = f"region={str(self.regionhandler.region).lower()}"
-        return f"{url}?{region}&energysource=spotprice&daysahead=7"
+        _LOGGER.debug("Done fetching tariff data from Eloverblik")
