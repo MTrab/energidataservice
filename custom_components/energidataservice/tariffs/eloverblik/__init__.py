@@ -12,10 +12,24 @@ _LOGGER = getLogger(__name__)
 
 SOURCE_NAME = "eloverblik"
 
-DATA_SCHEME = ""
 
-__all__ = ["Connector","DATA_SCHEME"]
+__all__ = ["Connector","config_scheme"]
 
+
+def config_scheme(
+    options: ConfigEntry = {},
+) -> dict:
+    """Return a schema for Carnot credentials."""
+    if not options:
+        options = {CONF_EMAIL: None, CONF_API_KEY: None}
+
+    schema = {
+        vol.Required(CONF_EMAIL, default=options.get(CONF_EMAIL) or None): str,
+        vol.Required(CONF_API_KEY, default=options.get(CONF_API_KEY) or None): str,
+    }
+
+    _LOGGER.debug("Schema: %s", schema)
+    return schema
 
 class Connector:
     """Eloverblik API"""

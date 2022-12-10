@@ -26,11 +26,11 @@ class Forecast:
                 and not module.endswith("__pycache__")
                 and not mod_path.endswith(".disabled")
             ):
-                Endpoint = namedtuple("Endpoint", "module namespace DATA_SCHEME")
+                Endpoint = namedtuple("Endpoint", "module namespace config_scheme")
                 _LOGGER.debug("Adding module %s", module)
                 api_ns = f".{module}"
                 mod = import_module(api_ns, __name__)
-                con = Endpoint(module, f".tariffs{api_ns}", mod.DATA_SCHEME)
+                con = Endpoint(module, f".tariffs{api_ns}", mod.config_scheme)
 
                 self._tariffs.append(con)
 
