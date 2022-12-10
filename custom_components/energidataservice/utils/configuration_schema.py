@@ -8,10 +8,6 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
-from homeassistant.helpers.config_validation import (
-    TIME_CONDITION_SCHEMA,
-    NUMERIC_STATE_THRESHOLD_SCHEMA,
-)
 
 from ..const import (
     CONF_AREA,
@@ -19,19 +15,16 @@ from ..const import (
     CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
     CONF_ENABLE_FORECAST,
-    CONF_ENABLE_HELPER_BEFORE,
-    CONF_ENABLE_HELPER_DURATION,
+    CONF_ENABLE_TARIFFS,
+    CONF_METERING_POINT,
     CONF_PRICETYPE,
+    CONF_REFRESH_TOKEN,
     CONF_TEMPLATE,
     CONF_VAT,
     UNIT_TO_MULTIPLIER,
 )
 from .regionhandler import RegionHandler
 
-HELPER_MAPPER = {
-    CONF_ENABLE_HELPER_BEFORE: TIME_CONDITION_SCHEMA,
-    CONF_ENABLE_HELPER_DURATION: NUMERIC_STATE_THRESHOLD_SCHEMA,
-}
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -115,8 +108,7 @@ def energidataservice_config_option_extras(options: ConfigEntry = {}) -> dict:
     if not options:
         options = {
             CONF_ENABLE_FORECAST: False,
-            CONF_ENABLE_HELPER_BEFORE: False,
-            CONF_ENABLE_HELPER_DURATION: False,
+            CONF_ENABLE_TARIFFS: False,
         }
 
     schema = {
@@ -124,23 +116,8 @@ def energidataservice_config_option_extras(options: ConfigEntry = {}) -> dict:
             CONF_ENABLE_FORECAST, default=options.get(CONF_ENABLE_FORECAST) or False
         ): bool,
         vol.Required(
-            CONF_ENABLE_HELPER_BEFORE,
-            default=options.get(CONF_ENABLE_HELPER_BEFORE) or False,
+            CONF_ENABLE_TARIFFS, default=options.get(CONF_ENABLE_TARIFFS) or False
         ): bool,
-        vol.Required(
-            CONF_ENABLE_HELPER_DURATION,
-            default=options.get(CONF_ENABLE_HELPER_DURATION) or False,
-        ): bool,
-    }
-
-    _LOGGER.debug("Schema: %s", schema)
-    return schema
-
-
-def energidataservice_config_option_helper(options: ConfigEntry, helper: str) -> dict:
-    """Return a schema for enabling forecasts."""
-    schema = {
-        vol.Required(helper, default=options.get(helper) or None): HELPER_MAPPER[helper],
     }
 
     _LOGGER.debug("Schema: %s", schema)
@@ -157,6 +134,26 @@ def energidataservice_config_option_carnot_credentials(
     schema = {
         vol.Required(CONF_EMAIL, default=options.get(CONF_EMAIL) or None): str,
         vol.Required(CONF_API_KEY, default=options.get(CONF_API_KEY) or None): str,
+    }
+
+    _LOGGER.debug("Schema: %s", schema)
+    return schema
+
+
+def energidataservice_config_option_eloverblik_credentials(
+    options: ConfigEntry = None,
+) -> dict:
+    """Return a schema for Eloverblik API configuration."""
+    if options is None:
+        options = {CONF_REFRESH_TOKEN: None, CONF_METERING_POINT: None}
+
+    schema = {
+        vol.Required(
+            CONF_REFRESH_TOKEN, default=options.get(CONF_REFRESH_TOKEN) or None
+        ): str,
+        vol.Required(
+            CONF_METERING_POINT, default=options.get(CONF_METERING_POINT) or None
+        ): str,
     }
 
     _LOGGER.debug("Schema: %s", schema)

@@ -21,6 +21,7 @@ from .const import (
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_HELPER_BEFORE,
     CONF_ENABLE_HELPER_DURATION,
+    CONF_ENABLE_TARIFFS,
     CONF_TEMPLATE,
     DEFAULT_TEMPLATE,
     DOMAIN,
@@ -28,8 +29,8 @@ from .const import (
 from .forecasts import Forecast
 from .utils.configuration_schema import (
     energidataservice_config_option_carnot_credentials,
+    energidataservice_config_option_eloverblik_credentials,
     energidataservice_config_option_extras,
-    energidataservice_config_option_helper,
     energidataservice_config_option_info_schema,
     energidataservice_config_option_initial_schema,
 )
@@ -105,20 +106,6 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                     )
                     return self.async_show_form(
                         step_id="carnot_credentials",
-                        data_schema=vol.Schema(creds),
-                        errors=self._errors,
-                        description_placeholders={
-                            "name": self.config_entry.data[CONF_NAME],
-                            "country": self.get_country(),
-                        },
-                    )
-
-                if user_input[CONF_ENABLE_HELPER_BEFORE]:
-                    creds = energidataservice_config_option_helper(
-                        self.options, CONF_ENABLE_HELPER_BEFORE
-                    )
-                    return self.async_show_form(
-                        step_id="enable_helper_before",
                         data_schema=vol.Schema(creds),
                         errors=self._errors,
                         description_placeholders={
@@ -336,7 +323,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         self.user_input
                     )
                     return self.async_show_form(
-                        step_id="enable_forecast",
+                        step_id="enable_extras",
                         data_schema=vol.Schema(enable_extra_schema),
                         errors=self._errors,
                         description_placeholders={
@@ -364,10 +351,10 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_enable_forecast(
+    async def async_step_enable_extras(
         self, user_input: Any | None = None
     ) -> FlowResult:
-        """Handle step 3, should we enable forecasts."""
+        """Handle step 3, should we enable extras."""
         self._errors = {}
 
         if user_input is not None:
@@ -384,6 +371,19 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "country": self.user_input[CONF_COUNTRY],
                     },
                 )
+            elif user_input[CONF_ENABLE_TARIFFS]:
+                creds = energidataservice_config_option_eloverblik_credentials(
+                    user_input
+                )
+                return self.async_show_form(
+                    step_id="eloverblik_credentials",
+                    data_schema=vol.Schema(creds),
+                    errors=self._errors,
+                    description_placeholders={
+                        "name": self.user_input[CONF_NAME],
+                        "country": self.user_input[CONF_COUNTRY],
+                    },
+                )
             else:
                 return self.async_create_entry(
                     title=user_input[CONF_NAME],
@@ -393,7 +393,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         enable_extra_schema = energidataservice_config_option_extras(self.user_input)
         return self.async_show_form(
-            step_id="enable_forecast",
+            step_id="enable_extras",
             data_schema=vol.Schema(enable_extra_schema),
             errors=self._errors,
             description_placeholders={
@@ -411,12 +411,25 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             user_input = {**user_input, **self.user_input}
-
-            return self.async_create_entry(
-                title=user_input[CONF_NAME],
-                data={"name": user_input[CONF_NAME]},
-                options=user_input,
-            )
+            if user_input[CONF_ENABLE_TARIFFS]:
+                creds = energidataservice_config_option_eloverblik_credentials(
+                    user_input
+                )
+                return self.async_show_form(
+                    step_id="eloverblik_credentials",
+                    data_schema=vol.Schema(creds),
+                    errors=self._errors,
+                    description_placeholders={
+                        "name": self.user_input[CONF_NAME],
+                        "country": self.user_input[CONF_COUNTRY],
+                    },
+                )
+            else:
+                return self.async_create_entry(
+                    title=user_input[CONF_NAME],
+                    data={"name": user_input[CONF_NAME]},
+                    options=user_input,
+                )
 
         creds = energidataservice_config_option_carnot_credentials(self.user_input)
         return self.async_show_form(
@@ -429,9 +442,35 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
+    async def async_step_eloverblik_credentials(
+        self, user_input: Any | None = None
+    ) -> FlowResult:
+        """Handle Eloverblik credentials."""
+        self._errors = {}
+
+        if user_input is not None:
+            user_input = {**user_input, **self.user_input}
+
+            return self.async_create_entry(
+                title=user_input[CONF_NAME],
+                data={"name": user_input[CONF_NAME]},
+                options=user_input,
+            )
+
+        creds = energidataservice_config_option_eloverblik_credentials(self.user_input)
+        return self.async_show_form(
+            step_id="eloverblik_credentials",
+            data_schema=vol.Schema(creds),
+            errors=self._errors,
+            description_placeholders={
+                "name": self.user_input[CONF_NAME],
+                "country": self.user_input[CONF_COUNTRY],
+            },
+        )
+
     async def async_step_import(
-        self, user_input: Any | None
-    ) -> Any:  # pylint: disable=unused-argument
+        self, user_input: Any | None  # pylint: disable=unused-argument
+    ) -> Any:
         """Import a config entry.
         Special type of import, we're not actually going to store any data.
         Instead, we're going to rely on the values that are in config file.

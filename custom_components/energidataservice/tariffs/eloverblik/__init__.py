@@ -3,9 +3,15 @@ from __future__ import annotations
 
 from logging import getLogger
 import sys
+import voluptuous as vol
+
+
+from homeassistant.config_entries import ConfigEntry
 
 from pyeloverblik.eloverblik import Eloverblik
 import requests
+
+from ...const import CONF_METERING_POINT, CONF_REFRESH_TOKEN
 
 
 _LOGGER = getLogger(__name__)
@@ -13,23 +19,8 @@ _LOGGER = getLogger(__name__)
 SOURCE_NAME = "eloverblik"
 
 
-__all__ = ["Connector","config_scheme"]
+__all__ = ["Connector"]
 
-
-def config_scheme(
-    options: ConfigEntry = {},
-) -> dict:
-    """Return a schema for Carnot credentials."""
-    if not options:
-        options = {CONF_EMAIL: None, CONF_API_KEY: None}
-
-    schema = {
-        vol.Required(CONF_EMAIL, default=options.get(CONF_EMAIL) or None): str,
-        vol.Required(CONF_API_KEY, default=options.get(CONF_API_KEY) or None): str,
-    }
-
-    _LOGGER.debug("Schema: %s", schema)
-    return schema
 
 class Connector:
     """Eloverblik API"""
