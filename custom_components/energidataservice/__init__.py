@@ -103,7 +103,9 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Handle data on new day."""
         _LOGGER.debug("New day function called")
         api.today = api.tomorrow
+        api.api_today = api.api_tomorrow
         api.tomorrow = None
+        api.api_tomorrow = None
         api._tomorrow_valid = False  # pylint: disable=protected-access
         api.tomorrow_calculated = False
         async_dispatcher_send(hass, UPDATE_EDS)
