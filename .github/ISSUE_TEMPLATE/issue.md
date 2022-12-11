@@ -11,7 +11,8 @@ Issues not containing the minimum requirements will be closed:
 
 - Issues without a description (using the header is not good enough) will be closed.
 - Issues without debug logging will be closed.
-- Issues without configuration will be closed
+- Issues without configuration will be closed.
+- Issues without diagnostics attached will be closed.
 
 -->
 
@@ -65,5 +66,25 @@ logger:
 ```text
 
 Add your logs here.
+
+```
+
+## Diganostics data from the device
+
+<!--
+
+IMPORTANT!! Download the diagnostics BEFORE ANY RELOAD OR RESTART!
+------------------------------------------------------------------
+
+Go to Settings > Integrations > Energi Data Service > 'The device with the problem'
+Click 'Download Diagnostics' and attach or paste the file
+
+Personal info and API keys have been redacted automatically.
+
+-->
+
+```text
+
+Add your diagnostics here.
 
 ```
