@@ -169,10 +169,13 @@ class APIConnector:
         self._entry_id = entry.entry_id
 
         self.today = None
+        self.api_today = None
         self.tomorrow = None
+        self.api_tomorrow = None
         self.today_calculated = False
         self.tomorrow_calculated = False
         self.predictions = None
+        self.api_predictions = None
         self.predictions_calculated = False
         self.predictions_currency = None
         self.connector_currency = "EUR"
@@ -204,6 +207,7 @@ class APIConnector:
                 await api.async_get_spotprices()
                 if api.today and not self.today:
                     self.today = api.today
+                    self.api_today = api.today
                     _LOGGER.debug(
                         "%s got values from %s (namespace='%s')",
                         self._region.region,
@@ -214,7 +218,9 @@ class APIConnector:
 
                 if api.tomorrow and not self.tomorrow:
                     self.today = api.today
+                    self.api_today = api.today
                     self.tomorrow = api.tomorrow
+                    self.api_tomorrow = api.tomorrow
 
                     _LOGGER.debug(
                         "%s got values from %s (namespace='%s')",
@@ -301,6 +307,8 @@ class APIConnector:
                     for value in self.predictions
                     if value.hour.day != (datetime.now() + timedelta(days=1)).day
                 )
+
+            self.api_predictions = self.predictions
 
     @property
     def tomorrow_valid(self) -> bool:
