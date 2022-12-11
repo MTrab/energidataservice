@@ -5,14 +5,14 @@ from typing import Any
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.const import (
-    CONF_UNIQUE_ID,
-)
+from homeassistant.const import CONF_UNIQUE_ID, CONF_API_KEY, CONF_EMAIL
 
 from .const import DOMAIN
 
 TO_REDACT = {
     CONF_UNIQUE_ID,
+    CONF_API_KEY,
+    CONF_EMAIL,
 }
 
 
@@ -26,9 +26,12 @@ async def async_get_config_entry_diagnostics(
         "entry": async_redact_data(entry.as_dict(), TO_REDACT),
         "today": api.today,
         "today_calculated": api.today_calculated,
+        "api_today": api.api_today,
         "tomorrow": api.tomorrow,
         "tomorrow_calculated": api.tomorrow_calculated,
-        "forecasts": api.predictions,
+        "api_tomorrow": api.api_tomorrow,
+        "predictions": api.predictions,
+        "api_predictions": api.api_predictions,
         "next_update": api.next_data_refresh,
         "data_source": api._source,
         "home_assistant_tz": hass.config.time_zone,
