@@ -14,7 +14,7 @@ PLEASE NOTE!! This integration CANNOT be used with fixed price contracts! Perhap
 #### HACS
 
 - Ensure that HACS is installed.
-- Search for and install the "Energidataaservice" integration.
+- Search for and install the "Energi Data Service" integration.
 - Restart Home Assistant.
 
 #### Manual installation
@@ -29,7 +29,7 @@ Shortcut:<br>
 [![](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=energidataservice)
 
 * Go to Home Assistant > Settings > Integrations
-* Add Energidataservice integration *(If it doesn't show, try CTRL+F5 to force a refresh of the page)*
+* Add "Energi Data Service" integration *(If it doesn't show, try CTRL+F5 to force a refresh of the page)*
 * Select area
 
 Voila
