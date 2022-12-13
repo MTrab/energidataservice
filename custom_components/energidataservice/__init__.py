@@ -146,7 +146,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         second=0,
     )
 
-    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
+    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=1)
 
     if use_forecast:
         async_call_later(hass, CARNOT_UPDATE, update_carnot)
