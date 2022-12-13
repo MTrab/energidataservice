@@ -146,14 +146,14 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         second=0,
     )
 
-    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
+    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=1)
 
     if use_forecast:
         async_call_later(hass, CARNOT_UPDATE, update_carnot)
 
-    api.listeners.append(update_tomorrow)
-    api.listeners.append(update_new_hour)
     api.listeners.append(update_new_day)
+    api.listeners.append(update_new_hour)
+    api.listeners.append(update_tomorrow)
 
     return True
 
@@ -200,6 +200,10 @@ class APIConnector:
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from API"""
         connectors = self._connectors.get_connectors(self._region.region)
+        self.today = None
+        self.tomorrow = None
+        self.today_calculated = False
+        self.tomorrow_calculated = False
 
         try:
             for endpoint in connectors:
@@ -233,9 +237,6 @@ class APIConnector:
 
                     self._source = module.SOURCE_NAME
                     break
-
-            self.today_calculated = False
-            self.tomorrow_calculated = False
 
             if not self.tomorrow:
                 _LOGGER.debug("No data found for tomorrow")
