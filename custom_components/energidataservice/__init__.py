@@ -103,7 +103,9 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Handle data on new day."""
         _LOGGER.debug("New day function called")
         api.today = api.tomorrow
+        api.api_today = api.api_tomorrow
         api.tomorrow = None
+        api.api_tomorrow = None
         api._tomorrow_valid = False  # pylint: disable=protected-access
         api.tomorrow_calculated = False
         async_dispatcher_send(hass, UPDATE_EDS)
@@ -144,14 +146,14 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         second=0,
     )
 
-    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=0)
+    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=1)
 
     if use_forecast:
         async_call_later(hass, CARNOT_UPDATE, update_carnot)
 
-    api.listeners.append(update_tomorrow)
-    api.listeners.append(update_new_hour)
     api.listeners.append(update_new_day)
+    api.listeners.append(update_new_hour)
+    api.listeners.append(update_tomorrow)
 
     return True
 
@@ -169,10 +171,13 @@ class APIConnector:
         self._entry_id = entry.entry_id
 
         self.today = None
+        self.api_today = None
         self.tomorrow = None
+        self.api_tomorrow = None
         self.today_calculated = False
         self.tomorrow_calculated = False
         self.predictions = None
+        self.api_predictions = None
         self.predictions_calculated = False
         self.predictions_currency = None
         self.connector_currency = "EUR"
@@ -195,6 +200,10 @@ class APIConnector:
     async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from API"""
         connectors = self._connectors.get_connectors(self._region.region)
+        self.today = None
+        self.tomorrow = None
+        self.today_calculated = False
+        self.tomorrow_calculated = False
 
         try:
             for endpoint in connectors:
@@ -204,6 +213,7 @@ class APIConnector:
                 await api.async_get_spotprices()
                 if api.today and not self.today:
                     self.today = api.today
+                    self.api_today = api.today
                     _LOGGER.debug(
                         "%s got values from %s (namespace='%s')",
                         self._region.region,
@@ -214,7 +224,9 @@ class APIConnector:
 
                 if api.tomorrow and not self.tomorrow:
                     self.today = api.today
+                    self.api_today = api.today
                     self.tomorrow = api.tomorrow
+                    self.api_tomorrow = api.tomorrow
 
                     _LOGGER.debug(
                         "%s got values from %s (namespace='%s')",
@@ -225,9 +237,6 @@ class APIConnector:
 
                     self._source = module.SOURCE_NAME
                     break
-
-            self.today_calculated = False
-            self.tomorrow_calculated = False
 
             if not self.tomorrow:
                 _LOGGER.debug("No data found for tomorrow")
@@ -301,6 +310,8 @@ class APIConnector:
                     for value in self.predictions
                     if value.hour.day != (datetime.now() + timedelta(days=1)).day
                 )
+
+            self.api_predictions = self.predictions
 
     @property
     def tomorrow_valid(self) -> bool:

@@ -15,5 +15,5 @@
         "CurrencyConverter==0.17.3",
         "pyeloverblik==0.3.1"
     ],
-    "version": "0.4.4"
+    "version": "0.4.7"
 }
