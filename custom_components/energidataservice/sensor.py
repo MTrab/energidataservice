@@ -246,7 +246,7 @@ class EnergidataserviceSensor(SensorEntity):
         if not self._api.today:
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
-            if not self._api.today is None:
+            if not self._api.today is None and not self._api.today_calculated:
                 await self._hass.async_add_executor_job(
                     self._format_list,
                     self._api.today,
