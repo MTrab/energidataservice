@@ -27,7 +27,7 @@ from .const import CONF_AREA, CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
 from .forecasts import Forecast
 from .utils.regionhandler import RegionHandler
 
-RANDOM_MINUTE = randint(0, 20)
+RANDOM_MINUTE = randint(5, 40)
 RANDOM_SECOND = randint(0, 59)
 
 RETRY_MINUTES = 5
@@ -106,7 +106,8 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def new_day(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Handle data on new day."""
         _LOGGER.debug("New day function called")
-        api.today = api.tomorrow
+        api.today = api.api_tomorrow
+        api.today_calculated = False
         api.api_today = api.api_tomorrow
         api.tomorrow = None
         api.api_tomorrow = None
