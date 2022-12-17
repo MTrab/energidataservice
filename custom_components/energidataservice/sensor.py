@@ -272,6 +272,20 @@ class EnergidataserviceSensor(SensorEntity):
             self._tomorrow_raw = None
             self._api.tomorrow_calculated = False
 
+        # Check if the data have been reset to API values rather than the calculated values
+        if self._api.today == self._api.api_today and not isinstance(
+            self._api.today, type(None)
+        ):
+            self._api.today_calculated = False
+        if self._api.tomorrow == self._api.api_tomorrow and not isinstance(
+            self._api.tomorrow, type(None)
+        ):
+            self._api.tomorrow_calculated = False
+        if self._api.predictions == self._api.api_predictions and not isinstance(
+            self._api.predictions, type(None)
+        ):
+            self._api.predictions_calculated = False
+
         # If we haven't already calculated todays prices in local currency, do so now
         if not self._api.today_calculated and not isinstance(
             self._api.today, type(None)
