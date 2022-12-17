@@ -124,6 +124,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Fetch new data for tomorrows prices at 13:00ish CET."""
         _LOGGER.debug("Getting latest dataset")
         await api.update()
+        await api.update_carnot()
         async_dispatcher_send(hass, UPDATE_EDS)
 
     async def update_carnot(n):  # type: ignore pylint: disable=unused-argument, invalid-name
