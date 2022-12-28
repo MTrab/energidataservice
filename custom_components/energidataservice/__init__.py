@@ -20,7 +20,6 @@ from homeassistant.helpers.event import (
     async_track_utc_time_change,
 )
 from homeassistant.loader import async_get_integration
-from pytz import timezone
 
 from .connectors import Connectors
 from .const import CONF_AREA, CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
@@ -306,6 +305,8 @@ class APIConnector:
                 value
                 for value in self.predictions
                 if value.hour.day >= (datetime.now() + timedelta(days=1)).day
+                or value.hour.month > (datetime.now() + timedelta(days=1)).month
+                or value.hour.year > datetime.now().year
             )
 
             if self._tomorrow_valid:
