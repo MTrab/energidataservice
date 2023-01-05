@@ -14,16 +14,19 @@ from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_send
-from homeassistant.helpers.event import async_call_later, async_track_time_change
+from homeassistant.helpers.event import (
+    async_call_later,
+    async_track_time_change,
+    async_track_utc_time_change,
+)
 from homeassistant.loader import async_get_integration
-from pytz import timezone
 
 from .connectors import Connectors
 from .const import CONF_AREA, CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
 from .forecasts import Forecast
 from .utils.regionhandler import RegionHandler
 
-RANDOM_MINUTE = randint(0, 20)
+RANDOM_MINUTE = randint(5, 40)
 RANDOM_SECOND = randint(0, 59)
 
 RETRY_MINUTES = 5
@@ -102,7 +105,8 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def new_day(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Handle data on new day."""
         _LOGGER.debug("New day function called")
-        api.today = api.tomorrow
+        api.today = api.api_tomorrow
+        api.today_calculated = False
         api.api_today = api.api_tomorrow
         api.tomorrow = None
         api.api_tomorrow = None
@@ -119,6 +123,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Fetch new data for tomorrows prices at 13:00ish CET."""
         _LOGGER.debug("Getting latest dataset")
         await api.update()
+        await api.update_carnot()
         async_dispatcher_send(hass, UPDATE_EDS)
 
     async def update_carnot(n):  # type: ignore pylint: disable=unused-argument, invalid-name
@@ -130,7 +135,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_dispatcher_send(hass, UPDATE_EDS)
 
     # Handle dataset updates
-    update_tomorrow = async_track_time_change(
+    update_tomorrow = async_track_utc_time_change(
         hass,
         get_new_data,
         hour=12,  # UTC time!!
@@ -238,27 +243,26 @@ class APIConnector:
                     self._source = module.SOURCE_NAME
                     break
 
-            if not self.tomorrow:
+            if (not self.tomorrow or not self.api_tomorrow) or (
+                self.tomorrow is None or self.api_tomorrow is None
+            ):
                 _LOGGER.debug("No data found for tomorrow")
                 self._tomorrow_valid = False
                 self.tomorrow = None
-
-                # local_tz = timezone(self.hass.config.time_zone)
+                self.api_tomorrow = None
 
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
-                refresh = datetime.strptime(
-                    self.next_data_refresh, "%H:%M:%S"
-                )  # .astimezone(local_tz)
-                now = datetime.now()  # .astimezone(local_tz)
+                refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
+                now = datetime.utcnow()
 
                 _LOGGER.debug(
-                    "Now: %s:%s:%s",
+                    "Now: %s:%s:%s (UTC)",
                     f"{now.hour:02d}",
                     f"{now.minute:02d}",
                     f"{now.second:02d}",
                 )
                 _LOGGER.debug(
-                    "Refresh: %s:%s:%s",
+                    "Refresh: %s:%s:%s (local time)",
                     f"{refresh.hour:02d}",
                     f"{refresh.minute:02d}",
                     f"{refresh.second:02d}",
@@ -267,7 +271,7 @@ class APIConnector:
                     f"{midnight.hour}:{midnight.minute}:{midnight.second}"
                     > f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
                     and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
-                    < f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+                    <= f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
                 ):
                     retry_update(self)
                 else:
@@ -301,6 +305,8 @@ class APIConnector:
                 value
                 for value in self.predictions
                 if value.hour.day >= (datetime.now() + timedelta(days=1)).day
+                or value.hour.month > (datetime.now() + timedelta(days=1)).month
+                or value.hour.year > datetime.now().year
             )
 
             if self._tomorrow_valid:
@@ -346,12 +352,9 @@ def retry_update(self) -> None:
         self.next_retry_delay,
     )
 
-    local_tz = timezone(self.hass.config.time_zone)
-    now = (datetime.now() + timedelta(minutes=self.next_retry_delay)).astimezone(
-        local_tz
-    )
+    now = datetime.utcnow() + timedelta(minutes=self.next_retry_delay)
     _LOGGER.debug(
-        "Next retry: %s:%s:%s",
+        "Next retry: %s:%s:%s (UTC)",
         f"{now.hour:02d}",
         f"{now.minute:02d}",
         f"{now.second:02d}",
