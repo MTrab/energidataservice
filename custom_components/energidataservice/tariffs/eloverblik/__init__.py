@@ -63,3 +63,4 @@ class Connector:
             _LOGGER.warning("Exception: %s", exc)
 
         _LOGGER.debug("Done fetching tariff data from Eloverblik")
+        _LOGGER.debug("Tariffs: %s", self._tariff_data)
