@@ -19,8 +19,6 @@ from .const import (
     CONF_AREA,
     CONF_COUNTRY,
     CONF_ENABLE_FORECAST,
-    CONF_ENABLE_HELPER_BEFORE,
-    CONF_ENABLE_HELPER_DURATION,
     CONF_ENABLE_TARIFFS,
     CONF_TEMPLATE,
     DEFAULT_TEMPLATE,
@@ -80,7 +78,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             },
         )
 
-    async def _do_update(self, *args, **kwargs) -> None:
+    async def _do_update(
+        self, *args, **kwargs  # pylint: disable=unused-argument
+    ) -> None:
         """Update after settings change."""
         await async_unload_entry(self.hass, self.config_entry)
         await async_setup_entry(self.hass, self.config_entry)
@@ -95,11 +95,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
         if user_input is not None:
             self.options.update(user_input)
-            if user_input in [
-                CONF_ENABLE_FORECAST,
-                CONF_ENABLE_HELPER_BEFORE,
-                CONF_ENABLE_HELPER_DURATION,
-            ]:
+            _LOGGER.debug("Forecast selected: %s", user_input[CONF_ENABLE_FORECAST])
+            _LOGGER.debug("Tariffs selected: %s", user_input[CONF_ENABLE_TARIFFS])
+            if CONF_ENABLE_FORECAST in user_input or CONF_ENABLE_TARIFFS in user_input:
                 if user_input[CONF_ENABLE_FORECAST]:
                     creds = energidataservice_config_option_carnot_credentials(
                         self.options
@@ -110,6 +108,19 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                         errors=self._errors,
                         description_placeholders={
                             "name": self.config_entry.data[CONF_NAME],
+                            "country": self.get_country(),
+                        },
+                    )
+                elif user_input[CONF_ENABLE_TARIFFS]:
+                    creds = energidataservice_config_option_eloverblik_credentials(
+                        self.options
+                    )
+                    return self.async_show_form(
+                        step_id="eloverblik_credentials",
+                        data_schema=vol.Schema(creds),
+                        errors=self._errors,
+                        description_placeholders={
+                            "name": self.config_entry.options[CONF_NAME],
                             "country": self.get_country(),
                         },
                     )
@@ -146,11 +157,25 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             self.options.update(user_input)
             _LOGGER.debug(self.options)
 
-            async_call_later(self.hass, 2, self._do_update)
-            return self.async_create_entry(
-                title=self.options.get(CONF_NAME),
-                data=self.options,
-            )
+            if user_input[CONF_ENABLE_TARIFFS]:
+                creds = energidataservice_config_option_eloverblik_credentials(
+                    user_input
+                )
+                return self.async_show_form(
+                    step_id="eloverblik_credentials",
+                    data_schema=vol.Schema(creds),
+                    errors=self._errors,
+                    description_placeholders={
+                        "name": self.options.get(CONF_NAME),
+                        "country": self.options.get(CONF_COUNTRY),
+                    },
+                )
+            else:
+                async_call_later(self.hass, 2, self._do_update)
+                return self.async_create_entry(
+                    title=self.options.get(CONF_NAME),
+                    data=self.options,
+                )
 
         creds = energidataservice_config_option_carnot_credentials(
             self.config_entry.options
@@ -165,11 +190,10 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             },
         )
 
-    async def async_step_enable_helper_before(
+    async def async_step_eloverblik_credentials(
         self, user_input: Any | None = None
     ) -> FlowResult:
-        """Handle before helper setup credentials."""
-
+        """Handle Eloverblik credentials."""
         self._errors = {}
 
         if user_input is not None:
@@ -182,11 +206,11 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                 data=self.options,
             )
 
-        creds = energidataservice_config_option_carnot_credentials(
+        creds = energidataservice_config_option_eloverblik_credentials(
             self.config_entry.options
         )
         return self.async_show_form(
-            step_id="carnot_credentials",
+            step_id="eloverblik_credentials",
             data_schema=vol.Schema(creds),
             errors=self._errors,
             description_placeholders={
@@ -214,34 +238,18 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
             if template_ok:
-                available_forecasts = []
-                for f_endpoint in self.forecasts.forecast_endpoints:
-                    _LOGGER.debug(f_endpoint)
-                    if (
-                        RegionHandler.description_to_region(user_input[CONF_AREA])
-                        in f_endpoint.regions
-                    ):
-                        available_forecasts.append(f_endpoint)
-
-                if len(available_forecasts) > 0:
-                    enable_extra_schema = energidataservice_config_option_extras(
-                        self.options
-                    )
-                    return self.async_show_form(
-                        step_id="enable_forecast",
-                        data_schema=vol.Schema(enable_extra_schema),
-                        errors=self._errors,
-                        description_placeholders={
-                            "name": self.config_entry.data[CONF_NAME],
-                            "country": self.get_country(),
-                        },
-                    )
-                else:
-                    async_call_later(self.hass, 2, self._do_update)
-                    return self.async_create_entry(
-                        title=self.options.get(CONF_NAME),
-                        data=self.options,
-                    )
+                enable_extra_schema = energidataservice_config_option_extras(
+                    self.options
+                )
+                return self.async_show_form(
+                    step_id="enable_extras",
+                    data_schema=vol.Schema(enable_extra_schema),
+                    errors=self._errors,
+                    description_placeholders={
+                        "name": self.config_entry.data[CONF_NAME],
+                        "country": self.get_country(),
+                    },
+                )
             else:
                 self._errors["base"] = "invalid_template"
         schema = energidataservice_config_option_info_schema(self.config_entry.options)
@@ -487,7 +495,7 @@ async def _validate_template(hass: HomeAssistant, user_template: Any) -> bool:
         _LOGGER.debug(user_template)
         user_template = Template(user_template, hass).async_render()
         return bool(isinstance(user_template, float))
-    except Exception as err:
+    except Exception as err:  # pylint: disable=broad-except
         _LOGGER.error(err)
 
     return False
