@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
-import voluptuous as vol
 
 from ..const import (
     CONF_AREA,
@@ -15,12 +15,16 @@ from ..const import (
     CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
     CONF_ENABLE_FORECAST,
+    CONF_ENABLE_TARIFFS,
+    CONF_METERING_POINT,
     CONF_PRICETYPE,
+    CONF_REFRESH_TOKEN,
     CONF_TEMPLATE,
     CONF_VAT,
     UNIT_TO_MULTIPLIER,
 )
 from .regionhandler import RegionHandler
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -98,15 +102,21 @@ def energidataservice_config_option_initial_schema(options: ConfigEntry = {}) ->
     return schema
 
 
-def energidataservice_config_option_enable_forecasts(options: ConfigEntry = {}) -> dict:
+def energidataservice_config_option_extras(options: ConfigEntry = {}) -> dict:
     """Return a schema for enabling forecasts."""
     _LOGGER.debug(options)
     if not options:
-        options = {CONF_ENABLE_FORECAST: False}
+        options = {
+            CONF_ENABLE_FORECAST: False,
+            CONF_ENABLE_TARIFFS: False,
+        }
 
     schema = {
         vol.Required(
             CONF_ENABLE_FORECAST, default=options.get(CONF_ENABLE_FORECAST) or False
+        ): bool,
+        vol.Required(
+            CONF_ENABLE_TARIFFS, default=options.get(CONF_ENABLE_TARIFFS) or False
         ): bool,
     }
 
@@ -124,6 +134,26 @@ def energidataservice_config_option_carnot_credentials(
     schema = {
         vol.Required(CONF_EMAIL, default=options.get(CONF_EMAIL) or None): str,
         vol.Required(CONF_API_KEY, default=options.get(CONF_API_KEY) or None): str,
+    }
+
+    _LOGGER.debug("Schema: %s", schema)
+    return schema
+
+
+def energidataservice_config_option_eloverblik_credentials(
+    options: ConfigEntry = None,
+) -> dict:
+    """Return a schema for Eloverblik API configuration."""
+    if options is None:
+        options = {CONF_REFRESH_TOKEN: None, CONF_METERING_POINT: None}
+
+    schema = {
+        vol.Required(
+            CONF_REFRESH_TOKEN, default=options.get(CONF_REFRESH_TOKEN) or None
+        ): str,
+        vol.Required(
+            CONF_METERING_POINT, default=options.get(CONF_METERING_POINT) or None
+        ): str,
     }
 
     _LOGGER.debug("Schema: %s", schema)

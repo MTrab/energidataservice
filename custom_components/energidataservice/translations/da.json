@@ -27,18 +27,28 @@
                 },
                 "description": "Set detaljer for {name} i {country}"
             },
-            "enable_forecast": {
-                "title": "Aktiver prognoser?",
+            "enable_extras": {
+                "title": "Aktiver ekstra services?",
                 "data": {
-                    "enable_forecast": "Aktiver prognoser"
+                    "enable_forecast": "AI prognoser fra Carnot",
+                    "enable_tariffs": "Tariff data fra Eloverblik"
                 },
-                "description": "Skal {name} i {country} vise AI genererede prognoser?"
+                "description": "Skal {name} i {country} gøre brug af nogle ekstra services?"
             },
             "carnot_credentials": {
-                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "title": "API bruger oplysninger til Carnot",
+                "description": "See https:\/\/www.carnot.dk",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
+                }
+            },
+            "eloverblik_credentials": {
+                "title": "API info for Eloverblik",
+                "description": "Find måle punkt og token på https:\/\/www.eloverblik.dk",
+                "data": {
+                    "refresh_token": "Token",
+                    "metering_point": "Målepunkt"
                 }
             }
         }
@@ -51,6 +61,14 @@
             "already_configured": "Det angivede navn eksisterer allerede!"
         },
         "step": {
+            "user": {
+                "title": "Basis info",
+                "data": {
+                    "name": "Navn",
+                    "country": "Vælg land"
+                },
+                "description": "Indstil basis settings for sensoren"
+            },
             "region": {
                 "title": "Detaljerede oplysninger",
                 "data": {
@@ -63,18 +81,28 @@
                 },
                 "description": "Set detaljer for {name} i {country}"
             },
-            "enable_forecast": {
-                "title": "Aktiver prognoser?",
+            "enable_extras": {
+                "title": "Aktiver ekstra services?",
                 "data": {
-                    "enable_forecast": "Aktiver prognoser"
+                    "enable_forecast": "AI prognoser fra Carnot",
+                    "enable_tariffs": "Tariff data fra Eloverblik"
                 },
-                "description": "Skal {name} i {country} vise AI genererede prognoser?"
+                "description": "Skal {name} i {country} gøre brug af nogle ekstra services?"
             },
             "carnot_credentials": {
-                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "title": "API bruger oplysninger til Carnot",
+                "description": "See https:\/\/www.carnot.dk",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
+                }
+            },
+            "eloverblik_credentials": {
+                "title": "API info for Eloverblik",
+                "description": "Find måle punkt og token på https:\/\/www.eloverblik.dk",
+                "data": {
+                    "refresh_token": "Token",
+                    "metering_point": "Målepunkt"
                 }
             }
         }

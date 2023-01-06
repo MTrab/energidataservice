@@ -7,12 +7,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_UNIQUE_ID, CONF_API_KEY, CONF_EMAIL
 
-from .const import DOMAIN
+from .const import CONF_METERING_POINT, CONF_REFRESH_TOKEN, DOMAIN
 
 TO_REDACT = {
     CONF_UNIQUE_ID,
     CONF_API_KEY,
     CONF_EMAIL,
+    CONF_METERING_POINT,
+    CONF_REFRESH_TOKEN,
 }
 
 
@@ -32,6 +34,7 @@ async def async_get_config_entry_diagnostics(
         "api_tomorrow": api.api_tomorrow,
         "predictions": api.predictions,
         "api_predictions": api.api_predictions,
+        "tariff_data": api.tariff_data,
         "next_update": api.next_data_refresh,
         "data_source": api._source,
         "home_assistant_tz": hass.config.time_zone,
