@@ -549,9 +549,13 @@ class EnergidataserviceSensor(SensorEntity):
                 return pass_context(inner)
 
             hour = fake_dt
-            template_value = self._cost_template.async_render(now=faker())
+            template_value = self._cost_template.async_render(
+                now=faker(), tariffs=self._api.tariff_data
+            )
         else:
-            template_value = self._cost_template.async_render()
+            template_value = self._cost_template.async_render(
+                tariffs=self._api.tariff_data
+            )
 
         # The api returns prices in MWh
         if self._price_type in ("MWh", "mWh"):
