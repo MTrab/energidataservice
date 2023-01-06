@@ -7,12 +7,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_UNIQUE_ID, CONF_API_KEY, CONF_EMAIL
 
-from .const import DOMAIN
+from .const import CONF_METERING_POINT, CONF_REFRESH_TOKEN, DOMAIN
 
 TO_REDACT = {
     CONF_UNIQUE_ID,
     CONF_API_KEY,
     CONF_EMAIL,
+    CONF_METERING_POINT,
+    CONF_REFRESH_TOKEN,
 }
 
 
