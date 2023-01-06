@@ -30,6 +30,7 @@ from .const import (
     CONF_CURRENCY_IN_CENT,
     CONF_DECIMALS,
     CONF_ENABLE_FORECAST,
+    CONF_ENABLE_TARIFFS,
     CONF_PRICETYPE,
     CONF_TEMPLATE,
     CONF_VAT,
@@ -77,6 +78,10 @@ def _setup(hass, config: ConfigEntry, add_devices):
     )
     _LOGGER.debug(
         "Get AI predictions? %s", config.options.get(CONF_ENABLE_FORECAST) or False
+    )
+    _LOGGER.debug(
+        "Automatically try fetching tariffs? %s",
+        config.options.get(CONF_ENABLE_TARIFFS) or False,
     )
     _LOGGER.debug("Domain %s", DOMAIN)
 
@@ -167,6 +172,7 @@ class EnergidataserviceSensor(SensorEntity):
         self._entry_id = config.entry_id
         self._cent = config.options.get(CONF_CURRENCY_IN_CENT) or False
         self._forecast = config.options.get(CONF_ENABLE_FORECAST) or False
+        self._tariff = config.options.get(CONF_ENABLE_TARIFFS) or False
         self._carnot_user = config.options.get(CONF_EMAIL) or None
         self._carnot_apikey = config.options.get(CONF_API_KEY) or None
         self._area = region.description
@@ -551,6 +557,9 @@ class EnergidataserviceSensor(SensorEntity):
 
         if self._cent:
             price = price * CENT_MULTIPLIER
+
+        # if self._api.tariff_data is not None:
+        #     # Fetch tariffs automatically
 
         return round(price, self._decimals)
 

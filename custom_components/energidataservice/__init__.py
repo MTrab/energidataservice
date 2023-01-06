@@ -22,8 +22,18 @@ from homeassistant.helpers.event import (
 from homeassistant.loader import async_get_integration
 
 from .connectors import Connectors
-from .const import CONF_AREA, CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
+from .const import (
+    CONF_AREA,
+    CONF_ENABLE_FORECAST,
+    CONF_ENABLE_TARIFFS,
+    CONF_METERING_POINT,
+    CONF_REFRESH_TOKEN,
+    DOMAIN,
+    STARTUP,
+    UPDATE_EDS,
+)
 from .forecasts import Forecast
+from .tariffs import Tariff
 from .utils.regionhandler import RegionHandler
 
 RANDOM_MINUTE = randint(5, 40)
@@ -170,10 +180,12 @@ class APIConnector:
         """Initialize Energi Data Service Connector."""
         self._connectors = Connectors()
         self.forecasts = Forecast()
+        self.tariffs = Tariff()
         self.hass = hass
         self._last_tick = None
         self._tomorrow_valid = False
         self._entry_id = entry.entry_id
+        self._config = entry
 
         self.today = None
         self.api_today = None
@@ -183,6 +195,7 @@ class APIConnector:
         self.tomorrow_calculated = False
         self.predictions = None
         self.api_predictions = None
+        self.tariff_data = None
         self.predictions_calculated = False
         self.predictions_currency = None
         self.connector_currency = "EUR"
@@ -199,6 +212,7 @@ class APIConnector:
         self._tz = hass.config.time_zone
         self._source = None
         self.forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
+        self.tariff = entry.options.get(CONF_ENABLE_TARIFFS) or False
         self._carnot_user = entry.options.get(CONF_EMAIL) or None
         self._carnot_apikey = entry.options.get(CONF_API_KEY) or None
 
@@ -209,6 +223,8 @@ class APIConnector:
         self.tomorrow = None
         self.today_calculated = False
         self.tomorrow_calculated = False
+
+        self.tariff_data = None
 
         try:
             for endpoint in connectors:
@@ -285,6 +301,7 @@ class APIConnector:
                 self.retry_count = 0
                 self._tomorrow_valid = True
 
+            await self.async_get_tariffs()
         except ServerDisconnectedError:
             _LOGGER.warning("Err.")
             retry_update(self)
@@ -318,6 +335,20 @@ class APIConnector:
                 )
 
             self.api_predictions = self.predictions
+
+    async def async_get_tariffs(self) -> dict:
+        """Get tariff data."""
+        if self.tariff:
+            tariff_endpoint = self.tariffs.get_endpoint(self._region.region)
+            tariff_module = import_module(tariff_endpoint[0].namespace, __name__)
+            tariff = tariff_module.Connector(
+                self.hass,
+                self._config.options.get(CONF_REFRESH_TOKEN),
+                self._config.options.get(CONF_METERING_POINT),
+            )
+            tariff_data = await tariff.async_get_tariffs()
+
+        return {}
 
     @property
     def tomorrow_valid(self) -> bool:
