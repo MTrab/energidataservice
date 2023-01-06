@@ -70,4 +70,4 @@ class Connector:
         _LOGGER.debug("Done fetching tariff data from Eloverblik")
         _LOGGER.debug("Tariffs: %s", self._tariff_data.charges)
 
-        return self._tariff_data.charges
+        return self._tariff_data.charges.values()
