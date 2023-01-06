@@ -346,7 +346,7 @@ class APIConnector:
                 self._config.options.get(CONF_REFRESH_TOKEN),
                 self._config.options.get(CONF_METERING_POINT),
             )
-            tariff_data = await tariff.async_get_tariffs()
+            self.tariff_data = await tariff.async_get_tariffs()
 
         return {}
 

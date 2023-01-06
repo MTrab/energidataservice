@@ -521,9 +521,14 @@ class EnergidataserviceSensor(SensorEntity):
         return self._tomorrow_mean
 
     def _calculate(
-        self, value=None, fake_dt=None, default_currency: str = "EUR"
+        self,
+        value=None,
+        fake_dt=None,
+        default_currency: str = "EUR",
     ) -> float:
         """Do price calculations"""
+        hour = None
+
         if value is None:
             value = self._attr_native_value
 
@@ -543,6 +548,7 @@ class EnergidataserviceSensor(SensorEntity):
 
                 return pass_context(inner)
 
+            hour = fake_dt
             template_value = self._cost_template.async_render(now=faker())
         else:
             template_value = self._cost_template.async_render()
@@ -558,8 +564,15 @@ class EnergidataserviceSensor(SensorEntity):
         if self._cent:
             price = price * CENT_MULTIPLIER
 
-        # if self._api.tariff_data is not None:
-        #     # Fetch tariffs automatically
+        if self._api.tariff_data is not None and hour is not None:
+            # Add tariffs automatically
+            for tariff in self._api.tariff_data:
+                if isinstance(tariff, list):
+                    if tariff[hour.hour] > 0:
+                        if len(tariff) == 24:
+                            price += tariff[hour.hour] * (float(1 + self._vat))
+                else:
+                    price += float(tariff) * (float(1 + self._vat))
 
         return round(price, self._decimals)
 
