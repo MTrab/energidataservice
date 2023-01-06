@@ -36,14 +36,16 @@
                 "description": "Skal {name} i {country} gøre brug af nogle ekstra services?"
             },
             "carnot_credentials": {
-                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "title": "API bruger oplysninger til Carnot",
+                "description": "See https:\/\/www.carnot.dk",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
                 }
             },
             "eloverblik_credentials": {
-                "title": "API oplysninger til Eloverblik (https:\/\/www.eloverblik.dk\/)",
+                "title": "API info for Eloverblik",
+                "description": "Find måle punkt og token på https:\/\/www.eloverblik.dk",
                 "data": {
                     "refresh_token": "Token",
                     "metering_point": "Målepunkt"
@@ -59,6 +61,14 @@
             "already_configured": "Det angivede navn eksisterer allerede!"
         },
         "step": {
+            "user": {
+                "title": "Basis info",
+                "data": {
+                    "name": "Navn",
+                    "country": "Vælg land"
+                },
+                "description": "Indstil basis settings for sensoren"
+            },
             "region": {
                 "title": "Detaljerede oplysninger",
                 "data": {
@@ -80,14 +90,16 @@
                 "description": "Skal {name} i {country} gøre brug af nogle ekstra services?"
             },
             "carnot_credentials": {
-                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "title": "API bruger oplysninger til Carnot",
+                "description": "See https:\/\/www.carnot.dk",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
                 }
             },
             "eloverblik_credentials": {
-                "title": "API oplysninger til Eloverblik (https:\/\/www.eloverblik.dk\/)",
+                "title": "API info for Eloverblik",
+                "description": "Find måle punkt og token på https:\/\/www.eloverblik.dk",
                 "data": {
                     "refresh_token": "Token",
                     "metering_point": "Målepunkt"
