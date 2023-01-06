@@ -3,17 +3,14 @@ from __future__ import annotations
 
 from logging import getLogger
 import sys
-import voluptuous as vol
-
 
 from homeassistant.config_entries import ConfigEntry
-
 from pyeloverblik.eloverblik import Eloverblik
 import requests
+import voluptuous as vol
 
 from ...const import CONF_METERING_POINT, CONF_REFRESH_TOKEN
 from .regions import REGIONS
-
 
 _LOGGER = getLogger(__name__)
 
