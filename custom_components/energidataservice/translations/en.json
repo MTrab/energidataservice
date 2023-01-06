@@ -71,18 +71,26 @@
                 },
                 "description": "Set details for {name} in {country}"
             },
-            "enable_forecast": {
-                "title": "Enable forecasts?",
+            "enable_extras": {
+                "title": "Enable extra services?",
                 "data": {
-                    "enable_forecast": "Enable forecasts"
+                    "enable_forecast": "AI forecasts from Carnot",
+                    "enable_tariffs": "Tariff data from Eloverblik"
                 },
-                "description": "Should {name} in {country} show AI predicted prices for the next 7 days?"
+                "description": "Should {name} in {country} make use of extra services?"
             },
             "carnot_credentials": {
                 "title": "API credentials for Carnot platform (https:\/\/www.carnot.dk\/)",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
+                }
+            },
+            "eloverblik_credentials": {
+                "title": "API credential for Eloverblik (https:\/\/www.eloverblik.dk\/)",
+                "data": {
+                    "refresh_token": "Refresh Token",
+                    "metering_point": "Metering Point"
                 }
             }
         }
