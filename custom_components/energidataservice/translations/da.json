@@ -37,7 +37,7 @@
             },
             "carnot_credentials": {
                 "title": "API bruger oplysninger til Carnot",
-                "description": "See https:\/\/www.carnot.dk",
+                "description": "Se mere på https:\/\/www.carnot.dk",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
