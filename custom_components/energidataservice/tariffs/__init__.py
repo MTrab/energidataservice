@@ -12,7 +12,7 @@ from genericpath import isdir
 _LOGGER = getLogger(__name__)
 
 
-class Forecast:
+class Tariff:
     """Handle tariff modules."""
 
     def __init__(self):
@@ -26,10 +26,12 @@ class Forecast:
                 and not module.endswith("__pycache__")
                 and not mod_path.endswith(".disabled")
             ):
-                Endpoint = namedtuple("Endpoint", "module namespace")
+                Endpoint = namedtuple("Endpoint", "module namespace regions")
                 _LOGGER.debug("Adding module %s", module)
                 api_ns = f".{module}"
-                con = Endpoint(module, f".tariffs{api_ns}")
+                mod = import_module(api_ns, __name__)
+                con = Endpoint(module, f".tariffs{api_ns}", mod.REGIONS)
+                # con = Endpoint(module, f".tariffs{api_ns}")
 
                 self._tariffs.append(con)
 
@@ -37,3 +39,14 @@ class Forecast:
     def tariff_endpoints(self) -> list:
         """Return valid tariff endpoints."""
         return self._tariffs
+
+    def get_endpoint(self, region: str) -> list:
+        """Get valid endpoint(s) of a specific zone."""
+        endpoints = []
+
+        for endpoint in self._tariffs:
+            if region in endpoint.regions:
+                TariffEndpoint = namedtuple("Tariff", "module namespace")
+                endpoints.append(TariffEndpoint(endpoint.module, endpoint.namespace))
+
+        return endpoints

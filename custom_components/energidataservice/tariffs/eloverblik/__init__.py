@@ -12,6 +12,7 @@ from pyeloverblik.eloverblik import Eloverblik
 import requests
 
 from ...const import CONF_METERING_POINT, CONF_REFRESH_TOKEN
+from .regions import REGIONS
 
 
 _LOGGER = getLogger(__name__)
@@ -25,8 +26,9 @@ __all__ = ["Connector"]
 class Connector:
     """Eloverblik API"""
 
-    def __init__(self, refresh_token: str, metering_point: str) -> None:
+    def __init__(self, hass, refresh_token: str, metering_point: str) -> None:
         """Init API connection to Eloverblik"""
+        self.hass = hass
         self.client = Eloverblik(refresh_token)
         self._metering_point = metering_point
         self._tariff_data = None
@@ -40,7 +42,10 @@ class Connector:
     async def async_get_tariffs(self):
         """Get tariff from Eloverblik API"""
         try:
-            tariff_data = self.client.get_tariffs(self._metering_point)
+            tariff_data = await self.hass.async_add_executor_job(
+                self.client.get_tariffs, self._metering_point
+            )
+
             if tariff_data.status == 200:
                 self._tariff_data = tariff_data
             else:
@@ -63,4 +68,6 @@ class Connector:
             _LOGGER.warning("Exception: %s", exc)
 
         _LOGGER.debug("Done fetching tariff data from Eloverblik")
-        _LOGGER.debug("Tariffs: %s", self._tariff_data)
+        _LOGGER.debug("Tariffs: %s", self._tariff_data.charges)
+
+        return self._tariff_data.charges
