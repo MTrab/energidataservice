@@ -42,9 +42,10 @@ class Connector:
     """Energi Data Service API"""
 
     def __init__(
-        self, regionhandler, client, tz  # pylint: disable=invalid-name
+        self, regionhandler, client, tz, config  # pylint: disable=invalid-name
     ) -> None:
         """Init API connection to Energi Data Service"""
+        self.config = config
         self.regionhandler = regionhandler
         self.client = client
         self._result = {}

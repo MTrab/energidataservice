@@ -23,7 +23,8 @@
                     "decimals": "Decimals",
                     "pricetype": "Price calculated in",
                     "cost_template": "Template for additional costs",
-                    "in_cent": "Show prices in cent"
+                    "in_cent": "Show prices in cent",
+                    "fixed_value": "Insert price - WITHOUT VAT"
                 },
                 "description": "Set details for {name} in {country}"
             },
@@ -69,7 +70,8 @@
                     "decimals": "Decimals",
                     "pricetype": "Price calculated in",
                     "cost_template": "Template for additional costs",
-                    "in_cent": "Show prices in cent"
+                    "in_cent": "Show prices in cent",
+                    "fixed_value": "Insert price - WITHOUT VAT"
                 },
                 "description": "Set details for {name} in {country}"
             },

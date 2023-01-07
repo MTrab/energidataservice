@@ -48,6 +48,7 @@ class Connectors:
         connectors = []
 
         for connector in self._connectors:
+            _LOGGER.debug("%s = %s", connector, connector.regions)
             if region in connector.regions:
                 Connector = namedtuple("Connector", "module namespace")
                 connectors.append(Connector(connector.module, connector.namespace))

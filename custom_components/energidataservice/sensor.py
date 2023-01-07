@@ -66,6 +66,8 @@ def mean(data: list) -> float:
 def _setup(hass, config: ConfigEntry, add_devices):
     """Setup the platform."""
     area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
+    if area is None:
+        area = "FIXED"
     region = RegionHandler(area)
     _LOGGER.debug("Timezone set in ha %s", hass.config.time_zone)
     _LOGGER.debug("Currency set in ha %s", hass.config.currency)
@@ -86,13 +88,14 @@ def _setup(hass, config: ConfigEntry, add_devices):
     _LOGGER.debug("Domain %s", DOMAIN)
 
     if region.currency.name != hass.config.currency:
-        _LOGGER.warning(
-            "Official currency for %s is %s but Home Assistant reports %s from config and will show prices in %s",  # pylint: disable=line-too-long
-            region.country,
-            region.currency.name,
-            hass.config.currency,
-            hass.config.currency,
-        )
+        if area != "FIXED":
+            _LOGGER.warning(
+                "Official currency for %s is %s but Home Assistant reports %s from config and will show prices in %s",  # pylint: disable=line-too-long
+                region.country,
+                region.currency.name,
+                hass.config.currency,
+                hass.config.currency,
+            )
         region.set_region(area, hass.config.currency)
 
     this_sensor = SensorEntityDescription(
@@ -258,7 +261,7 @@ class EnergidataserviceSensor(SensorEntity):
                     self._api.today,
                     False,
                     False,
-                    self._api.connector_currency,
+                    self._api.connector_currency or self._currency,
                 )
 
         # Do we have valid data for tomorrow? If we do, calculate prices in local currency
@@ -270,7 +273,7 @@ class EnergidataserviceSensor(SensorEntity):
                     self._api.tomorrow,
                     True,
                     False,
-                    self._api.connector_currency,
+                    self._api.connector_currency or self._currency,
                 )
             self._tomorrow_raw = self._add_raw(self._api.tomorrow)
         else:
@@ -311,7 +314,7 @@ class EnergidataserviceSensor(SensorEntity):
                 self._api.predictions,
                 False,
                 True,
-                self._api.predictions_currency,
+                self._api.predictions_currency or self._currency,
             )
         else:
             _LOGGER.debug(
