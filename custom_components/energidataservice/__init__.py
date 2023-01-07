@@ -229,7 +229,7 @@ class APIConnector:
         try:
             for endpoint in connectors:
                 module = import_module(endpoint.namespace, __name__)
-                api = module.Connector(self._region, self._client, self._tz)
+                api = module.Connector(self._region, self._client, self._tz, self.hass)
                 self.connector_currency = module.DEFAULT_CURRENCY
                 await api.async_get_spotprices()
                 if api.today and not self.today:

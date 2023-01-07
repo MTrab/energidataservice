@@ -41,9 +41,10 @@ class Connector:
     """Define Nordpool Connector Class."""
 
     def __init__(
-        self, regionhandler, client, tz  # pylint: disable=invalid-name
+        self, regionhandler, client, tz, hass  # pylint: disable=invalid-name
     ) -> None:
         """Init API connection to Nordpool Group"""
+        self.hass = hass
         self.regionhandler = map_region(regionhandler)
         self.client = client
         self._result = {}
