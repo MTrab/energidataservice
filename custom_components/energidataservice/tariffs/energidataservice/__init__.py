@@ -98,3 +98,4 @@ class Connector:
             self._tariffs = tariff_data
 
         _LOGGER.debug("Tariffs:\n%s", json.dumps(self.tariffs, indent=2, default=str))
+        return self.tariffs
