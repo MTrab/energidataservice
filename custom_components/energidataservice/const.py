@@ -74,7 +74,7 @@ CURRENCY_LIST = {
         "name": "NONE",
         "symbol": "NONE",
         "cent": "NONE",
-    }
+    },
 }
 
 # Regions

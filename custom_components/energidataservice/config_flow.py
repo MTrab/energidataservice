@@ -230,7 +230,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                 user_input[CONF_FIXED_PRICE_VALUE] = (
                     user_input[CONF_FIXED_PRICE_VALUE] * 1000
                 )
-                
+
             self.options.update(user_input)
             _LOGGER.debug(self.options)
             template_ok = False

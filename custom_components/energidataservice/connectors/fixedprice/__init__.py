@@ -1,7 +1,7 @@
 """Fixed price connector."""
 from __future__ import annotations
-from datetime import datetime, timedelta
 
+from datetime import datetime, timedelta
 from logging import getLogger
 
 import pytz
