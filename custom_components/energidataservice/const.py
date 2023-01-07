@@ -26,6 +26,7 @@ CONF_ENABLE_TARIFFS = "enable_tariffs"
 CONF_REFRESH_TOKEN = "refresh_token"
 CONF_METERING_POINT = "metering_point"
 CONF_FIXED_PRICE = "fixed_price"
+CONF_FIXED_PRICE_VALUE = "fixed_value"
 
 DATA = "data"
 DEFAULT_NAME = "Energidataservice"
@@ -69,6 +70,11 @@ CURRENCY_LIST = {
         "symbol": "$",
         "cent": "¢",
     },
+    "NONE": {
+        "name": "NONE",
+        "symbol": "NONE",
+        "cent": "NONE",
+    }
 }
 
 # Regions
@@ -96,4 +102,5 @@ REGIONS = {
     "AT": [CURRENCY_LIST["EUR"], "Austria", "Austria", 0.20],
     "DE": [CURRENCY_LIST["EUR"], "Germany", "Germany", 0.19],
     "LU": [CURRENCY_LIST["EUR"], "Luxemburg", "Luxemburg", 0.08],
+    "FIXED": [CURRENCY_LIST["NONE"], "Fixed Price", "Fixed Price", 0.0],
 }
