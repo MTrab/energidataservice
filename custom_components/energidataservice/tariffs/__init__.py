@@ -48,7 +48,7 @@ class Tariff:
         endpoints = []
         _LOGGER.debug("Finding valid endpoints for region '%s'", region)
         for endpoint in self._tariffs:
-            if region in endpoint.regions:
+            if region in endpoint.regions or region is None:
                 TariffEndpoint = namedtuple("Tariff", "module namespace")
                 endpoints.append(TariffEndpoint(endpoint.module, endpoint.namespace))
 
