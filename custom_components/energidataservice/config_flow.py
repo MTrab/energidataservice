@@ -125,8 +125,12 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                             "country": self.get_country(),
                         },
                     )
-
-                return True
+                else:
+                    async_call_later(self.hass, 2, self._do_update)
+                    return self.async_create_entry(
+                        title=self.options.get(CONF_NAME),
+                        data=self.options,
+                    )
             else:
                 async_call_later(self.hass, 2, self._do_update)
                 return self.async_create_entry(
