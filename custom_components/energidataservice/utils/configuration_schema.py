@@ -63,7 +63,7 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
             CONF_COUNTRY: options.get(CONF_COUNTRY) or None,
             CONF_FIXED_PRICE_VALUE: float(options.get(CONF_FIXED_PRICE_VALUE) / 1000)
             if CONF_FIXED_PRICE_VALUE in options
-            else None,
+            else 0,
             CONF_CURRENCY_IN_CENT: options.get(CONF_CURRENCY_IN_CENT)
             if not isinstance(options.get(CONF_CURRENCY_IN_CENT), type(None))
             else False,
