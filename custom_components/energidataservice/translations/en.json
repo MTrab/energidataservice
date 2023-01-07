@@ -32,7 +32,7 @@
                 "title": "Enable extra services?",
                 "data": {
                     "enable_forecast": "AI forecasts from Carnot",
-                    "enable_tariffs": "Tariff data from Eloverblik"
+                    "enable_tariffs": "Automatically fetch tariff data"
                 },
                 "description": "Should {name} in {country} make use of extra services?"
             },
@@ -44,12 +44,11 @@
                     "api_key": "API-key"
                 }
             },
-            "eloverblik_credentials": {
-                "title": "API info for Eloverblik",
-                "description": "Get metering point and refresh token from https:\/\/www.eloverblik.dk",
+            "tariff_settings": {
+                "title": "Select net operator",
+                "description": "If in doubt find more information here:",
                 "data": {
-                    "refresh_token": "Refresh Token",
-                    "metering_point": "Metering Point"
+                    "tariff_charge_owner": "Select net operator"
                 }
             }
         }
@@ -79,7 +78,7 @@
                 "title": "Enable extra services?",
                 "data": {
                     "enable_forecast": "AI forecasts from Carnot",
-                    "enable_tariffs": "Tariff data from Eloverblik"
+                    "enable_tariffs": "Automatically fetch tariff data"
                 },
                 "description": "Should {name} in {country} make use of extra services?"
             },
@@ -91,12 +90,11 @@
                     "api_key": "API-key"
                 }
             },
-            "eloverblik_credentials": {
-                "title": "API info for Eloverblik",
-                "description": "Get metering point and refresh token from https:\/\/www.eloverblik.dk",
+            "tariff_settings": {
+                "title": "Select net operator",
+                "description": "If in doubt find more information here:",
                 "data": {
-                    "refresh_token": "Refresh Token",
-                    "metering_point": "Metering Point"
+                    "tariff_charge_owner": "Select net operator"
                 }
             }
         }

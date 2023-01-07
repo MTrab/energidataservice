@@ -26,12 +26,11 @@ class Tariff:
                 and not module.endswith("__pycache__")
                 and not mod_path.endswith(".disabled")
             ):
-                Endpoint = namedtuple("Endpoint", "module namespace regions")
+                Endpoint = namedtuple("Endpoint", "module namespace regions chargeowners")
                 _LOGGER.debug("Adding module %s", module)
                 api_ns = f".{module}"
                 mod = import_module(api_ns, __name__)
-                con = Endpoint(module, f".tariffs{api_ns}", mod.REGIONS)
-                # con = Endpoint(module, f".tariffs{api_ns}")
+                con = Endpoint(module, f".tariffs{api_ns}", mod.REGIONS, mod.CHARGEOWNERS)
 
                 self._tariffs.append(con)
 
@@ -43,7 +42,7 @@ class Tariff:
     def get_endpoint(self, region: str) -> list:
         """Get valid endpoint(s) of a specific zone."""
         endpoints = []
-
+        _LOGGER.debug("Finding valid endpoints for region '%s'", region)
         for endpoint in self._tariffs:
             if region in endpoint.regions:
                 TariffEndpoint = namedtuple("Tariff", "module namespace")

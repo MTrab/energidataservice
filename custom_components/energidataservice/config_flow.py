@@ -28,10 +28,10 @@ from .const import (
 from .forecasts import Forecast
 from .utils.configuration_schema import (
     energidataservice_config_option_carnot_credentials,
-    energidataservice_config_option_eloverblik_credentials,
     energidataservice_config_option_extras,
     energidataservice_config_option_info_schema,
     energidataservice_config_option_initial_schema,
+    energidataservice_config_option_tariff_settings,
 )
 from .utils.regionhandler import RegionHandler
 
@@ -113,11 +113,11 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                         },
                     )
                 elif user_input[CONF_ENABLE_TARIFFS]:
-                    creds = energidataservice_config_option_eloverblik_credentials(
+                    creds = energidataservice_config_option_tariff_settings(
                         self.options
                     )
                     return self.async_show_form(
-                        step_id="eloverblik_credentials",
+                        step_id="tariff_settings",
                         data_schema=vol.Schema(creds),
                         errors=self._errors,
                         description_placeholders={
@@ -163,11 +163,11 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             _LOGGER.debug(self.options)
 
             if user_input[CONF_ENABLE_TARIFFS]:
-                creds = energidataservice_config_option_eloverblik_credentials(
+                creds = energidataservice_config_option_tariff_settings(
                     user_input
                 )
                 return self.async_show_form(
-                    step_id="eloverblik_credentials",
+                    step_id="tariff_settings",
                     data_schema=vol.Schema(creds),
                     errors=self._errors,
                     description_placeholders={
@@ -195,10 +195,10 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             },
         )
 
-    async def async_step_eloverblik_credentials(
+    async def async_step_tariff_settings(
         self, user_input: Any | None = None
     ) -> FlowResult:
-        """Handle Eloverblik credentials."""
+        """Handle Tariff Settings."""
         self._errors = {}
 
         if user_input is not None:
@@ -211,11 +211,11 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                 data=self.options,
             )
 
-        creds = energidataservice_config_option_eloverblik_credentials(
+        creds = energidataservice_config_option_tariff_settings(
             self.config_entry.options
         )
         return self.async_show_form(
-            step_id="eloverblik_credentials",
+            step_id="tariff_settings",
             data_schema=vol.Schema(creds),
             errors=self._errors,
             description_placeholders={
@@ -383,11 +383,11 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
             elif user_input[CONF_ENABLE_TARIFFS]:
-                creds = energidataservice_config_option_eloverblik_credentials(
+                creds = energidataservice_config_option_tariff_settings(
                     user_input
                 )
                 return self.async_show_form(
-                    step_id="eloverblik_credentials",
+                    step_id="tariff_settings",
                     data_schema=vol.Schema(creds),
                     errors=self._errors,
                     description_placeholders={
@@ -423,11 +423,11 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             user_input = {**user_input, **self.user_input}
             if user_input[CONF_ENABLE_TARIFFS]:
-                creds = energidataservice_config_option_eloverblik_credentials(
+                creds = energidataservice_config_option_tariff_settings(
                     user_input
                 )
                 return self.async_show_form(
-                    step_id="eloverblik_credentials",
+                    step_id="tariff_settings",
                     data_schema=vol.Schema(creds),
                     errors=self._errors,
                     description_placeholders={
@@ -453,7 +453,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
-    async def async_step_eloverblik_credentials(
+    async def async_step_tariff_settings(
         self, user_input: Any | None = None
     ) -> FlowResult:
         """Handle Eloverblik credentials."""
@@ -468,9 +468,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options=user_input,
             )
 
-        creds = energidataservice_config_option_eloverblik_credentials(self.user_input)
+        creds = energidataservice_config_option_tariff_settings(self.user_input)
         return self.async_show_form(
-            step_id="eloverblik_credentials",
+            step_id="tariff_settings",
             data_schema=vol.Schema(creds),
             errors=self._errors,
             description_placeholders={

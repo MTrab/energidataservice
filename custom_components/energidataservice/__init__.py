@@ -26,8 +26,7 @@ from .const import (
     CONF_AREA,
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_TARIFFS,
-    CONF_METERING_POINT,
-    CONF_REFRESH_TOKEN,
+    CONF_TARIFF_CHARGE_OWNER,
     DOMAIN,
     STARTUP,
     UPDATE_EDS,
@@ -216,7 +215,7 @@ class APIConnector:
         self._carnot_user = entry.options.get(CONF_EMAIL) or None
         self._carnot_apikey = entry.options.get(CONF_API_KEY) or None
 
-    async def update(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
+    async def update(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from API"""
         _LOGGER.debug("Updating data for '%s'", self._region.region)
         connectors = self._connectors.get_connectors(self._region.region)
@@ -230,87 +229,87 @@ class APIConnector:
 
         self.tariff_data = None
 
-        # try:
-        for endpoint in connectors:
-            module = import_module(endpoint.namespace, __name__)
-            api = module.Connector(self._region, self._client, self._tz, self._config)
-            self.connector_currency = module.DEFAULT_CURRENCY
-            await api.async_get_spotprices()
-            if api.today and not self.today:
-                self.today = api.today
-                self.api_today = api.today
-                _LOGGER.debug(
-                    "%s got values from %s (namespace='%s')",
-                    self._region.region,
-                    endpoint.module,
-                    endpoint.namespace,
-                )
-                self._source = module.SOURCE_NAME
+        try:
+            for endpoint in connectors:
+                module = import_module(endpoint.namespace, __name__)
+                api = module.Connector(self._region, self._client, self._tz, self._config)
+                self.connector_currency = module.DEFAULT_CURRENCY
+                await api.async_get_spotprices()
+                if api.today and not self.today:
+                    self.today = api.today
+                    self.api_today = api.today
+                    _LOGGER.debug(
+                        "%s got values from %s (namespace='%s')",
+                        self._region.region,
+                        endpoint.module,
+                        endpoint.namespace,
+                    )
+                    self._source = module.SOURCE_NAME
 
-            if api.tomorrow and not self.tomorrow:
-                self.today = api.today
-                self.api_today = api.today
-                self.tomorrow = api.tomorrow
-                self.api_tomorrow = api.tomorrow
+                if api.tomorrow and not self.tomorrow:
+                    self.today = api.today
+                    self.api_today = api.today
+                    self.tomorrow = api.tomorrow
+                    self.api_tomorrow = api.tomorrow
 
-                _LOGGER.debug(
-                    "%s got values from %s (namespace='%s')",
-                    self._region.region,
-                    endpoint.module,
-                    endpoint.namespace,
-                )
+                    _LOGGER.debug(
+                        "%s got values from %s (namespace='%s')",
+                        self._region.region,
+                        endpoint.module,
+                        endpoint.namespace,
+                    )
 
-                self._source = module.SOURCE_NAME
-                break
+                    self._source = module.SOURCE_NAME
+                    break
 
-        if (not self.tomorrow or not self.api_tomorrow) or (
-            self.tomorrow is None or self.api_tomorrow is None
-        ):
-            _LOGGER.debug("No data found for tomorrow")
-            self._tomorrow_valid = False
-            self.tomorrow = None
-            self.api_tomorrow = None
-
-            midnight = datetime.strptime("23:59:59", "%H:%M:%S")
-            refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
-            now = datetime.utcnow()
-
-            _LOGGER.debug(
-                "Now: %s:%s:%s (UTC)",
-                f"{now.hour:02d}",
-                f"{now.minute:02d}",
-                f"{now.second:02d}",
-            )
-            _LOGGER.debug(
-                "Refresh: %s:%s:%s (local time)",
-                f"{refresh.hour:02d}",
-                f"{refresh.minute:02d}",
-                f"{refresh.second:02d}",
-            )
-            if (
-                f"{midnight.hour}:{midnight.minute}:{midnight.second}"
-                > f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
-                and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
-                <= f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+            if (not self.tomorrow or not self.api_tomorrow) or (
+                self.tomorrow is None or self.api_tomorrow is None
             ):
-                retry_update(self)
+                _LOGGER.debug("No data found for tomorrow")
+                self._tomorrow_valid = False
+                self.tomorrow = None
+                self.api_tomorrow = None
+
+                midnight = datetime.strptime("23:59:59", "%H:%M:%S")
+                refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
+                now = datetime.utcnow()
+
+                _LOGGER.debug(
+                    "Now: %s:%s:%s (UTC)",
+                    f"{now.hour:02d}",
+                    f"{now.minute:02d}",
+                    f"{now.second:02d}",
+                )
+                _LOGGER.debug(
+                    "Refresh: %s:%s:%s (local time)",
+                    f"{refresh.hour:02d}",
+                    f"{refresh.minute:02d}",
+                    f"{refresh.second:02d}",
+                )
+                if (
+                    f"{midnight.hour}:{midnight.minute}:{midnight.second}"
+                    > f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+                    and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
+                    <= f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+                ):
+                    retry_update(self)
+                else:
+                    _LOGGER.debug(
+                        "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
+                    )
             else:
                 _LOGGER.debug(
-                    "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
+                    "Tomorrow:\n%s", json.dumps(self.tomorrow, indent=2, default=str)
                 )
-        else:
-            _LOGGER.debug(
-                "Tomorrow:\n%s", json.dumps(self.tomorrow, indent=2, default=str)
-            )
-            self.retry_count = 0
-            self._tomorrow_valid = True
+                self.retry_count = 0
+                self._tomorrow_valid = True
 
-        await self.async_get_tariffs()
-        # except ServerDisconnectedError:
-        #     _LOGGER.warning("Err.")
-        #     retry_update(self)
+            await self.async_get_tariffs()
+        except ServerDisconnectedError:
+            _LOGGER.warning("Err.")
+            retry_update(self)
 
-    async def update_carnot(self, dt=None):  # type: ignore pylint: disable=unused-argument,invalid-name
+    async def update_carnot(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
         """Update Carnot data if enabled."""
         if self.forecast:
             self.predictions_calculated = False
@@ -340,19 +339,18 @@ class APIConnector:
 
             self.api_predictions = self.predictions
 
-    async def async_get_tariffs(self) -> dict:
+    async def async_get_tariffs(self) -> None:
         """Get tariff data."""
         if self.tariff:
             tariff_endpoint = self.tariffs.get_endpoint(self._region.region)
             tariff_module = import_module(tariff_endpoint[0].namespace, __name__)
             tariff = tariff_module.Connector(
                 self.hass,
-                self._config.options.get(CONF_REFRESH_TOKEN),
-                self._config.options.get(CONF_METERING_POINT),
+                self._client,
+                self._config.options.get(CONF_TARIFF_CHARGE_OWNER),
             )
-            self.tariff_data = await tariff.async_get_tariffs()
 
-        return {}
+            self.tariff_data = await tariff.async_get_tariffs()
 
     @property
     def tomorrow_valid(self) -> bool:
