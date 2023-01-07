@@ -1,6 +1,7 @@
 """Update available charge owners from Energi Data Service API."""
 
 import os
+
 import requests
 
 url = 'https://api.energidataservice.dk/dataset/DatahubPricelist?start=1970-01-01&filter={"Note":["Nettarif C time"]}'

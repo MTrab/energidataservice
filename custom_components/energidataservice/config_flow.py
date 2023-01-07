@@ -163,9 +163,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             _LOGGER.debug(self.options)
 
             if user_input[CONF_ENABLE_TARIFFS]:
-                creds = energidataservice_config_option_tariff_settings(
-                    user_input
-                )
+                creds = energidataservice_config_option_tariff_settings(user_input)
                 return self.async_show_form(
                     step_id="tariff_settings",
                     data_schema=vol.Schema(creds),
@@ -383,9 +381,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
             elif user_input[CONF_ENABLE_TARIFFS]:
-                creds = energidataservice_config_option_tariff_settings(
-                    user_input
-                )
+                creds = energidataservice_config_option_tariff_settings(user_input)
                 return self.async_show_form(
                     step_id="tariff_settings",
                     data_schema=vol.Schema(creds),
@@ -423,9 +419,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             user_input = {**user_input, **self.user_input}
             if user_input[CONF_ENABLE_TARIFFS]:
-                creds = energidataservice_config_option_tariff_settings(
-                    user_input
-                )
+                creds = energidataservice_config_option_tariff_settings(user_input)
                 return self.async_show_form(
                     step_id="tariff_settings",
                     data_schema=vol.Schema(creds),

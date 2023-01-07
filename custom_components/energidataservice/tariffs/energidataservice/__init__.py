@@ -1,16 +1,16 @@
 """Energi Data Service tariff connector"""
 from __future__ import annotations
+
 import asyncio
 from datetime import datetime, timedelta
 import json
-
 from logging import getLogger
 from typing import Any
 
 import requests
 
-from .regions import REGIONS
 from .chargeowners import CHARGEOWNERS
+from .regions import REGIONS
 
 _LOGGER = getLogger(__name__)
 
@@ -93,8 +93,7 @@ class Connector:
         tariff_data = {}
         for entry in self._result:
             if (entry["ValidFrom"].split("T"))[0] <= start_date and (
-                (entry["ValidTo"].split("T"))[0] >= end_date
-                or entry["ValidTo"] is None
+                (entry["ValidTo"].split("T"))[0] >= end_date or entry["ValidTo"] is None
             ):
                 for key, val in entry.items():
                     if "Price" in key:
