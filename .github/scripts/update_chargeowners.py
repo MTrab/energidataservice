@@ -27,7 +27,6 @@ data_file = (
     + "/../../custom_components/energidataservice/tariffs/energidataservice/chargeowners.py"
 )
 
-print(data_file)
 f = open(data_file, "w", encoding="UTF-8")
 f.write('"""Valid Charge Owners for Energi Data Service connector."""\r\n')
 f.write("\r\n")
@@ -38,3 +37,5 @@ for chargeowner in chargeowners:
 
 f.write("]\r\n")
 f.close()
+
+print("Charge Owners from Energi Data Service was updated")
