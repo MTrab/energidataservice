@@ -17,14 +17,14 @@ from ..const import (
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_TARIFFS,
     CONF_FIXED_PRICE_VALUE,
-    CONF_METERING_POINT,
     CONF_PRICETYPE,
-    CONF_REFRESH_TOKEN,
+    CONF_TARIFF_CHARGE_OWNER,
     CONF_TEMPLATE,
     CONF_VAT,
     UNIT_TO_MULTIPLIER,
 )
 from .regionhandler import RegionHandler
+from .tariffhandler import TariffHandler
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -188,20 +188,22 @@ def energidataservice_config_option_carnot_credentials(
     return schema
 
 
-def energidataservice_config_option_eloverblik_credentials(
+def energidataservice_config_option_tariff_settings(
     options: ConfigEntry = None,
 ) -> dict:
     """Return a schema for Eloverblik API configuration."""
     if options is None:
-        options = {CONF_REFRESH_TOKEN: None, CONF_METERING_POINT: None}
+        options = {CONF_TARIFF_CHARGE_OWNER: None}
 
     schema = {
         vol.Required(
-            CONF_REFRESH_TOKEN, default=options.get(CONF_REFRESH_TOKEN) or None
-        ): str,
-        vol.Required(
-            CONF_METERING_POINT, default=options.get(CONF_METERING_POINT) or None
-        ): str,
+            CONF_TARIFF_CHARGE_OWNER,
+            default=options.get(CONF_TARIFF_CHARGE_OWNER),
+        ): vol.In(
+            TariffHandler.get_chargeowners(
+                RegionHandler.description_to_region(options.get(CONF_AREA)), True
+            )
+        ),
     }
 
     _LOGGER.debug("Schema: %s", schema)
