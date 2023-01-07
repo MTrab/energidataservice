@@ -192,6 +192,7 @@ def energidataservice_config_option_tariff_settings(
     options: ConfigEntry = None,
 ) -> dict:
     """Return a schema for Eloverblik API configuration."""
+    _LOGGER.debug("EDS options: %s", options)
     if options is None:
         options = {CONF_TARIFF_CHARGE_OWNER: None}
 
