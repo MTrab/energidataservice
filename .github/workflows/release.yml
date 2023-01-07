@@ -18,12 +18,16 @@ jobs:
       - name: Update manifest.json version to ${{ github.event.release.tag_name }}
         run: |
           python3 ${{ github.workspace }}/.github/scripts/update_hacs_manifest.py --version ${{ github.event.release.tag_name }} --path /custom_components/energidataservice/
+      - name: Update available Charge Owners from Energi Data Service
+        run: |
+          python3 ${{ github.workspace }}/.github/scripts/update_chargeowners.py
       - name: Commit manifest update
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add ./custom_components/energidataservice/manifest.json
-          git commit -m "Updated manifest.json"
+          git add ./custom_components/energidataservice/tariffs/energidataservice/chargeowners.py
+          git commit -m "Updated manifest.json and Charge Owners"
           git push origin HEAD:master
       - name: Create zip
         run: |
