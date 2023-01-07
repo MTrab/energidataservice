@@ -3,4 +3,5 @@
 REGIONS = [
     "DK1",
     "DK2",
+    "FIXED",
 ]
