@@ -25,6 +25,7 @@ CONF_ENABLE_HELPER_DURATION = "enable_helper_duration"
 CONF_ENABLE_TARIFFS = "enable_tariffs"
 CONF_REFRESH_TOKEN = "refresh_token"
 CONF_METERING_POINT = "metering_point"
+CONF_FIXED_PRICE = "fixed_price"
 
 DATA = "data"
 DEFAULT_NAME = "Energidataservice"
