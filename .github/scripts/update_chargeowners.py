@@ -1,5 +1,6 @@
 """Update available charge owners from Energi Data Service API."""
 
+from datetime import datetime
 import os
 
 import requests
@@ -13,11 +14,13 @@ response = requests.request("GET", url, headers=headers, data=payload)
 
 data = response.json()
 chargeowners = []
+today = (datetime.utcnow()).strftime("%Y-%m-%d")
 
 for entry in data["records"]:
     if (
         entry["ChargeOwner"] not in chargeowners
         and "UDGÅET" not in entry["ChargeOwner"]
+        and (entry["ValidTo"] is None or entry["ValidTo"] >= today)
     ):
         chargeowners.append(entry["ChargeOwner"])
 
