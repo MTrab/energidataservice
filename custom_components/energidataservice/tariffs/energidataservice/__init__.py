@@ -1,13 +1,9 @@
 """Energi Data Service tariff connector"""
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timedelta
 import json
 from logging import getLogger
-from typing import Any
-
-import requests
 
 from .chargeowners import CHARGEOWNERS
 from .regions import REGIONS
@@ -59,13 +55,13 @@ class Connector:
 
     def _prepare_url(self, url: str) -> str:
         """Prepare and format the URL for the API request."""
-        start_date = (datetime.utcnow()).strftime("%Y-%m-%d")
-        start = f"start={str(start_date)}"
-        limit = "limit=100"
-        objfilter = f"filter=%7B%22Note%22:%5B%22Nettarif C time%22%5D,%22ChargeOwner%22:%5B%22{self._chargeowner}%22%5D%7D"  # pylint disable=line-too-long
-        sort = "sort=ValidFrom%20asc"
+        limit = "limit=200"
+        objfilter = f"filter=%7B%22Note%22:%5B%22Nettarif C time%22%5D,%22ChargeOwner%22:%5B%22{self._chargeowner}%22%5D%7D"  # pylint: disable=line-too-long
+        sort = "sort=ValidFrom%20desc"
 
-        return f"{url}?{objfilter}&{sort}"
+        out_url = f"{url}?{objfilter}&{sort}&{limit}"
+        _LOGGER.debug("URL for tariff request: %s", out_url)
+        return out_url
 
     async def async_get_tariffs(self):
         """Get tariff from Eloverblik API"""
@@ -87,14 +83,15 @@ class Connector:
             _LOGGER.error("API returned error %s", str(resp.status))
             return
 
-        start_date = (datetime.utcnow()).strftime("%Y-%m-%d")
-        end_date = (datetime.utcnow() + timedelta(days=10)).strftime("%Y-%m-%d")
+        check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
 
         tariff_data = {}
         for entry in self._result:
-            if (entry["ValidFrom"].split("T"))[0] <= start_date and (
-                (entry["ValidTo"].split("T"))[0] >= end_date or entry["ValidTo"] is None
+            if (entry["ValidFrom"].split("T"))[0] <= check_date and (
+                entry["ValidTo"] is None
+                or (entry["ValidTo"].split("T"))[0] >= check_date
             ):
+                _LOGGER.debug("Found possible dataset: %s", entry)
                 for key, val in entry.items():
                     if "Price" in key:
                         hour = str(int("".join(filter(str.isdigit, key))) - 1)
