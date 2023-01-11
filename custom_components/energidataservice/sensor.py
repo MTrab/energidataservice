@@ -381,8 +381,6 @@ class EnergidataserviceSensor(SensorEntity):
                 "tomorrow": self.tomorrow or None,
                 "raw_today": self._today_raw or None,
                 "raw_tomorrow": self._tomorrow_raw or None,
-                "net_operator": self._config.options.get(CONF_TARIFF_CHARGE_OWNER),
-                "tariffs": self._api.tariff_data,
                 "today_min": self._today_min,
                 "today_max": self._today_max,
                 "today_mean": self._today_mean,
@@ -398,6 +396,16 @@ class EnergidataserviceSensor(SensorEntity):
                         "forecast": self._add_raw(self.predictions),
                         "attribution": f"Data sourced from {self._api.source} "
                         "and forecast from Carnot",
+                    }
+                )
+
+            if not isinstance(self._api.tariff_data, type(None)):
+                self._attr_extra_state_attributes.update(
+                    {
+                        "net_operator": self._config.options.get(
+                            CONF_TARIFF_CHARGE_OWNER
+                        ),
+                        "tariffs": self._api.tariff_data,
                     }
                 )
         else:
@@ -587,7 +595,9 @@ class EnergidataserviceSensor(SensorEntity):
                     float(1 + self._vat)
                 )
             except KeyError:
-                _LOGGER.warning("Error adding tariffs for %s, no valid tariffs was found!", fake_dt)
+                _LOGGER.warning(
+                    "Error adding tariffs for %s, no valid tariffs was found!", fake_dt
+                )
 
         return round(price, self._decimals)
 
