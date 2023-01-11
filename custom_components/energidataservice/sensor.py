@@ -380,6 +380,7 @@ class EnergidataserviceSensor(SensorEntity):
                 "tomorrow": self.tomorrow or None,
                 "raw_today": self._today_raw or None,
                 "raw_tomorrow": self._tomorrow_raw or None,
+                "tariffs": self._api.tariff_data,
                 "today_min": self._today_min,
                 "today_max": self._today_max,
                 "today_mean": self._today_mean,
