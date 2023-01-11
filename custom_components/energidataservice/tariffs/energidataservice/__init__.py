@@ -90,19 +90,6 @@ class Connector:
 
         tariff_data = {}
         for entry in self._result:
-            # _LOGGER.debug(
-            #     "Checking %s <= %s: %s",
-            #     (entry["ValidFrom"].split("T"))[0],
-            #     check_date,
-            #     (entry["ValidFrom"].split("T"))[0] <= check_date,
-            # )
-            # _LOGGER.debug(
-            #     "Checking %s >= %s or None: %s",
-            #     (entry["ValidTo"].split("T"))[0],
-            #     check_date,
-            #     entry["ValidTo"] is None
-            #     or (entry["ValidTo"].split("T"))[0] >= check_date,
-            # )
             if (entry["ValidFrom"].split("T"))[0] <= check_date and (
                 entry["ValidTo"] is None
                 or (entry["ValidTo"].split("T"))[0] >= check_date
