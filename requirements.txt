@@ -1,2 +1,1 @@
 CurrencyConverter==0.17.4
-pyeloverblik==0.3.1
