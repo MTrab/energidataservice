@@ -3,11 +3,10 @@
 <a href="https://www.buymeacoffee.com/mtrab" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 # Energidataservice
 
-This is a custom component for Home Assistant to integrate Day Ahead spotprices for electricity, from Energidataservice
+This is a custom component for Home Assistant to integrate Day Ahead spotprices for electricity, from Energidataservice.
+The integration also adds posibility to get price forecasts for the next week thru Carnot.dk and automatically add tariffs to the price by selecting your charge owner (net operator)
 
 For Tips & Tricks, see the [wiki pages](https://github.com/MTrab/energidataservice/wiki)
-
-PLEASE NOTE!! This integration CANNOT be used with fixed price contracts! Perhaps in a future release, but NOT as it is right now.
 
 ### Installation:
 
