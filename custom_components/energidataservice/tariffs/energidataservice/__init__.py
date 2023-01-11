@@ -55,9 +55,12 @@ class Connector:
 
     def _prepare_url(self, url: str) -> str:
         """Prepare and format the URL for the API request."""
-        limit = "limit=200"
-        objfilter = f"filter=%7B%22Note%22:%5B%22Nettarif C time%22%5D,%22ChargeOwner%22:%5B%22{self._chargeowner}%22%5D%7D"  # pylint: disable=line-too-long
-        sort = "sort=ValidFrom%20desc"
+        chargeowner = CHARGEOWNERS[self._chargeowner]
+        limit = "limit=500"
+        objfilter = 'filter=%7B"note": {},"gln_number": ["{}"]%7D'.format(  # pylint: disable=consider-using-f-string
+            str(chargeowner["note"]).replace("'", '"'), chargeowner["gln"]
+        )
+        sort = "sort=ValidFrom desc"
 
         out_url = f"{url}?{objfilter}&{sort}&{limit}"
         _LOGGER.debug("URL for tariff request: %s", out_url)
@@ -87,16 +90,32 @@ class Connector:
 
         tariff_data = {}
         for entry in self._result:
+            # _LOGGER.debug(
+            #     "Checking %s <= %s: %s",
+            #     (entry["ValidFrom"].split("T"))[0],
+            #     check_date,
+            #     (entry["ValidFrom"].split("T"))[0] <= check_date,
+            # )
+            # _LOGGER.debug(
+            #     "Checking %s >= %s or None: %s",
+            #     (entry["ValidTo"].split("T"))[0],
+            #     check_date,
+            #     entry["ValidTo"] is None
+            #     or (entry["ValidTo"].split("T"))[0] >= check_date,
+            # )
             if (entry["ValidFrom"].split("T"))[0] <= check_date and (
                 entry["ValidTo"] is None
                 or (entry["ValidTo"].split("T"))[0] >= check_date
             ):
                 _LOGGER.debug("Found possible dataset: %s", entry)
+                baseprice = 0
                 for key, val in entry.items():
+                    if key == "Price1":
+                        baseprice = val
                     if "Price" in key:
                         hour = str(int("".join(filter(str.isdigit, key))) - 1)
 
-                        tariff_data.update({hour: val})
+                        tariff_data.update({hour: val if val is not None else baseprice})
 
                 if len(tariff_data) == 24:
                     self._tariffs = tariff_data
