@@ -68,45 +68,55 @@ class Connector:
 
     async def async_get_tariffs(self):
         """Get tariff from Eloverblik API"""
-        headers = self._header()
-        url = self._prepare_url(BASE_URL)
+        try:
+            headers = self._header()
+            url = self._prepare_url(BASE_URL)
 
-        resp = await self.client.get(url, headers=headers)
+            resp = await self.client.get(url, headers=headers)
 
-        if resp.status == 400:
-            _LOGGER.error("API returned error 400, Bad Request!")
-            self._result = {}
-        elif resp.status == 411:
-            _LOGGER.error("API returned error 411, Invalid Request!")
-            self._result = {}
-        elif resp.status == 200:
-            res = await resp.json()
-            self._result = res["records"]
-        else:
-            _LOGGER.error("API returned error %s", str(resp.status))
-            return
+            if resp.status == 400:
+                _LOGGER.error("API returned error 400, Bad Request!")
+                self._result = {}
+            elif resp.status == 411:
+                _LOGGER.error("API returned error 411, Invalid Request!")
+                self._result = {}
+            elif resp.status == 200:
+                res = await resp.json()
+                self._result = res["records"]
+            else:
+                _LOGGER.error("API returned error %s", str(resp.status))
+                return
 
-        check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
+            check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
 
-        tariff_data = {}
-        for entry in self._result:
-            if (entry["ValidFrom"].split("T"))[0] <= check_date and (
-                entry["ValidTo"] is None
-                or (entry["ValidTo"].split("T"))[0] >= check_date
-            ):
-                _LOGGER.debug("Found possible dataset: %s", entry)
-                baseprice = 0
-                for key, val in entry.items():
-                    if key == "Price1":
-                        baseprice = val
-                    if "Price" in key:
-                        hour = str(int("".join(filter(str.isdigit, key))) - 1)
+            tariff_data = {}
+            for entry in self._result:
+                if (entry["ValidFrom"].split("T"))[0] <= check_date and (
+                    entry["ValidTo"] is None
+                    or (entry["ValidTo"].split("T"))[0] >= check_date
+                ):
+                    _LOGGER.debug("Found possible dataset: %s", entry)
+                    baseprice = 0
+                    for key, val in entry.items():
+                        if key == "Price1":
+                            baseprice = val
+                        if "Price" in key:
+                            hour = str(int("".join(filter(str.isdigit, key))) - 1)
 
-                        tariff_data.update({hour: val if val is not None else baseprice})
+                            tariff_data.update(
+                                {hour: val if val is not None else baseprice}
+                            )
 
-                if len(tariff_data) == 24:
-                    self._tariffs = tariff_data
-                    break
+                    if len(tariff_data) == 24:
+                        self._tariffs = tariff_data
+                        break
 
-        _LOGGER.debug("Tariffs:\n%s", json.dumps(self.tariffs, indent=2, default=str))
-        return self.tariffs
+            _LOGGER.debug(
+                "Tariffs:\n%s", json.dumps(self.tariffs, indent=2, default=str)
+            )
+            return self.tariffs
+        except KeyError:
+            _LOGGER.error(
+                "Error finding '%s' in the list of charge owners - please reconfigure your integration.",
+                self._chargeowner,
+            )
