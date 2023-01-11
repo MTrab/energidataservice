@@ -23,6 +23,7 @@ class TariffHandler:
         for endpoint in connectors:
             _LOGGER.debug("Getting chargeowner from '%s'", endpoint.namespace)
             module = import_module(f"..{endpoint.namespace}", __name__)
-            chargeowners += module.CHARGEOWNERS
+            for chargeowner in module.CHARGEOWNERS:
+                chargeowners.append(chargeowner)
 
         return chargeowners if not sort else sorted(chargeowners, reverse=descending)

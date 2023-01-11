@@ -574,22 +574,18 @@ class EnergidataserviceSensor(SensorEntity):
 
         if self._api.tariff_data is not None and hour is not None:
             # Add tariffs automatically
-            if "additional_tariffs" in self._api.tariff_data:
-                for _, additional_tariff in self._api.tariff_data[
-                    "additional_tariffs"
-                ].items():
-                    price += float(additional_tariff) * (float(1 + self._vat))
+            try:
+                if "additional_tariffs" in self._api.tariff_data:
+                    for _, additional_tariff in self._api.tariff_data[
+                        "additional_tariffs"
+                    ].items():
+                        price += float(additional_tariff) * (float(1 + self._vat))
 
-            price += float(self._api.tariff_data["tariffs"][str(hour.hour)]) * (
-                float(1 + self._vat)
-            )
-            # for tariff in self._api.tariff_data:
-            #     if isinstance(tariff, list):
-            #         if tariff[hour.hour] > 0:
-            #             if len(tariff) == 24:
-            #                 price += tariff[hour.hour] * (float(1 + self._vat))
-            #     else:
-            #         price += float(tariff) * (float(1 + self._vat))
+                price += float(self._api.tariff_data["tariffs"][str(hour.hour)]) * (
+                    float(1 + self._vat)
+                )
+            except KeyError:
+                _LOGGER.warning("Error adding tariffs for %s, no valid tariffs was found!", fake_dt)
 
         return round(price, self._decimals)
 

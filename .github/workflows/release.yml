@@ -18,9 +18,6 @@ jobs:
       - name: Update manifest.json version to ${{ github.event.release.tag_name }}
         run: |
           python3 ${{ github.workspace }}/.github/scripts/update_hacs_manifest.py --version ${{ github.event.release.tag_name }} --path /custom_components/energidataservice/
-      - name: Update available Charge Owners from Energi Data Service
-        run: |
-          python3 ${{ github.workspace }}/.github/scripts/update_chargeowners.py
       - name: Commit manifest update
         run: |
           git config user.name github-actions
