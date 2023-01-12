@@ -127,4 +127,10 @@ CHARGEOWNERS = {
         "type": ["50001"],
         "note": ["Overliggende net"],
     },
+    "Tarm Elværk Net": {
+        "gln": "5790000706419",
+        "company": "Tarm Elværk Net A/S",
+        "type": ["TEV-NT-01"],
+        "note": ["Nettarif C"],
+    },
 }
