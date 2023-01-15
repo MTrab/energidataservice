@@ -579,9 +579,6 @@ class EnergidataserviceSensor(SensorEntity):
                 template_value + (value / UNIT_TO_MULTIPLIER[self._price_type])
             ) * (float(1 + self._vat))
 
-        if self._cent:
-            price = price * CENT_MULTIPLIER
-
         if self._api.tariff_data is not None and hour is not None:
             # Add tariffs automatically
             try:
@@ -598,6 +595,9 @@ class EnergidataserviceSensor(SensorEntity):
                 _LOGGER.warning(
                     "Error adding tariffs for %s, no valid tariffs was found!", fake_dt
                 )
+
+        if self._cent:
+            price = price * CENT_MULTIPLIER
 
         return round(price, self._decimals)
 
