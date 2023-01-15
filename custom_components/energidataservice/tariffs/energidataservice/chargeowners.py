@@ -74,7 +74,7 @@ CHARGEOWNERS = {
         "note": ["Nettarif"],
     },
     "Veksel": {
-        "gln": "5790000610839",
+        "gln": "5790001088217",
         "company": "Veksel A/S",
         "type": ["NT-10"],
         "note": ["Nettarif C time  NT-10"],
