@@ -33,9 +33,29 @@ from .utils.configuration_schema import (
     energidataservice_config_option_initial_schema,
     energidataservice_config_option_tariff_settings,
 )
+from .utils.tariffhandler import TariffHandler
 from .utils.regionhandler import RegionHandler
+from .utils.forecasthandler import ForecastHandler
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def get_options(area) -> list:
+    """Get available options for a given region."""
+
+    options = []
+
+    region = RegionHandler.description_to_region(area)
+    tariff_connectors = TariffHandler.get_chargeowners(region)
+    forecast_connectors = ForecastHandler.get_forecasts_connectors(region)
+
+    if len(tariff_connectors) > 0:
+        options.append("tariff")
+
+    if len(forecast_connectors) > 0:
+        options.append("forecast")
+
+    return options
 
 
 class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
@@ -138,8 +158,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                     data=self.options,
                 )
 
+        options = get_options(self.config_entry.options.get(CONF_AREA))
         enable_extra_schema = energidataservice_config_option_extras(
-            self.config_entry.options
+            self.config_entry.options, options
         )
         return self.async_show_form(
             step_id="enable_extras",
@@ -247,18 +268,26 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
             if template_ok:
-                enable_extra_schema = energidataservice_config_option_extras(
-                    self.options
-                )
-                return self.async_show_form(
-                    step_id="enable_extras",
-                    data_schema=vol.Schema(enable_extra_schema),
-                    errors=self._errors,
-                    description_placeholders={
-                        "name": self.config_entry.data[CONF_NAME],
-                        "country": self.get_country(),
-                    },
-                )
+                options = get_options(self.config_entry.options.get(CONF_AREA))
+                if len(options) > 0:
+                    enable_extra_schema = energidataservice_config_option_extras(
+                        self.options, options
+                    )
+                    return self.async_show_form(
+                        step_id="enable_extras",
+                        data_schema=vol.Schema(enable_extra_schema),
+                        errors=self._errors,
+                        description_placeholders={
+                            "name": self.config_entry.data[CONF_NAME],
+                            "country": self.get_country(),
+                        },
+                    )
+                else:
+                    async_call_later(self.hass, 2, self._do_update)
+                    return self.async_create_entry(
+                        title=self.options.get(CONF_NAME),
+                        data=self.options,
+                    )
             else:
                 self._errors["base"] = "invalid_template"
         schema = energidataservice_config_option_info_schema(self.config_entry.options)
@@ -335,18 +364,26 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
             self._async_abort_entries_match({CONF_NAME: user_input[CONF_NAME]})
             if template_ok:
-                enable_extra_schema = energidataservice_config_option_extras(
-                    self.user_input
-                )
-                return self.async_show_form(
-                    step_id="enable_extras",
-                    data_schema=vol.Schema(enable_extra_schema),
-                    errors=self._errors,
-                    description_placeholders={
-                        "name": self.user_input[CONF_NAME],
-                        "country": self.user_input[CONF_COUNTRY],
-                    },
-                )
+                options = get_options(self.user_input.get(CONF_AREA))
+                if len(options) > 0:
+                    enable_extra_schema = energidataservice_config_option_extras(
+                        self.user_input, options
+                    )
+                    return self.async_show_form(
+                        step_id="enable_extras",
+                        data_schema=vol.Schema(enable_extra_schema),
+                        errors=self._errors,
+                        description_placeholders={
+                            "name": self.user_input[CONF_NAME],
+                            "country": self.user_input[CONF_COUNTRY],
+                        },
+                    )
+                else:
+                    return self.async_create_entry(
+                        title=user_input[CONF_NAME],
+                        data={"name": user_input[CONF_NAME]},
+                        options=user_input,
+                    )
             else:
                 self._errors["base"] = "invalid_template"
 
@@ -399,7 +436,10 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options=user_input,
                 )
 
-        enable_extra_schema = energidataservice_config_option_extras(self.user_input)
+        options = get_options(self.user_input.get(CONF_AREA))
+        enable_extra_schema = energidataservice_config_option_extras(
+            self.user_input, options
+        )
         return self.async_show_form(
             step_id="enable_extras",
             data_schema=vol.Schema(enable_extra_schema),
