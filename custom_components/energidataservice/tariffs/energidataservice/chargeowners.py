@@ -86,7 +86,7 @@ CHARGEOWNERS = {
         "note": ["Nettarif C time"],
     },
     "Netselskabet Elværk": {
-        "gln": "5790000610976",
+        "gln": "5790000681075",
         "company": "Netselskabet Elværk A/S - 042",
         "type": ["0NCFF"],
         "note": ["Nettarif C Flex"],
