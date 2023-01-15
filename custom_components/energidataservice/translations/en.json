@@ -46,7 +46,7 @@
             },
             "tariff_settings": {
                 "title": "Select net operator",
-                "description": "If in doubt find more information here:",
+                "description": "If in doubt find more information here: https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab",
                 "data": {
                     "tariff_charge_owner": "Select net operator"
                 }
@@ -92,7 +92,7 @@
             },
             "tariff_settings": {
                 "title": "Select net operator",
-                "description": "If in doubt find more information here:",
+                "description": "If in doubt find more information here: https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab",
                 "data": {
                     "tariff_charge_owner": "Select net operator"
                 }

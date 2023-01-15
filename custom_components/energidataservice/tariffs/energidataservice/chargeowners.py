@@ -74,7 +74,7 @@ CHARGEOWNERS = {
         "note": ["Nettarif"],
     },
     "Veksel": {
-        "gln": "5790000610839",
+        "gln": "5790001088217",
         "company": "Veksel A/S",
         "type": ["NT-10"],
         "note": ["Nettarif C time  NT-10"],
@@ -86,7 +86,7 @@ CHARGEOWNERS = {
         "note": ["Nettarif C time"],
     },
     "Netselskabet Elværk": {
-        "gln": "5790000610976",
+        "gln": "5790000681075",
         "company": "Netselskabet Elværk A/S - 042",
         "type": ["0NCFF"],
         "note": ["Nettarif C Flex"],
@@ -132,5 +132,23 @@ CHARGEOWNERS = {
         "company": "El-net Kongerslev A/S",
         "type": ["K_22100"],
         "note": ["Nettarif C"],
+    },
+    "Ravdex": {
+        "gln": "5790000836727",
+        "company": "Ravdex A/S",
+        "type": ["NT-C"],
+        "note": ["Nettarif C time"],
+    },
+    "Tarm Elværk Net": {
+        "gln": "5790000706419",
+        "company": "Tarm Elværk Net A/S",
+        "type": ["TEV-NT-01"],
+        "note": ["Nettarif C"],
+    },
+    "Zeanet": {
+        "gln": "5790001089375",
+        "company": "Zeanet A/S",
+        "type": ["43110"],
+        "note": ["Nettarif C time"],
     },
 }
