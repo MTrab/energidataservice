@@ -127,4 +127,10 @@ CHARGEOWNERS = {
         "type": ["50001"],
         "note": ["Overliggende net"],
     },
+    "Ravdex": {
+        "gln": "5790000836727",
+        "company": "Ravdex A/S",
+        "type": ["NT-C"],
+        "note": ["Nettarif C time"],
+    },
 }
