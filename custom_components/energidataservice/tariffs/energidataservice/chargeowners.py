@@ -133,4 +133,10 @@ CHARGEOWNERS = {
         "type": ["TEV-NT-01"],
         "note": ["Nettarif C"],
     },
+    "Zeanet": {
+        "gln": "5790001089375",
+        "company": "Zeanet A/S",
+        "type": ["43110"],
+        "note": ["Nettarif C time"],
+    },
 }
