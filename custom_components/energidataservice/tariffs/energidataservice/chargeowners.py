@@ -127,4 +127,10 @@ CHARGEOWNERS = {
         "type": ["50001"],
         "note": ["Overliggende net"],
     },
+    "Zeanet": {
+        "gln": "5790001089375",
+        "company": "Zeanet A/S",
+        "type": ["43110"],
+        "note": ["Nettarif C time"],
+    },
 }
