@@ -150,23 +150,42 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
     return schema
 
 
-def energidataservice_config_option_extras(options: ConfigEntry = {}) -> dict:
+def energidataservice_config_option_extras(
+    options: ConfigEntry = {}, selections: list = ["ALL"]
+) -> dict:
     """Return a schema for enabling forecasts."""
     _LOGGER.debug(options)
+
+    if "ALL" in selections:
+        selections = ["forecast", "tariff"]
+
     if not options:
         options = {
             CONF_ENABLE_FORECAST: False,
             CONF_ENABLE_TARIFFS: False,
         }
 
-    schema = {
-        vol.Required(
-            CONF_ENABLE_FORECAST, default=options.get(CONF_ENABLE_FORECAST) or False
-        ): bool,
-        vol.Required(
-            CONF_ENABLE_TARIFFS, default=options.get(CONF_ENABLE_TARIFFS) or False
-        ): bool,
-    }
+    schema = {}
+
+    if "forecast" in selections:
+        schema.update(
+            {
+                vol.Required(
+                    CONF_ENABLE_FORECAST,
+                    default=options.get(CONF_ENABLE_FORECAST) or False,
+                ): bool
+            }
+        )
+
+    if "tariff" in selections:
+        schema.update(
+            {
+                vol.Required(
+                    CONF_ENABLE_TARIFFS,
+                    default=options.get(CONF_ENABLE_TARIFFS) or False,
+                ): bool
+            }
+        )
 
     _LOGGER.debug("Schema: %s", schema)
     return schema
