@@ -46,7 +46,7 @@
             },
             "tariff_settings": {
                 "title": "Vælg net leverandør",
-                "description": "Hvis du er i tvivl kan du finde din leverandør her:",
+                "description": "Hvis du er i tvivl kan du finde din leverandør her: https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab",
                 "data": {
                     "tariff_charge_owner": "Vælg net leverandør"
                 }
@@ -100,7 +100,7 @@
             },
             "tariff_settings": {
                 "title": "Vælg el net leverandør",
-                "description": "Hvis du er i tvivl kan du finde din leverandør her:",
+                "description": "Hvis du er i tvivl kan du finde din leverandør her: https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab",
                 "data": {
                     "tariff_charge_owner": "Vælg leverandør"
                 }
