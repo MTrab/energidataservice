@@ -151,4 +151,10 @@ CHARGEOWNERS = {
         "type": ["43110"],
         "note": ["Nettarif C time"],
     },
+    "L-Net": {
+        "gln": "5790001090111",
+        "company": "L-Net A/S",
+        "type": ["4010"],
+        "note": ["Nettarif C time"],
+    },
 }
