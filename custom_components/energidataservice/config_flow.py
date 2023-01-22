@@ -116,10 +116,23 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
         if user_input is not None:
             self.options.update(user_input)
-            _LOGGER.debug("Forecast selected: %s", user_input[CONF_ENABLE_FORECAST])
-            _LOGGER.debug("Tariffs selected: %s", user_input[CONF_ENABLE_TARIFFS])
+            _LOGGER.debug(
+                "Forecast selected: %s",
+                user_input[CONF_ENABLE_FORECAST]
+                if CONF_ENABLE_FORECAST in user_input
+                else "Unavailable",
+            )
+            _LOGGER.debug(
+                "Tariffs selected: %s",
+                user_input[CONF_ENABLE_TARIFFS]
+                if CONF_ENABLE_TARIFFS in user_input
+                else "Unavailable",
+            )
             if CONF_ENABLE_FORECAST in user_input or CONF_ENABLE_TARIFFS in user_input:
-                if user_input[CONF_ENABLE_FORECAST]:
+                if (
+                    CONF_ENABLE_FORECAST in user_input
+                    and user_input[CONF_ENABLE_FORECAST]
+                ):
                     creds = energidataservice_config_option_carnot_credentials(
                         self.options
                     )
@@ -132,7 +145,10 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                             "country": self.get_country(),
                         },
                     )
-                elif user_input[CONF_ENABLE_TARIFFS]:
+                elif (
+                    CONF_ENABLE_TARIFFS in user_input
+                    and user_input[CONF_ENABLE_TARIFFS]
+                ):
                     creds = energidataservice_config_option_tariff_settings(
                         self.options
                     )
@@ -407,7 +423,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             user_input = {**user_input, **self.user_input}
             self.user_input = user_input
-            if user_input[CONF_ENABLE_FORECAST]:
+            if CONF_ENABLE_FORECAST in user_input and user_input[CONF_ENABLE_FORECAST]:
                 creds = energidataservice_config_option_carnot_credentials(user_input)
                 return self.async_show_form(
                     step_id="carnot_credentials",
@@ -418,7 +434,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "country": self.user_input[CONF_COUNTRY],
                     },
                 )
-            elif user_input[CONF_ENABLE_TARIFFS]:
+            elif CONF_ENABLE_TARIFFS in user_input and user_input[CONF_ENABLE_TARIFFS]:
                 creds = energidataservice_config_option_tariff_settings(user_input)
                 return self.async_show_form(
                     step_id="tariff_settings",

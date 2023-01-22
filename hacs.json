@@ -3,5 +3,6 @@
     "render_readme": true,
     "homeassistant": "2022.8.0",
     "zip_release": true,
-    "filename": "energidataservice.zip"
+    "filename": "energidataservice.zip",
+    "country": ["DK", "SE", "NO", "FI", "EE", "LV", "LT", "FR", "NL", "BE", "AT", "DE", "LU"]
 }

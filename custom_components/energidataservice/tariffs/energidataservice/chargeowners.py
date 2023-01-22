@@ -151,6 +151,12 @@ CHARGEOWNERS = {
         "type": ["43110"],
         "note": ["Nettarif C time"],
     },
+    "NKE-Elnet": {
+        "gln": "5790001088231",
+        "company": "NKE-Elnet A/S",
+        "type": ["94TR_C_ET"],
+        "note": ["Nettarif C time"],
+    },
     "L-Net": {
         "gln": "5790001090111",
         "company": "L-Net A/S",

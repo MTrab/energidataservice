@@ -155,7 +155,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     update_new_day = async_track_time_change(
         hass,
         new_day,
-        hour=0,
+        hour=0,  # LOCAL time!!
         minute=0,
         second=0,
     )
