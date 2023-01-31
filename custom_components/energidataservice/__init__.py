@@ -121,6 +121,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         api.api_tomorrow = None
         api._tomorrow_valid = False  # pylint: disable=protected-access
         api.tomorrow_calculated = False
+        await api.async_get_tariffs()
         async_dispatcher_send(hass, UPDATE_EDS)
 
     async def new_hour(n):  # type: ignore pylint: disable=unused-argument, invalid-name
