@@ -4,7 +4,7 @@ CHARGEOWNERS = {
     "Radius": {
         "gln": "5790000705689",
         "company": "Radius Elnet A/S",
-        "type": ["DC_C_01"],
+        "type": ["DT_C_01"],
         "note": ["Nettarif C time"],
     },
     "RAH": {
