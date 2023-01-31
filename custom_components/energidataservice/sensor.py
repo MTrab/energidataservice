@@ -575,28 +575,26 @@ class EnergidataserviceSensor(SensorEntity):
                     for _, additional_tariff in self._api.tariff_data[
                         "additional_tariffs"
                     ].items():
-                        tariff_value += float(additional_tariff) * (
-                            float(1 + self._vat)
-                        )
+                        tariff_value += float(additional_tariff)
 
                 tariff_value += float(
                     self._api.tariff_data["tariffs"][
                         str(fake_dt.hour or dt_utils.now().hour)
                     ]
-                ) * (float(1 + self._vat))
+                )
             except KeyError:
                 _LOGGER.warning(
                     "Error adding tariffs for %s, no valid tariffs was found!", fake_dt
                 )
                 raise
 
-        price = (value / UNIT_TO_MULTIPLIER[self._price_type]) * (float(1 + self._vat))
+        price = value / UNIT_TO_MULTIPLIER[self._price_type]
 
         template_value = self._cost_template.async_render(
             now=hour,
             current_tariff=tariff_value,
             current_price=price,
-        ) * (float(1 + self._vat))
+        )
 
         if not isinstance(template_value, (int, float)):
             try:
@@ -622,6 +620,9 @@ class EnergidataserviceSensor(SensorEntity):
                 tariff_value,
             )
             raise
+
+        # Add vat if selected
+        price = price * (float(1 + self._vat))
 
         if self._cent:
             price = price * CENT_MULTIPLIER
