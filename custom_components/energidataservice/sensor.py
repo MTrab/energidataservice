@@ -551,10 +551,16 @@ class EnergidataserviceSensor(SensorEntity):
         default_currency: str = "EUR",
     ) -> float:
         """Do price calculations"""
-        hour = None
-
         if value is None:
             value = self._attr_native_value
+
+        def faker():
+            def inner(*_, **__):
+                return fake_dt or dt_utils.now()
+
+            return pass_context(inner)
+
+        hour = faker()
 
         # Convert currency from EUR
         if self._currency != default_currency:
@@ -562,49 +568,61 @@ class EnergidataserviceSensor(SensorEntity):
                 value, to_currency=self._currency, from_currency=default_currency
             )
 
-        # Used to inject the current hour.
-        # so template can be simplified using now
-        if fake_dt is not None:
-
-            def faker():
-                def inner(*args, **kwargs):  # type: ignore pylint: disable=unused-argument
-                    return fake_dt
-
-                return pass_context(inner)
-
-            hour = fake_dt
-            template_value = self._cost_template.async_render(
-                now=faker(), tariffs=self._api.tariff_data
-            )
-        else:
-            template_value = self._cost_template.async_render(
-                tariffs=self._api.tariff_data
-            )
-
-        # The api returns prices in MWh
-        if self._price_type in ("MWh", "mWh"):
-            price = ((template_value / 1000) + value) * float(1 + self._vat)
-        else:
-            price = (
-                template_value + (value / UNIT_TO_MULTIPLIER[self._price_type])
-            ) * (float(1 + self._vat))
-
+        tariff_value = 0
         if self._api.tariff_data is not None and hour is not None:
-            # Add tariffs automatically
             try:
                 if "additional_tariffs" in self._api.tariff_data:
                     for _, additional_tariff in self._api.tariff_data[
                         "additional_tariffs"
                     ].items():
-                        price += float(additional_tariff) * (float(1 + self._vat))
+                        tariff_value += float(additional_tariff)
 
-                price += float(self._api.tariff_data["tariffs"][str(hour.hour)]) * (
-                    float(1 + self._vat)
+                tariff_value += float(
+                    self._api.tariff_data["tariffs"][
+                        str(fake_dt.hour or dt_utils.now().hour)
+                    ]
                 )
             except KeyError:
                 _LOGGER.warning(
                     "Error adding tariffs for %s, no valid tariffs was found!", fake_dt
                 )
+                raise
+
+        price = value / UNIT_TO_MULTIPLIER[self._price_type]
+
+        template_value = self._cost_template.async_render(
+            now=hour,
+            current_tariff=tariff_value,
+            current_price=price,
+        )
+
+        if not isinstance(template_value, (int, float)):
+            try:
+                template_value = float(template_value)
+            except (TypeError, ValueError):
+                _LOGGER.exception(
+                    "Failed to convert %s %s to float",
+                    template_value,
+                    type(template_value),
+                )
+                raise
+
+        try:
+            template_value = abs(template_value) if price < 0 else template_value
+            price += template_value + tariff_value
+        except Exception:
+            _LOGGER.debug(
+                "price %s template value %s type %s dt %s tariff_value %s ",
+                price,
+                template_value,
+                type(template_value),
+                fake_dt,
+                tariff_value,
+            )
+            raise
+
+        # Add vat if selected
+        price = price * (float(1 + self._vat))
 
         if self._cent:
             price = price * CENT_MULTIPLIER
