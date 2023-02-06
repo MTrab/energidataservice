@@ -113,7 +113,7 @@ def _setup(hass, config: ConfigEntry, add_devices):
         device_class=SensorDeviceClass.MONETARY,
         icon="mdi:flash",
         name=config.data.get(CONF_NAME),
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=None,
     )
     sens = EnergidataserviceSensor(config, hass, region, this_sensor)
 
