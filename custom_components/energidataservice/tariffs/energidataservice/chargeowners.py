@@ -56,7 +56,7 @@ CHARGEOWNERS = {
         "note": ["Nettarif C time"],
     },
     "Elektrus": {
-        "gln": "5790000706686",
+        "gln": "5790000836239",
         "company": "Elektrus A/S",
         "type": ["6000091"],
         "note": ["Nettarif C time"],
