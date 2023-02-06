@@ -60,6 +60,7 @@ class RegionHandler:
         self._region = None
         self._description = None
         self._api_region = None
+        self._vat: float = 0.0
 
         if region:
             self.set_region(region)
@@ -70,6 +71,7 @@ class RegionHandler:
         self._country = self.country_from_region(self._region)
         self._currency = self.get_country_currency(self._country)
         self._description = self.region_to_description(self._region)
+        self._vat = self.get_country_vat(self._country)
         if not currency_override is None:
             self.currency = Currency(CURRENCY_LIST[currency_override])
         else:
@@ -157,13 +159,13 @@ class RegionHandler:
         return None
 
     @staticmethod
-    def get_country_vat(country: str) -> float | None:
+    def get_country_vat(country: str) -> float:
         """Get VAT amount for country."""
         for region in REGIONS.items():
             if country == region[1][1]:
-                return region[1][3]
+                return float(region[1][3])
 
-        return None
+        return 0.0
 
     @property
     def country(self) -> str:
@@ -189,3 +191,8 @@ class RegionHandler:
     def name(self) -> str:
         """Returns the region name."""
         return self._region
+
+    @property
+    def vat(self) -> str:
+        """Returns the VAT of the country."""
+        return self._vat
