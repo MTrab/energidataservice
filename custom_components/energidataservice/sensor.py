@@ -45,6 +45,28 @@ from .utils.regionhandler import RegionHandler
 _LOGGER = logging.getLogger(__name__)
 
 
+def show_with_vat(dataset: dict, vat: float, decimals: int = 3) -> dict:
+    """Add vat to the dataset."""
+    _LOGGER.debug("Tariff dataset before VAT: %s", dataset)
+
+    out_set = {"additional_tariffs": {}, "tariffs": {}}
+    for key, value in dataset.items():
+        if key == "additional_tariffs":
+            out_set.update({"additional_tariffs": {}})
+            for add_key, add_value in dataset[key].items():
+                out_set["additional_tariffs"].update(
+                    {add_key: round(add_value * float(1 + vat), decimals)}
+                )
+        elif key == "tariffs":
+            for t_key, t_value in dataset[key].items():
+                out_set["tariffs"].update(
+                    {t_key: round(t_value * float(1 + vat), decimals)}
+                )
+
+    _LOGGER.debug("Tariff dataset after VAT: %s", out_set)
+    return out_set
+
+
 async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
     """Setup sensor platform from a config entry."""
     config = config_entry
@@ -197,7 +219,7 @@ class EnergidataserviceSensor(SensorEntity):
         )
 
         if config.options.get(CONF_VAT) is True:
-            self._vat = 0.25
+            self._vat = region.vat
         else:
             self._vat = 0
 
@@ -415,7 +437,9 @@ class EnergidataserviceSensor(SensorEntity):
                         "net_operator": self._config.options.get(
                             CONF_TARIFF_CHARGE_OWNER
                         ),
-                        "tariffs": self._api.tariff_data,
+                        "tariffs": show_with_vat(
+                            self._api.tariff_data, self._vat, self._decimals
+                        ),
                     }
                 )
         else:
