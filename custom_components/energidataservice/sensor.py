@@ -50,7 +50,7 @@ def show_with_vat(dataset: dict, vat: float, decimals: int = 3) -> dict:
     _LOGGER.debug("Tariff dataset before VAT: %s", dataset)
 
     out_set = {"additional_tariffs": {}, "tariffs": {}}
-    for key, value in dataset.items():
+    for key, _ in dataset.items():
         if key == "additional_tariffs":
             out_set.update({"additional_tariffs": {}})
             for add_key, add_value in dataset[key].items():
