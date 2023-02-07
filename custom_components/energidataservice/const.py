@@ -25,6 +25,7 @@ CONF_ENABLE_HELPER_DURATION = "enable_helper_duration"
 CONF_ENABLE_TARIFFS = "enable_tariffs"
 CONF_FIXED_PRICE = "fixed_price"
 CONF_FIXED_PRICE_VALUE = "fixed_value"
+CONF_FIXED_PRICE_VAT = "fixed_vat"
 CONF_TARIFF_CHARGE_OWNER = "tariff_charge_owner"
 
 DATA = "data"

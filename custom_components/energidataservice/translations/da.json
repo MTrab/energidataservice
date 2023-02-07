@@ -24,7 +24,8 @@
                     "pricetype": "Pris beregnes i",
                     "cost_template": "Skabelon til ekstra omkostninger",
                     "in_cent": "Vis priser i øre",
-                    "fixed_value": "Angiv den ønskede pris - UDEN moms"
+                    "fixed_value": "Angiv den ønskede pris - UDEN moms",
+                    "fixed_vat": "Moms i procent"
                 },
                 "description": "Set detaljer for {name} i {country}"
             },
@@ -78,7 +79,8 @@
                     "pricetype": "Pris beregnes i",
                     "cost_template": "Skabelon til ekstra omkostninger",
                     "in_cent": "Vis priser i øre",
-                    "fixed_value": "Angiv den ønskede pris - UDEN moms"
+                    "fixed_value": "Angiv den ønskede pris - UDEN moms",
+                    "fixed_vat": "Moms i procent"
                 },
                 "description": "Set detaljer for {name} i {country}"
             },

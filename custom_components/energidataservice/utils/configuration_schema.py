@@ -17,6 +17,7 @@ from ..const import (
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_TARIFFS,
     CONF_FIXED_PRICE_VALUE,
+    CONF_FIXED_PRICE_VAT,
     CONF_PRICETYPE,
     CONF_TARIFF_CHARGE_OWNER,
     CONF_TEMPLATE,
@@ -64,6 +65,9 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
             CONF_FIXED_PRICE_VALUE: float(options.get(CONF_FIXED_PRICE_VALUE) / 1000)
             if CONF_FIXED_PRICE_VALUE in options
             else 0,
+            CONF_FIXED_PRICE_VAT: float(options.get(CONF_FIXED_PRICE_VAT))
+            if CONF_FIXED_PRICE_VAT in options
+            else 0,
             CONF_CURRENCY_IN_CENT: options.get(CONF_CURRENCY_IN_CENT)
             if not isinstance(options.get(CONF_CURRENCY_IN_CENT), type(None))
             else False,
@@ -76,16 +80,15 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
             CONF_TEMPLATE: options.get(CONF_TEMPLATE)
             if CONF_TEMPLATE in options
             else "",
-            CONF_VAT: options.get(CONF_VAT)
-            if not isinstance(options.get(CONF_VAT), type(None))
-            else True,
         }
 
         schema = {
             vol.Required(
                 CONF_FIXED_PRICE_VALUE, default=info_options.get(CONF_FIXED_PRICE_VALUE)
             ): vol.Coerce(float),
-            vol.Required(CONF_VAT, default=info_options.get(CONF_VAT)): bool,
+            vol.Required(
+                CONF_FIXED_PRICE_VAT, default=info_options.get(CONF_FIXED_PRICE_VAT)
+            ): vol.Coerce(float),
             vol.Required(
                 CONF_CURRENCY_IN_CENT,
                 default=info_options.get(CONF_CURRENCY_IN_CENT) or False,
