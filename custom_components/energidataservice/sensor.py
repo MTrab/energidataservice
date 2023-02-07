@@ -31,6 +31,7 @@ from .const import (
     CONF_DECIMALS,
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_TARIFFS,
+    CONF_FIXED_PRICE_VAT,
     CONF_PRICETYPE,
     CONF_TARIFF_CHARGE_OWNER,
     CONF_TEMPLATE,
@@ -222,6 +223,9 @@ class EnergidataserviceSensor(SensorEntity):
             self._vat = region.vat
         else:
             self._vat = 0
+
+        if config.options.get(CONF_COUNTRY) == "Fixed Price":
+            self._vat = (config.options.get(CONF_FIXED_PRICE_VAT) / 100) or 0
 
         self._entity_id = sensor.ENTITY_ID_FORMAT.format(
             util_slugify(f"{self._attr_name} {self._area}")
