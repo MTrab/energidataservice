@@ -575,20 +575,20 @@ class EnergidataserviceSensor(SensorEntity):
     def _calculate(
         self,
         value=None,
-        fake_dt=None,
+        fake_dt=datetime,
         default_currency: str = "EUR",
     ) -> float:
         """Do price calculations"""
         if value is None:
             value = self._attr_native_value
 
-        def faker():
-            def inner(*_, **__):
-                return fake_dt or dt_utils.now()
+        # def faker():
+        #     def inner(*_, **__):
+        #         return fake_dt or dt_utils.now()
 
-            return pass_context(inner)
+        #     return pass_context(inner)
 
-        hour = faker()
+        # hour = faker()
 
         # Convert currency from EUR
         if self._currency != default_currency:
@@ -597,7 +597,7 @@ class EnergidataserviceSensor(SensorEntity):
             )
 
         tariff_value = 0
-        if self._api.tariff_data is not None and hour is not None:
+        if self._api.tariff_data is not None and fake_dt is not None:
             try:
                 if "additional_tariffs" in self._api.tariff_data:
                     for _, additional_tariff in self._api.tariff_data[
@@ -606,9 +606,7 @@ class EnergidataserviceSensor(SensorEntity):
                         tariff_value += float(additional_tariff)
 
                 tariff_value += float(
-                    self._api.tariff_data["tariffs"][
-                        str(fake_dt.hour or dt_utils.now().hour)
-                    ]
+                    self._api.tariff_data["tariffs"][str(fake_dt.hour)]
                 )
             except KeyError:
                 _LOGGER.warning(
@@ -619,7 +617,7 @@ class EnergidataserviceSensor(SensorEntity):
         price = value / UNIT_TO_MULTIPLIER[self._price_type]
 
         template_value = self._cost_template.async_render(
-            now=hour,
+            now=fake_dt,
             current_tariff=tariff_value,
             current_price=price,
         )
@@ -654,6 +652,13 @@ class EnergidataserviceSensor(SensorEntity):
 
         if self._cent:
             price = price * CENT_MULTIPLIER
+
+        _LOGGER.debug(
+            "Hour %s: Tariff %s, Template %s",
+            fake_dt.hour,
+            tariff_value,
+            template_value,
+        )
 
         return round(price, self._decimals)
 
