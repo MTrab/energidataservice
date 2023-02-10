@@ -582,13 +582,11 @@ class EnergidataserviceSensor(SensorEntity):
         if value is None:
             value = self._attr_native_value
 
-        # def faker():
-        #     def inner(*_, **__):
-        #         return fake_dt or dt_utils.now()
+        def faker():
+            def inner(*_, **__):
+                return fake_dt or dt_utils.now()
 
-        #     return pass_context(inner)
-
-        # hour = faker()
+            return pass_context(inner)
 
         # Convert currency from EUR
         if self._currency != default_currency:
@@ -617,7 +615,7 @@ class EnergidataserviceSensor(SensorEntity):
         price = value / UNIT_TO_MULTIPLIER[self._price_type]
 
         template_value = self._cost_template.async_render(
-            now=fake_dt,
+            now=faker(),
             current_tariff=tariff_value,
             current_price=price,
         )
