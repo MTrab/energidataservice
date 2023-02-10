@@ -11,6 +11,8 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.template import Template
+from homeassistant.util import dt as dt_utils
+from jinja2 import pass_context
 import voluptuous as vol
 
 from . import async_setup_entry, async_unload_entry
@@ -33,9 +35,9 @@ from .utils.configuration_schema import (
     energidataservice_config_option_initial_schema,
     energidataservice_config_option_tariff_settings,
 )
-from .utils.tariffhandler import TariffHandler
-from .utils.regionhandler import RegionHandler
 from .utils.forecasthandler import ForecastHandler
+from .utils.regionhandler import RegionHandler
+from .utils.tariffhandler import TariffHandler
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -548,9 +550,21 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 async def _validate_template(hass: HomeAssistant, user_template: Any) -> bool:
     """Validate template to eliminate most user errors."""
     try:
+
+        def faker():
+            def inner(*_, **__):
+                return dt_utils.now()
+
+            return pass_context(inner)
+
         _LOGGER.debug("Template:")
         _LOGGER.debug(user_template)
-        user_template = Template(user_template, hass).async_render()
+        user_template = Template(user_template, hass).async_render(
+            now=faker(),
+            current_tariff=0,
+            current_price=0,
+            el_afgift=0,
+        )
         return bool(isinstance(user_template, float))
     except Exception as err:  # pylint: disable=broad-except
         _LOGGER.error(err)
