@@ -605,7 +605,7 @@ class EnergidataserviceSensor(SensorEntity):
                         "additional_tariffs"
                     ].items():
                         tariff_value += float(additional_tariff)
-                        if tariff == "el_afgift":
+                        if tariff == "elafgift":
                             elafgift = float(additional_tariff)
 
                 tariff_value += float(
