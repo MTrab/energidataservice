@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import json
 from logging import getLogger
 
+from .elafgift import FM_EL_AFGIFT
+
 from .chargeowners import CHARGEOWNERS
 from .regions import REGIONS
 
@@ -18,8 +20,9 @@ BASE_URL = "https://api.energidataservice.dk/dataset/DatahubPricelist"
 ADDITIONAL_TARIFFS = {
     "transmissions_net_tarif": 0.058,
     "system_tarif": 0.054,
-    "el_afgift": 0.008,
+    "el_afgift": 0,
 }
+
 
 __all__ = ["Connector", "REGIONS", "CHARGEOWNERS"]
 
@@ -34,6 +37,13 @@ class Connector:
         self._chargeowner = chargeowner
         self._tariffs = {}
         self._result = {}
+        self._additional_tariff = ADDITIONAL_TARIFFS
+
+        dt_now = datetime.now()
+        for elafgift in FM_EL_AFGIFT:
+            if elafgift["from"] <= dt_now and elafgift["to"] > dt_now:
+                self._additional_tariff.update({"el_afgift": elafgift["value"]})
+                break
 
     @property
     def tariffs(self):
