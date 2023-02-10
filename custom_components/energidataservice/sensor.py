@@ -597,13 +597,16 @@ class EnergidataserviceSensor(SensorEntity):
             )
 
         tariff_value = 0
+        elafgift = 0
         if self._api.tariff_data is not None and fake_dt is not None:
             try:
                 if "additional_tariffs" in self._api.tariff_data:
-                    for _, additional_tariff in self._api.tariff_data[
+                    for tariff, additional_tariff in self._api.tariff_data[
                         "additional_tariffs"
                     ].items():
                         tariff_value += float(additional_tariff)
+                        if tariff == "el_afgift":
+                            elafgift = float(additional_tariff)
 
                 tariff_value += float(
                     self._api.tariff_data["tariffs"][str(fake_dt.hour)]
@@ -620,6 +623,7 @@ class EnergidataserviceSensor(SensorEntity):
             now=fake_dt,
             current_tariff=tariff_value,
             current_price=price,
+            el_afgift=elafgift,
         )
 
         if not isinstance(template_value, (int, float)):
