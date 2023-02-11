@@ -1,9 +1,12 @@
 """Energi Data Service tariff connector"""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 from logging import getLogger
+from aiohttp import ClientSession
+import aiohttp
+from async_retrying import retry
 
 from homeassistant.util import slugify as util_slugify
 
@@ -22,7 +25,9 @@ __all__ = ["Connector", "REGIONS", "CHARGEOWNERS"]
 class Connector:
     """Energi Data Service API"""
 
-    def __init__(self, hass, client, chargeowner: str | None = None) -> None:
+    def __init__(
+        self, hass, client: ClientSession, chargeowner: str | None = None
+    ) -> None:
         """Init API connection to Energi Data Service"""
         self.hass = hass
         self.client = client
@@ -55,40 +60,30 @@ class Connector:
         data = {"Content-Type": "application/json"}
         return data
 
-    def _prepare_url(self, url: str) -> str:
-        """Prepare and format the URL for the API request."""
-        chargeowner = CHARGEOWNERS[self._chargeowner]
-        limit = "limit=500"
-        objfilter = 'filter=%7B"note": {},"gln_number": ["{}"]%7D'.format(  # pylint: disable=consider-using-f-string
-            str(chargeowner["note"]).replace("'", '"'), chargeowner["gln"]
-        )
-        sort = "sort=ValidFrom desc"
-
-        out_url = f"{url}?{objfilter}&{sort}&{limit}"
-        _LOGGER.debug("URL for tariff request: %s", out_url)
-        return out_url
-
     async def async_get_tariffs(self):
         """Get tariff from Eloverblik API"""
         await self.async_get_system_tariffs()
+
         try:
-            headers = self._header()
-            url = self._prepare_url(BASE_URL)
 
-            resp = await self.client.get(url, headers=headers)
+            chargeowner = CHARGEOWNERS[self._chargeowner]
+            limit = "limit=500"
+            objfilter = 'filter=%7B"note": {},"gln_number": ["{}"]%7D'.format(  # pylint: disable=consider-using-f-string
+                str(chargeowner["note"]).replace("'", '"'), chargeowner["gln"]
+            )
+            sort = "sort=ValidFrom desc"
 
-            if resp.status == 400:
-                _LOGGER.error("API returned error 400, Bad Request!")
-                self._result = {}
-            elif resp.status == 411:
-                _LOGGER.error("API returned error 411, Invalid Request!")
-                self._result = {}
-            elif resp.status == 200:
-                res = await resp.json()
-                self._result = res["records"]
-            else:
-                _LOGGER.error("API returned error %s", str(resp.status))
+            query = f"{objfilter}&{sort}&{limit}"
+            resp = await self.async_call_api(query)
+
+            if len(resp) == 0:
+                _LOGGER.warning(
+                    "Could not fetch tariff data from Energi Data Service DataHub!"
+                )
                 return
+            else:
+                # We got data from the DataHub - update the dataset
+                self._result = resp
 
             check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
 
@@ -128,22 +123,15 @@ class Connector:
         """Get additional system tariffs defined by the Danish government."""
         search_filter = '{"Note":["Elafgift","Systemtarif","Transmissions nettarif"]}'
         limit = 500
-        headers = self._header()
-        tariff_url = f"{BASE_URL}?filter={search_filter}&limit={limit}"
 
-        resp = await self.client.get(tariff_url, headers=headers)
+        query = f"filter={search_filter}&limit={limit}"
 
-        if resp.status == 400:
-            _LOGGER.error("API returned error 400, Bad Request!")
-            dataset = {}
-        elif resp.status == 411:
-            _LOGGER.error("API returned error 411, Invalid Request!")
-            dataset = {}
-        elif resp.status == 200:
-            res = await resp.json()
-            dataset = res["records"]
-        else:
-            _LOGGER.error("API returned error %s", str(resp.status))
+        dataset = await self.async_call_api(query)
+
+        if len(dataset) == 0:
+            _LOGGER.warning(
+                "Could not fetch tariff data from Energi Data Service DataHub!"
+            )
             return
 
         check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
@@ -159,3 +147,27 @@ class Connector:
                     )
 
         self._additional_tariff = tariff_data
+
+    @retry(attempts=5)
+    async def async_call_api(self, query: str) -> dict:
+        """Make the API calls."""
+        try:
+            headers = self._header()
+            resp = await self.client.get(f"{BASE_URL}?{query}", headers=headers)
+            resp.raise_for_status()
+
+            if resp.status == 400:
+                _LOGGER.error("API returned error 400, Bad Request!")
+                return {}
+            elif resp.status == 411:
+                _LOGGER.error("API returned error 411, Invalid Request!")
+                return {}
+            elif resp.status == 200:
+                res = await resp.json()
+                return res["records"]
+            else:
+                _LOGGER.error("API returned error %s", str(resp.status))
+                return {}
+        except Exception as exc:
+            _LOGGER.error("Error during API request: %s", exc)
+            raise
