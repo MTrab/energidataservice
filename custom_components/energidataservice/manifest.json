@@ -12,6 +12,7 @@
     "issue_tracker": "https://github.com/MTrab/energidataservice/issues",
     "name": "Energi Data Service",
     "requirements": [
+        "async-retrying==0.2.2",
         "CurrencyConverter==0.17.5"
     ],
     "version": "1.2.4"
