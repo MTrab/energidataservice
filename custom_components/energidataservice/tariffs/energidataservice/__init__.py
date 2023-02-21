@@ -4,10 +4,10 @@ from __future__ import annotations
 from datetime import datetime
 import json
 from logging import getLogger
-from aiohttp import ClientSession
-import aiohttp
-from async_retrying import retry
 
+import aiohttp
+from aiohttp import ClientSession
+from async_retrying import retry
 from homeassistant.util import slugify as util_slugify
 
 from .chargeowners import CHARGEOWNERS
@@ -65,7 +65,6 @@ class Connector:
         await self.async_get_system_tariffs()
 
         try:
-
             chargeowner = CHARGEOWNERS[self._chargeowner]
             limit = "limit=500"
             objfilter = 'filter=%7B"note": {},"gln_number": ["{}"]%7D'.format(  # pylint: disable=consider-using-f-string

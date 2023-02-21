@@ -14,9 +14,7 @@ from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.event import (
-    async_call_later,
-)
+from homeassistant.helpers.event import async_call_later
 import voluptuous as vol
 
 from .connectors import Connectors
