@@ -1,0 +1,17 @@
+hour_update:
+  description: Forcing hour update
+  target:
+    entity:
+      integration: energidataservice
+
+day_update:
+  description: Forcing day update
+  target:
+    entity:
+      integration: energidataservice
+
+data_update:
+  description: Forcing data update
+  target:
+    entity:
+      integration: energidataservice

@@ -36,7 +36,7 @@ DOMAIN = "energidataservice"
 INTERVAL = namedtuple("Interval", "price hour")
 
 UNIQUE_ID = "unique_id"
-UPDATE_EDS = "eds_update"
+UPDATE_EDS = "eds_update_{}"
 
 # Multiplier mappings
 UNIT_TO_MULTIPLIER = {"MWh": 0, "kWh": 1000, "Wh": 1000000}
@@ -104,3 +104,7 @@ REGIONS = {
     "LU": [CURRENCY_LIST["EUR"], "Luxemburg", "Luxemburg", 0.08],
     "FIXED": [CURRENCY_LIST["NONE"], "Fixed Price", "Fixed Price", 0.0],
 }
+
+SERVICE_RELOAD_HOUR = "hour_update"
+SERVICE_RELOAD_DAY = "day_update"
+SERVICE_RELOAD_DATA = "data_update"
