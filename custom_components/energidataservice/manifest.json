@@ -15,5 +15,5 @@
         "async-retrying==0.2.2",
         "CurrencyConverter==0.17.5"
     ],
-    "version": "1.2.5"
+    "version": "1.2.6"
 }
