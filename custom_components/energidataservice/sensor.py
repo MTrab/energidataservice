@@ -206,8 +206,8 @@ class EnergidataserviceSensor(SensorEntity):
         self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(
             CONF_PRICETYPE
         )
-        
-        self.suggested_display_precision = config.options.get(CONF_DECIMALS) or config.data.get(
+
+        self._attr_suggested_display_precision = config.options.get(CONF_DECIMALS) or config.data.get(
             CONF_DECIMALS
         )
 
