@@ -206,9 +206,11 @@ class EnergidataserviceSensor(SensorEntity):
         self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(
             CONF_PRICETYPE
         )
-        self._decimals = config.options.get(CONF_DECIMALS) or config.data.get(
+
+        self._attr_suggested_display_precision = config.options.get(
             CONF_DECIMALS
-        )
+        ) or config.data.get(CONF_DECIMALS)
+
         self._api = hass.data[DOMAIN][config.entry_id]
         self._cost_template = config.options.get(CONF_TEMPLATE) or config.data.get(
             CONF_TEMPLATE
@@ -303,7 +305,9 @@ class EnergidataserviceSensor(SensorEntity):
                     False,
                     self._api.connector_currency or self._currency,
                 )
-            self._tomorrow_raw = self._add_raw(self._api.tomorrow)
+            self._tomorrow_raw = self._add_raw(
+                self._api.tomorrow, self._attr_suggested_display_precision
+            )
         else:
             self._api.tomorrow = None
             self._tomorrow_raw = None
@@ -361,20 +365,40 @@ class EnergidataserviceSensor(SensorEntity):
 
         # Update attributes
         if self._api.today:
-            self._today_raw = self._add_raw(self._api.today)
-
-            self._today_min = self._get_specific("min", self._api.today)
-            self._today_max = self._get_specific("max", self._api.today)
-            self._today_mean = round(
-                self._get_specific("mean", self._api.today), self._decimals
+            self._today_raw = self._add_raw(
+                self._api.today, self._attr_suggested_display_precision
             )
-            self._tomorrow_min = self._get_specific("min", self._api.tomorrow)
-            self._tomorrow_max = self._get_specific("max", self._api.tomorrow)
+
+            self._today_min = self._get_specific(
+                "min", self._api.today, self._attr_suggested_display_precision
+            )
+            self._today_max = self._get_specific(
+                "max",
+                self._api.today,
+                self._attr_suggested_display_precision,
+            )
+            self._today_mean = self._get_specific(
+                "mean",
+                self._api.today,
+                self._attr_suggested_display_precision,
+            )
+            self._tomorrow_min = self._get_specific(
+                "min",
+                self._api.tomorrow,
+                self._attr_suggested_display_precision,
+            )
+            self._tomorrow_max = self._get_specific(
+                "max",
+                self._api.tomorrow,
+                self._attr_suggested_display_precision,
+            )
 
         # If we have valid data for tomorrow, then find the mean value
         if self.tomorrow_valid:
-            self._tomorrow_mean = round(
-                self._get_specific("mean", self._api.tomorrow), self._decimals
+            self._tomorrow_mean = self._get_specific(
+                "mean",
+                self._api.tomorrow,
+                self._attr_suggested_display_precision,
             )
         else:
             self._tomorrow_mean = None
@@ -428,7 +452,9 @@ class EnergidataserviceSensor(SensorEntity):
             if not isinstance(self.predictions, type(None)):
                 self._attr_extra_state_attributes.update(
                     {
-                        "forecast": self._add_raw(self.predictions),
+                        "forecast": self._add_raw(
+                            self.predictions, self._attr_suggested_display_precision
+                        ),
                         "attribution": f"Data sourced from {self._api.source} "
                         "and forecast from Carnot",
                     }
@@ -441,7 +467,9 @@ class EnergidataserviceSensor(SensorEntity):
                             CONF_TARIFF_CHARGE_OWNER
                         ),
                         "tariffs": show_with_vat(
-                            self._api.tariff_data, self._vat, self._decimals
+                            self._api.tariff_data,
+                            self._vat,
+                            self._attr_suggested_display_precision,
                         ),
                     }
                 )
@@ -494,7 +522,11 @@ class EnergidataserviceSensor(SensorEntity):
             list: sorted list where today[0] is the price of hour 00.00 - 01.00
         """
         return (
-            [i.price for i in self._api.today if i]
+            [
+                round(i.price, self._attr_suggested_display_precision)
+                for i in self._api.today
+                if i
+            ]
             if not isinstance(self._api.today, type(None))
             else None
         )
@@ -506,7 +538,11 @@ class EnergidataserviceSensor(SensorEntity):
             list: sorted where tomorrow[0] is the price of hour 00.00 - 01.00 etc.
         """
         if self._api.tomorrow_valid:
-            return [i.price for i in self._api.tomorrow if i]
+            return [
+                round(i.price, self._attr_suggested_display_precision)
+                for i in self._api.tomorrow
+                if i
+            ]
         else:
             return None
 
@@ -517,12 +553,12 @@ class EnergidataserviceSensor(SensorEntity):
             return self._api.predictions
 
     @staticmethod
-    def _add_raw(data) -> list:
+    def _add_raw(data, decimals: int) -> list:
         lst = []
         for i in data:
             ret = {
                 "hour": i.hour,
-                "price": i.price,
+                "price": round(i.price, decimals),
             }
             lst.append(ret)
 
@@ -663,7 +699,7 @@ class EnergidataserviceSensor(SensorEntity):
             template_value,
         )
 
-        return round(price, self._decimals)
+        return price
 
     def _format_list(
         self, data, tomorrow=False, predictions=False, default_currency: str = "EUR"
@@ -725,7 +761,7 @@ class EnergidataserviceSensor(SensorEntity):
         )
 
     @staticmethod
-    def _get_specific(datatype: str, data: list):
+    def _get_specific(datatype: str, data: list, decimals: int):
         """Get specific values - ie. min, max, mean values"""
 
         if datatype in ["MIN", "Min", "min"]:
@@ -733,7 +769,7 @@ class EnergidataserviceSensor(SensorEntity):
                 res = min(data, key=lambda k: k.price)
                 ret = {
                     "hour": res.hour,
-                    "price": res.price,
+                    "price": round(res.price, decimals),
                 }
 
                 return ret
@@ -742,17 +778,14 @@ class EnergidataserviceSensor(SensorEntity):
         elif datatype in ["MAX", "Max", "max"]:
             if data:
                 res = max(data, key=lambda k: k.price)
-                ret = {
-                    "hour": res.hour,
-                    "price": res.price,
-                }
+                ret = {"hour": res.hour, "price": round(res.price, decimals)}
 
                 return ret
             else:
                 return None
         elif datatype in ["MEAN", "Mean", "mean"]:
             if data:
-                return mean(data)
+                return round(mean(data), decimals)
             else:
                 return None
         else:

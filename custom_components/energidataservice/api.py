@@ -6,7 +6,6 @@ from functools import partial
 from importlib import import_module
 import json
 from logging import getLogger
-from random import randint
 
 from aiohttp import ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
