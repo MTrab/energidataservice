@@ -206,9 +206,12 @@ class EnergidataserviceSensor(SensorEntity):
         self._price_type = config.options.get(CONF_PRICETYPE) or config.data.get(
             CONF_PRICETYPE
         )
-        self._decimals = config.options.get(CONF_DECIMALS) or config.data.get(
+        
+        self.suggested_display_precision = config.options.get(CONF_DECIMALS) or config.data.get(
             CONF_DECIMALS
         )
+
+
         self._api = hass.data[DOMAIN][config.entry_id]
         self._cost_template = config.options.get(CONF_TEMPLATE) or config.data.get(
             CONF_TEMPLATE
@@ -366,7 +369,7 @@ class EnergidataserviceSensor(SensorEntity):
             self._today_min = self._get_specific("min", self._api.today)
             self._today_max = self._get_specific("max", self._api.today)
             self._today_mean = round(
-                self._get_specific("mean", self._api.today), self._decimals
+                self._get_specific("mean", self._api.today), self.suggested_display_precision
             )
             self._tomorrow_min = self._get_specific("min", self._api.tomorrow)
             self._tomorrow_max = self._get_specific("max", self._api.tomorrow)
@@ -374,7 +377,7 @@ class EnergidataserviceSensor(SensorEntity):
         # If we have valid data for tomorrow, then find the mean value
         if self.tomorrow_valid:
             self._tomorrow_mean = round(
-                self._get_specific("mean", self._api.tomorrow), self._decimals
+                self._get_specific("mean", self._api.tomorrow), self.suggested_display_precision
             )
         else:
             self._tomorrow_mean = None
@@ -441,7 +444,7 @@ class EnergidataserviceSensor(SensorEntity):
                             CONF_TARIFF_CHARGE_OWNER
                         ),
                         "tariffs": show_with_vat(
-                            self._api.tariff_data, self._vat, self._decimals
+                            self._api.tariff_data, self._vat, self.suggested_display_precision
                         ),
                     }
                 )
@@ -663,7 +666,7 @@ class EnergidataserviceSensor(SensorEntity):
             template_value,
         )
 
-        return round(price, self._decimals)
+        return price
 
     def _format_list(
         self, data, tomorrow=False, predictions=False, default_currency: str = "EUR"
