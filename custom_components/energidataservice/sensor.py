@@ -633,7 +633,11 @@ class EnergidataserviceSensor(SensorEntity):
 
         tariff_value = 0
         elafgift = 0
-        if self._api.tariff_data is not None and fake_dt is not None:
+        if (
+            self._api.tariff_data is not None
+            and fake_dt is not None
+            and len(self._api.tariff_data["tariffs"]) > 0
+        ):
             try:
                 if "additional_tariffs" in self._api.tariff_data:
                     for tariff, additional_tariff in self._api.tariff_data[
@@ -651,6 +655,14 @@ class EnergidataserviceSensor(SensorEntity):
                     "Error adding tariffs for %s, no valid tariffs was found!", fake_dt
                 )
                 raise
+        elif (
+            self._api.tariff_data is not None
+            and fake_dt is not None
+            and len(self._api.tariff_data["tariffs"]) == 0
+        ):
+            _LOGGER.warning(
+                "Error adding tariffs for %s, empty tariff dataset was found!", fake_dt
+            )
 
         price = value / UNIT_TO_MULTIPLIER[self._price_type]
 
