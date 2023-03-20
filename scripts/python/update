@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -e
+echo -e "\\033[0;34mRunning Python update script\\033[0m"
+echo -e "\\033[0;34mChecking for newer Python version\\033[0m"
+
+VERSION=`python3 scripts/python/source_check.py`
+if [ ! -z $VERSION ]
+then
+    echo -e "\\033[0;34mNewer Python version was found, continuing update process\\033[0m"
+
+    echo -e "\\033[0;34mInstalling build dependencies\\033[0m"
+    apt-get update > /dev/null 2>&1
+    apt-get -y install --no-install-recommends \
+        curl \
+        ca-certificates \
+        tar \
+        make \
+        build-essential \
+        libffi-dev \
+        libssl-dev \
+        zlib1g-dev \
+        libbz2-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        wget \
+        jq \
+        llvm \
+        libncurses5-dev \
+        libncursesw5-dev \
+        xz-utils \
+        tk-dev \
+        liblzma-dev > /dev/null 2>&1
+
+    INSTALL_PATH="/usr/local/python"
+
+    echo -en "\\033[0;34mInstalling Python\\033[0m "
+    echo -en "\\033[1;33m${VERSION}\\033[0m"
+    echo -en "\\033[0;34m to \\033[0m"
+    echo -e "\\033[1;33m${INSTALL_PATH}\\033[0m"
+
+    echo -e "\\033[0;34mDownloading Python source\\033[0m"
+    mkdir -p /tmp/python-src "${INSTALL_PATH}" > /dev/null 2>&1
+    curl -sSLf -o /tmp/python.tar.xz "https://www.python.org/ftp/python/${VERSION}/Python-${VERSION}.tar.xz" > /dev/null
+    tar -xJC "/tmp/python-src" --strip-components=1 -f /tmp/python.tar.xz > /dev/null 2>&1
+
+    echo -e "\\033[0;34mBuilding Python (this could take a long time)\\033[0m"
+    cd /tmp/python-src || exit 1
+    ./configure \
+        --prefix="${INSTALL_PATH}" \
+        --enable-optimizations \
+        --with-ensurepip=install > /dev/null 2>&1
+
+    make -j"$(nproc)" EXTRA_CFLAGS="-DTHREAD_STACK_SIZE=0x100000" > /dev/null 2>&1
+    make install > /dev/null 2>&1
+
+    cd "${INSTALL_PATH}/bin" || exit 1
+    ln -sf idle3 idle
+    ln -sf pydoc3 pydoc
+    ln -sf python3 python
+    ln -sf pip3 pip
+    ln -sf python3-config python-config
+
+    rm -rf /tmp/python-dl.tgz /tmp/python-src > /dev/null 2>&1
+
+    echo -e "\\033[0;34mDone installing Python\\033[0m"
+
+    echo -en "\\033[0;34mPython version:\\033[0m "
+    python --version
+
+    echo -en "\\033[0;34mPython3 version:\\033[0m "
+    python3 --version
+
+    echo -e "\\033[0;34mCleaning up\\033[0m"
+
+    find /usr/local \( -type d -a -name test -o -name tests -o -name '__pycache__' \) -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) -exec rm -rf '{}' \; > /dev/null 2>&1
+
+    echo -e "\\033[0;34mReinstalling Home Assistant latest dev version\\033[0m"
+
+    python3 -m pip --disable-pip-version-check install --upgrade git+https://github.com/home-assistant/home-assistant.git@dev > /dev/null 2>&1
+
+    echo -e "\\033[0;34mInstall integration requirements\\033[0m"
+
+    python3 -m pip --disable-pip-version-check install --requirement requirements_dev.txt > /dev/null  2>&1
+
+    echo -e "\\033[0;34mUpgrading Python succeeded\\033[0m"
+else
+    echo -e "\\033[0;34mPython version is up-to-date\\033[0m"
+fi
