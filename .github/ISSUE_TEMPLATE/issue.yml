@@ -58,11 +58,11 @@ body:
       value: |
         # Details
   - type: textarea
+    validations:
+      required: true
     attributes:
       label: Diagnostics information
       placeholder: "drag-and-drop the diagnostics data file here (do not copy-and-paste the content)"
-    validations:
-      required: true
       description: >-
         Many integrations provide the ability to [download diagnostic data](https://www.home-assistant.io/docs/configuration/troubleshooting/#debug-logs-and-diagnostics).
 
