@@ -12,7 +12,7 @@
     "iot_class": "cloud_polling",
     "issue_tracker": "https://github.com/MTrab/energidataservice/issues",
     "requirements": [
-        "async-retrying==0.2.2",
+        "async-retrying-ng==0.1.1",
         "CurrencyConverter==0.17.6"
     ],
     "version": "1.3.1"
