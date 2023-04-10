@@ -163,4 +163,10 @@ CHARGEOWNERS = {
         "type": ["4010"],
         "note": ["Nettarif C time"],
     },
+    "Midtfyns Elforsyning": {
+        "gln": "5790001089023",
+        "company": "Midtfyns Elforsyning A.m.b.A",
+        "type": ["TNT15000"],
+        "note": ["Nettarif C Flex"],
+    },
 }
