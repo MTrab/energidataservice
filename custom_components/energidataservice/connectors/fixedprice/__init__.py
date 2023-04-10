@@ -21,18 +21,24 @@ __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY"]
 def prepare_data(value, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
     local_tz = pytz.timezone(tz)
+    dt = datetime.now()  # pylint: disable=invalid-name
+    dt = pytz.utc.localize(dt)  # pylint: disable=invalid-name
+    tmp_offset = str(dt.astimezone(local_tz).utcoffset()).split(":")
+
+    offset = tmp_offset[0]
+    if len(offset) < 2:
+        offset = f"0{tmp_offset[0]}"
+
+    offset += f":{tmp_offset[1]}"
     reslist = []
     i = 0
     while i < 24:
         hour = str(i)
         if len(hour) < 2:
             hour = f"0{hour}"
-        tmpdate = (
-            datetime.fromisoformat(f"{date}T{hour}:00:00+00:00")
-            .replace(tzinfo=pytz.utc)
-            .astimezone(local_tz)
-        )
-        tmp = INTERVAL(value, local_tz.normalize(tmpdate))
+
+        tmpdate = datetime.fromisoformat(f"{date}T{hour}:00:00+{offset}")
+        tmp = INTERVAL(value, tmpdate)
         if date in tmp.hour.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
