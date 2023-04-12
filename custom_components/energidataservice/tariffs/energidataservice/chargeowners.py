@@ -7,6 +7,12 @@ CHARGEOWNERS = {
         "type": ["DT_C_01"],
         "note": ["Nettarif C time"],
     },
+    "Radius": {
+        "gln": "5790000705689",
+        "company": "Radius Elnet A/S",
+        "type": ["DT_B_02"],
+        "note": ["Nettarif B lav time"],
+    },
     "RAH": {
         "gln": "5790000681327",
         "company": "RAH Net A/S",
