@@ -1,13 +1,13 @@
 """Valid Charge Owners for Energi Data Service connector."""
 
 CHARGEOWNERS = {
-    "Radius": {
+    "Radius C": {
         "gln": "5790000705689",
         "company": "Radius Elnet A/S",
         "type": ["DT_C_01"],
         "note": ["Nettarif C time"],
     },
-    "Radius": {
+    "Radius B lav": {
         "gln": "5790000705689",
         "company": "Radius Elnet A/S",
         "type": ["DT_B_02"],
