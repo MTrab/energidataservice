@@ -1,6 +1,6 @@
 {
     "domain": "energidataservice",
-    "name": "Energi Data Service",
+    "name": "Energi Data Service local",
     "after_dependencies": [
         "http"
     ],
