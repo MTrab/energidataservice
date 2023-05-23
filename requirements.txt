@@ -1,2 +1,2 @@
 async-retrying==0.2.2
-CurrencyConverter==0.17.6
+CurrencyConverter==0.17.7
