@@ -169,4 +169,10 @@ CHARGEOWNERS = {
         "type": ["TNT15000"],
         "note": ["Nettarif C Flex"],
     },
+    "Sunds Net": {
+        "gln": "5790001095444",
+        "company": "Sunds Net A.m.b.A",
+        "type": ["SEF-NT-05"],
+        "note": ["Nettarif C Flex - time"],
+    },
 }
