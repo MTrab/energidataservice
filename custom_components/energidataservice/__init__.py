@@ -10,7 +10,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import (
     async_call_later,
-    async_track_time_change,
     async_track_utc_time_change,
 )
 from homeassistant.loader import async_get_integration
