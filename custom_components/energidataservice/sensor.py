@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections import namedtuple
 from datetime import datetime
-import json
+import json  # pylint: disable=unused-import
 import logging
 
 from homeassistant.components import sensor

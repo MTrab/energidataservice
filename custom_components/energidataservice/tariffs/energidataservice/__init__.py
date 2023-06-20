@@ -114,7 +114,8 @@ class Connector:
             return self.tariffs
         except KeyError:
             _LOGGER.error(
-                "Error finding '%s' in the list of charge owners - please reconfigure your integration.",
+                "Error finding '%s' in the list of charge owners - "
+                "please reconfigure your integration.",
                 self._chargeowner,
             )
 
