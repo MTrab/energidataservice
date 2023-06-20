@@ -104,7 +104,7 @@ CHARGEOWNERS = {
     "El-net Kongerslev": {
         "gln": "5790002502699",
         "company": "El-net Kongerslev A/S",
-        "type": ["K_22100"],
+        "type": ["C-Tarif"],
     },
     "Ravdex": {
         "gln": "5790000836727",
