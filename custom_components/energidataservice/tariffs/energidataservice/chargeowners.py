@@ -26,11 +26,6 @@ CHARGEOWNERS = {
         "company": "N1 A/S - 131",
         "type": ["CD", "CD R"],
     },
-    "N1 Randers": {
-        "gln": "5790000681372",
-        "company": "N1 Randers A/S",
-        "type": ["CD"],
-    },
     "Dinel": {
         "gln": "5790000610099",
         "company": "Dinel A/S",
