@@ -65,6 +65,7 @@ class APIConnector:
         self.predictions = None
         self.api_predictions = None
         self.tariff_data = None
+        self.tariff_connector = None
         self.predictions_calculated = False
         self.predictions_currency = None
         self.connector_currency = "EUR"
@@ -225,6 +226,7 @@ class APIConnector:
                 self._config.options.get(CONF_TARIFF_CHARGE_OWNER),
             )
 
+            self.tariff_connector = tariff
             self.tariff_data = await tariff.async_get_tariffs()
 
     @property

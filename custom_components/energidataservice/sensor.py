@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections import namedtuple
 from datetime import datetime
-import json
+import json  # pylint: disable=unused-import
 import logging
 
 from homeassistant.components import sensor
@@ -639,17 +639,19 @@ class EnergidataserviceSensor(SensorEntity):
             and len(self._api.tariff_data["tariffs"]) > 0
         ):
             try:
-                if "additional_tariffs" in self._api.tariff_data:
-                    for tariff, additional_tariff in self._api.tariff_data[
-                        "additional_tariffs"
-                    ].items():
-                        tariff_value += float(additional_tariff)
-                        if tariff == "elafgift":
-                            elafgift = float(additional_tariff)
-
-                tariff_value += float(
-                    self._api.tariff_data["tariffs"][str(fake_dt.hour)]
+                system_tariff: dict = (
+                    self._api.tariff_connector.get_dated_system_tariff(fake_dt)
                 )
+                chargeowner_tariff: dict = self._api.tariff_connector.get_dated_tariff(
+                    fake_dt
+                )
+
+                for tariff, additional_tariff in system_tariff.items():
+                    tariff_value += float(additional_tariff)
+                    if tariff == "elafgift":
+                        elafgift = float(additional_tariff)
+
+                tariff_value += float(chargeowner_tariff[str(fake_dt.hour)])
             except KeyError:
                 _LOGGER.warning(
                     "Error adding tariffs for %s, no valid tariffs was found!", fake_dt
@@ -704,13 +706,6 @@ class EnergidataserviceSensor(SensorEntity):
         if self._cent:
             price = price * CENT_MULTIPLIER
 
-        _LOGGER.debug(
-            "Hour %s: Tariff %s, Template %s",
-            fake_dt.hour,
-            tariff_value,
-            template_value,
-        )
-
         return price
 
     def _format_list(
@@ -727,12 +722,6 @@ class EnergidataserviceSensor(SensorEntity):
         if predictions:
             list_for = "FORECASTS"
 
-        _LOGGER.debug(
-            "Unformatted list for '%s':\n%s",
-            list_for,
-            json.dumps(data, indent=2, default=str),
-        )
-
         _start = datetime.now().timestamp()
         Interval = namedtuple("Interval", "price hour")
         for i in data:
@@ -745,12 +734,6 @@ class EnergidataserviceSensor(SensorEntity):
 
         _stop = datetime.now().timestamp()
         _ttf = round(_stop - _start, 2)
-
-        _LOGGER.debug(
-            "Formatted list for '%s':\n%s",
-            list_for,
-            json.dumps(formatted_pricelist, indent=2, default=str),
-        )
 
         if tomorrow:
             _calc_for = "TOMORROW"

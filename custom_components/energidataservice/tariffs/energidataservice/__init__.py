@@ -32,8 +32,9 @@ class Connector:
         self.client = client
         self._chargeowner = chargeowner
         self._tariffs = {}
-        self._result = {}
         self._additional_tariff = {}
+        self._all_tariffs = {}
+        self._all_additional_tariffs = {}
 
         # dt_now = datetime.now()
         # for elafgift in FM_EL_AFGIFT:
@@ -81,12 +82,12 @@ class Connector:
                 return
             else:
                 # We got data from the DataHub - update the dataset
-                self._result = resp
+                self._all_tariffs = resp
 
             check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
 
             tariff_data = {}
-            for entry in self._result:
+            for entry in self._all_tariffs:
                 if (entry["ValidFrom"].split("T"))[0] <= check_date and (
                     entry["ValidTo"] is None
                     or (entry["ValidTo"].split("T"))[0] >= check_date
@@ -113,9 +114,52 @@ class Connector:
             return self.tariffs
         except KeyError:
             _LOGGER.error(
-                "Error finding '%s' in the list of charge owners - please reconfigure your integration.",
+                "Error finding '%s' in the list of charge owners - "
+                "please reconfigure your integration.",
                 self._chargeowner,
             )
+
+    def get_dated_tariff(self, date: datetime) -> dict:
+        """Get tariff for this specific date."""
+        check_date = date.strftime("%Y-%m-%d")
+
+        tariff_data = {}
+        for entry in self._all_tariffs:
+            if (entry["ValidFrom"].split("T"))[0] <= check_date and (
+                entry["ValidTo"] is None
+                or (entry["ValidTo"].split("T"))[0] >= check_date
+            ):
+                baseprice = 0
+                for key, val in entry.items():
+                    if key == "Price1":
+                        baseprice = val
+                    if "Price" in key:
+                        hour = str(int("".join(filter(str.isdigit, key))) - 1)
+
+                        tariff_data.update(
+                            {hour: val if val is not None else baseprice}
+                        )
+
+                if len(tariff_data) == 24:
+                    return tariff_data
+
+        return {}
+
+    def get_dated_system_tariff(self, date: datetime) -> dict:
+        """Get system tariffs for this specific date."""
+        check_date = date.strftime("%Y-%m-%d")
+        tariff_data = {}
+        for entry in self._all_additional_tariffs:
+            if (entry["ValidFrom"].split("T"))[0] <= check_date and (
+                entry["ValidTo"] is None
+                or (entry["ValidTo"].split("T"))[0] >= check_date
+            ):
+                if not entry["Note"] in tariff_data:
+                    tariff_data.update(
+                        {util_slugify(entry["Note"]): float(entry["Price1"])}
+                    )
+
+        return tariff_data
 
     async def async_get_system_tariffs(self) -> dict:
         """Get additional system tariffs defined by the Danish government."""
@@ -131,10 +175,12 @@ class Connector:
                 "Could not fetch tariff data from Energi Data Service DataHub!"
             )
             return
+        else:
+            self._all_additional_tariffs = dataset
 
         check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
         tariff_data = {}
-        for entry in dataset:
+        for entry in self._all_additional_tariffs:
             if (entry["ValidFrom"].split("T"))[0] <= check_date and (
                 entry["ValidTo"] is None
                 or (entry["ValidTo"].split("T"))[0] >= check_date
