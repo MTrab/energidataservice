@@ -90,7 +90,7 @@ class Connector:
             for entry in self._all_tariffs:
                 if (entry["ValidFrom"].split("T"))[0] <= check_date and (
                     entry["ValidTo"] is None
-                    or (entry["ValidTo"].split("T"))[0] >= check_date
+                    or (entry["ValidTo"].split("T"))[0] > check_date
                 ):
                     _LOGGER.debug("Found possible dataset: %s", entry)
                     baseprice = 0
@@ -127,7 +127,7 @@ class Connector:
         for entry in self._all_tariffs:
             if (entry["ValidFrom"].split("T"))[0] <= check_date and (
                 entry["ValidTo"] is None
-                or (entry["ValidTo"].split("T"))[0] >= check_date
+                or (entry["ValidTo"].split("T"))[0] > check_date
             ):
                 baseprice = 0
                 for key, val in entry.items():
@@ -152,7 +152,7 @@ class Connector:
         for entry in self._all_additional_tariffs:
             if (entry["ValidFrom"].split("T"))[0] <= check_date and (
                 entry["ValidTo"] is None
-                or (entry["ValidTo"].split("T"))[0] >= check_date
+                or (entry["ValidTo"].split("T"))[0] > check_date
             ):
                 if not entry["Note"] in tariff_data:
                     tariff_data.update(
@@ -183,7 +183,7 @@ class Connector:
         for entry in self._all_additional_tariffs:
             if (entry["ValidFrom"].split("T"))[0] <= check_date and (
                 entry["ValidTo"] is None
-                or (entry["ValidTo"].split("T"))[0] >= check_date
+                or (entry["ValidTo"].split("T"))[0] > check_date
             ):
                 if not entry["Note"] in tariff_data:
                     tariff_data.update(
