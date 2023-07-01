@@ -88,10 +88,7 @@ class Connector:
 
             tariff_data = {}
             for entry in self._all_tariffs:
-                if (entry["ValidFrom"].split("T"))[0] <= check_date and (
-                    entry["ValidTo"] is None
-                    or (entry["ValidTo"].split("T"))[0] >= check_date
-                ):
+                if self.__entry_in_range(entry, check_date):
                     _LOGGER.debug("Found possible dataset: %s", entry)
                     baseprice = 0
                     for key, val in entry.items():
@@ -125,10 +122,7 @@ class Connector:
 
         tariff_data = {}
         for entry in self._all_tariffs:
-            if (entry["ValidFrom"].split("T"))[0] <= check_date and (
-                entry["ValidTo"] is None
-                or (entry["ValidTo"].split("T"))[0] >= check_date
-            ):
+            if self.__entry_in_range(entry, check_date):
                 baseprice = 0
                 for key, val in entry.items():
                     if key == "Price1":
@@ -150,10 +144,7 @@ class Connector:
         check_date = date.strftime("%Y-%m-%d")
         tariff_data = {}
         for entry in self._all_additional_tariffs:
-            if (entry["ValidFrom"].split("T"))[0] <= check_date and (
-                entry["ValidTo"] is None
-                or (entry["ValidTo"].split("T"))[0] >= check_date
-            ):
+            if self.__entry_in_range(entry, check_date):
                 if not entry["Note"] in tariff_data:
                     tariff_data.update(
                         {util_slugify(entry["Note"]): float(entry["Price1"])}
@@ -181,10 +172,7 @@ class Connector:
         check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
         tariff_data = {}
         for entry in self._all_additional_tariffs:
-            if (entry["ValidFrom"].split("T"))[0] <= check_date and (
-                entry["ValidTo"] is None
-                or (entry["ValidTo"].split("T"))[0] >= check_date
-            ):
+            if self.__entry_in_range(entry, check_date):
                 if not entry["Note"] in tariff_data:
                     tariff_data.update(
                         {util_slugify(entry["Note"]): float(entry["Price1"])}
@@ -215,3 +203,9 @@ class Connector:
         except Exception as exc:
             _LOGGER.error("Error during API request: %s", exc)
             raise
+
+    def __entry_in_range(self, entry, check_date) -> bool:
+        """Check if an entry is witin the date range"""
+        return (entry["ValidFrom"].split("T"))[0] <= check_date and (
+                entry["ValidTo"] is None
+                or (entry["ValidTo"].split("T"))[0] > check_date)
