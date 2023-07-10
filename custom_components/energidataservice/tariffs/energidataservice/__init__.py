@@ -207,5 +207,5 @@ class Connector:
     def __entry_in_range(self, entry, check_date) -> bool:
         """Check if an entry is witin the date range"""
         return (entry["ValidFrom"].split("T"))[0] <= check_date and (
-                entry["ValidTo"] is None
-                or (entry["ValidTo"].split("T"))[0] > check_date)
+            entry["ValidTo"] is None or (entry["ValidTo"].split("T"))[0] > check_date
+        )

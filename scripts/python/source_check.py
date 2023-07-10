@@ -1,7 +1,7 @@
 """Update python."""
 import sys
-import requests
 
+import requests
 from version import Version
 
 URL = "https://www.python.org/downloads"
