@@ -687,11 +687,10 @@ class EnergidataserviceSensor(SensorEntity):
                 raise
 
         try:
-            template_value = abs(template_value) if price < 0 else template_value
             price += template_value + tariff_value
         except Exception:
             _LOGGER.debug(
-                "price %s template value %s type %s dt %s tariff_value %s ",
+                "Price %s template value %s type %s dt %s tariff_value %s ",
                 price,
                 template_value,
                 type(template_value),
