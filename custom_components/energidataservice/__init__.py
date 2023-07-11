@@ -130,7 +130,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     update_tomorrow = async_track_time_change(
         hass,
         get_new_data,
-        hour=12,  # LOCAL time!!
+        hour=13,  # LOCAL time!!
         minute=rand_min,
         second=rand_sec,
     )
