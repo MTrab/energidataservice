@@ -74,7 +74,7 @@ CHARGEOWNERS = {
     "Nord Energi Net": {
         "gln": "5790000610877",
         "company": "Nord Energi Net A/S",
-        "type": ["TA031U200"],
+        "type": ["TAC"],
     },
     "Nordvestjysk Elforsyning (NOE Net)": {
         "gln": "5790000395620",
