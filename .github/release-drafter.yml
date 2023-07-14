@@ -5,7 +5,7 @@ sort-direction: ascending
 exclude-labels:
   - 'skip-changelog'
 categories:
-  - title: '🛠 Breaking Changes'
+  - title: '⚒️ Breaking Changes'
     labels:
       - breaking-change
 
@@ -20,10 +20,15 @@ categories:
       - 'bugfix'
       - 'bug'
 
+  - title: '🧬 Changes to Charge Owner informations'
+    labels:
+      - chargeowner
+      - chargeowners
+
   - title: '🧰 Maintenance'
     label: 'chore'
 
-  - title: ":package: Dependencies"
+  - title: '📦 Dependencies'
     labels:
       - 'dependencies'
 
