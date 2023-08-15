@@ -1,8 +1,6 @@
 """Support for Energi Data Service sensor."""
 from __future__ import annotations
 
-from collections import namedtuple
-from datetime import datetime
 import logging
 from collections import namedtuple
 from datetime import datetime
@@ -718,7 +716,6 @@ class EnergidataserviceSensor(SensorEntity):
     ) -> None:
         """Format data as list with prices localized."""
         formatted_pricelist = []
-
 
         if tomorrow:
             pass

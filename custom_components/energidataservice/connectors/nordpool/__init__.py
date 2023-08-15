@@ -133,7 +133,9 @@ class Connector:
 
                 # Check if we already have this hour in dict
                 known = False
-                for _i, val in enumerate(region_data):  # pylint: disable=unused-variable
+                for _i, val in enumerate(
+                    region_data
+                ):  # pylint: disable=unused-variable
                     if start_hour == val["HourUTC"]:
                         known = True
                         break
