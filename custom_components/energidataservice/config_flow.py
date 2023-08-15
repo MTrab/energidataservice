@@ -5,6 +5,7 @@ import logging
 import re
 from typing import Any
 
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
@@ -13,7 +14,6 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_utils
 from jinja2 import pass_context
-import voluptuous as vol
 
 from . import async_setup_entry, async_unload_entry
 from .connectors import Connectors

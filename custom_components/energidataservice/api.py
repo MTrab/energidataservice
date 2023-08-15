@@ -1,12 +1,13 @@
 """EDS API."""
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta
 from functools import partial
 from importlib import import_module
-import json
 from logging import getLogger
 
+import voluptuous as vol
 from aiohttp import ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL
@@ -14,7 +15,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later
-import voluptuous as vol
 
 from .connectors import Connectors
 from .const import (

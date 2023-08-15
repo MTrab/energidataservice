@@ -1,7 +1,7 @@
 """Update available charge owners from Energi Data Service API."""
 
-from datetime import datetime
 import os
+from datetime import datetime
 
 import requests
 
