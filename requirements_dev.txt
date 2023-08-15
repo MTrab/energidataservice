@@ -1,4 +1,0 @@
-requests
-awesomeversion
-pylint
-black
