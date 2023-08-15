@@ -87,7 +87,7 @@ class APIConnector:
         self._carnot_apikey = entry.options.get(CONF_API_KEY) or None
 
     async def update(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
-        """Fetch latest prices from API"""
+        """Fetch latest prices from API."""
         _LOGGER.debug("Updating data for '%s'", self._region.region)
         connectors = self._connectors.get_connectors(self._region.region)
         _LOGGER.debug(
@@ -231,17 +231,17 @@ class APIConnector:
 
     @property
     def tomorrow_valid(self) -> bool:
-        """Is tomorrows prices valid?"""
+        """Is tomorrows prices valid?."""
         return self._tomorrow_valid
 
     @property
     def source(self) -> str:
-        """Who was the source for the data?"""
+        """Who was the source for the data?."""
         return self._source
 
     @property
     def next_data_refresh(self) -> str:
-        """When is next data update?"""
+        """When is next data update?."""
         return f"13:{self._rand_min:02d}:{self._rand_sec:02d}"
 
     @property

@@ -321,7 +321,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
 
 class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Energi Data Service"""
+    """Handle a config flow for Energi Data Service."""
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL

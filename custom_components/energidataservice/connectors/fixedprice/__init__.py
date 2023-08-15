@@ -57,7 +57,7 @@ class Connector:
         tz=None,  # pylint: disable=invalid-name
         config=None,
     ) -> None:
-        """Init API connection to Energi Data Service"""
+        """Init API connection to Energi Data Service."""
         self.config = config
         self.tz = tz  # pylint: disable=invalid-name
         self.regionhandler = regionhandler

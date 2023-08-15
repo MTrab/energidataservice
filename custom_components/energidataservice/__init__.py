@@ -13,7 +13,6 @@ from homeassistant.loader import async_get_integration
 
 from .api import APIConnector
 from .const import CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
-from .services import async_setup_services
 
 RETRY_MINUTES = 5
 MAX_RETRY_MINUTES = 60
@@ -54,9 +53,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")
     )
-
-    if DEBUG:
-        await async_setup_services(hass, entry)
 
     return result
 
