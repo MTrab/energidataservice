@@ -4,7 +4,10 @@ from __future__ import annotations
 from collections import namedtuple
 from datetime import datetime
 import logging
+from collections import namedtuple
+from datetime import datetime
 
+import homeassistant.helpers.config_validation as cv
 from homeassistant.components import sensor
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -14,11 +17,12 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr, entity_registry as er
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.template import Template, attach
-from homeassistant.util import dt as dt_utils, slugify as util_slugify
+from homeassistant.util import dt as dt_utils
+from homeassistant.util import slugify as util_slugify
 from jinja2 import pass_context
 
 from .const import (

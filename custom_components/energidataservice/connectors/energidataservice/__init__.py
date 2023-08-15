@@ -1,8 +1,8 @@
 """Energi Data Service connector."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
 from logging import getLogger
 
 import pytz

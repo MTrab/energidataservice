@@ -1,8 +1,8 @@
 """Energi Data Service tariff connector."""
 from __future__ import annotations
 
-from datetime import datetime
 import json
+from datetime import datetime
 from logging import getLogger
 
 from aiohttp import ClientSession

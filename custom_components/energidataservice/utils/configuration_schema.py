@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
-import voluptuous as vol
 
 from ..const import (
     CONF_AREA,
