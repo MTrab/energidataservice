@@ -1,4 +1,4 @@
-"""Energi Data Service tariff connector"""
+"""Energi Data Service tariff connector."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -22,12 +22,12 @@ __all__ = ["Connector", "REGIONS", "CHARGEOWNERS"]
 
 
 class Connector:
-    """Energi Data Service API"""
+    """Energi Data Service API."""
 
     def __init__(
         self, hass, client: ClientSession, chargeowner: str | None = None
     ) -> None:
-        """Init API connection to Energi Data Service"""
+        """Init API connection to Energi Data Service."""
         self.hass = hass
         self.client = client
         self._chargeowner = chargeowner
@@ -50,12 +50,12 @@ class Connector:
 
     @staticmethod
     def _header() -> dict:
-        """Create default request header"""
+        """Create default request header."""
         data = {"Content-Type": "application/json"}
         return data
 
     async def async_get_tariffs(self):
-        """Get tariff from Eloverblik API"""
+        """Get tariff from Eloverblik API."""
         await self.async_get_system_tariffs()
 
         try:
@@ -139,7 +139,7 @@ class Connector:
         tariff_data = {}
         for entry in self._all_additional_tariffs:
             if self.__entry_in_range(entry, check_date):
-                if not entry["Note"] in tariff_data:
+                if entry["Note"] not in tariff_data:
                     tariff_data.update(
                         {util_slugify(entry["Note"]): float(entry["Price1"])}
                     )
@@ -167,7 +167,7 @@ class Connector:
         tariff_data = {}
         for entry in self._all_additional_tariffs:
             if self.__entry_in_range(entry, check_date):
-                if not entry["Note"] in tariff_data:
+                if entry["Note"] not in tariff_data:
                     tariff_data.update(
                         {util_slugify(entry["Note"]): float(entry["Price1"])}
                     )
@@ -199,7 +199,7 @@ class Connector:
             raise
 
     def __entry_in_range(self, entry, check_date) -> bool:
-        """Check if an entry is witin the date range"""
+        """Check if an entry is witin the date range."""
         return (entry["ValidFrom"].split("T"))[0] <= check_date and (
             entry["ValidTo"] is None or (entry["ValidTo"].split("T"))[0] > check_date
         )

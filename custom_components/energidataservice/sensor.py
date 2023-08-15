@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from collections import namedtuple
 from datetime import datetime
-import json  # pylint: disable=unused-import
 import logging
 
 from homeassistant.components import sensor
@@ -148,9 +147,9 @@ def _async_migrate_unique_id(hass: HomeAssistant, entity: str, new_id: str) -> N
     _LOGGER.debug("Testing for unique_id")
     entity_registry = er.async_get(hass)
     curentity = entity_registry.async_get(entity)
-    if not curentity is None:
+    if curentity is not None:
         _LOGGER.debug("- Device_id: %s", curentity.device_id)
-        if not new_id is None:
+        if new_id is not None:
             device_registry = dr.async_get(hass)
             curdevice = device_registry.async_get(curentity.device_id)
             identifiers = curdevice.identifiers
@@ -283,7 +282,7 @@ class EnergidataserviceSensor(SensorEntity):
         if not self._api.today:
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
-            if not self._api.today is None and not self._api.today_calculated:
+            if self._api.today is not None and not self._api.today_calculated:
                 _LOGGER.debug("API currency: %s", self._api.connector_currency)
                 _LOGGER.debug("SELF currency: %s", self._currency)
                 await self._hass.async_add_executor_job(
@@ -409,7 +408,7 @@ class EnergidataserviceSensor(SensorEntity):
         self.async_write_ha_state()
 
     def _get_current_price(self) -> None:
-        """Get price for current hour"""
+        """Get price for current hour."""
         current_state_time = datetime.fromisoformat(
             dt_utils.now()
             .replace(microsecond=0)
@@ -519,7 +518,7 @@ class EnergidataserviceSensor(SensorEntity):
     def today(self) -> list:
         """Get todays prices
         Returns:
-            list: sorted list where today[0] is the price of hour 00.00 - 01.00
+            list: sorted list where today[0] is the price of hour 00.00 - 01.00.
         """
         return (
             [
@@ -615,7 +614,7 @@ class EnergidataserviceSensor(SensorEntity):
         fake_dt=datetime,
         default_currency: str = "EUR",
     ) -> float:
-        """Do price calculations"""
+        """Do price calculations."""
         if value is None:
             value = self._attr_native_value
 
@@ -678,7 +677,7 @@ class EnergidataserviceSensor(SensorEntity):
             chargeowner_tariff=owner_tariff,
         )
 
-        if not isinstance(template_value, (int, float)):
+        if not isinstance(template_value, int | float):
             try:
                 template_value = float(template_value)
             except (TypeError, ValueError):
@@ -716,13 +715,12 @@ class EnergidataserviceSensor(SensorEntity):
         """Format data as list with prices localized."""
         formatted_pricelist = []
 
-        list_for = "TODAY"
 
         if tomorrow:
-            list_for = "TOMORROW"
+            pass
 
         if predictions:
-            list_for = "FORECASTS"
+            pass
 
         _start = datetime.now().timestamp()
         Interval = namedtuple("Interval", "price hour")
@@ -759,7 +757,7 @@ class EnergidataserviceSensor(SensorEntity):
 
     @staticmethod
     def _get_specific(datatype: str, data: list, decimals: int):
-        """Get specific values - ie. min, max, mean values"""
+        """Get specific values - ie. min, max, mean values."""
 
         if datatype in ["MIN", "Min", "min"]:
             if data:

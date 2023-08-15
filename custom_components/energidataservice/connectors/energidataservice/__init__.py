@@ -1,4 +1,4 @@
-"""Energi Data Service connector"""
+"""Energi Data Service connector."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -39,12 +39,12 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
 
 
 class Connector:
-    """Energi Data Service API"""
+    """Energi Data Service API."""
 
     def __init__(
         self, regionhandler, client, tz, config  # pylint: disable=invalid-name
     ) -> None:
-        """Init API connection to Energi Data Service"""
+        """Init API connection to Energi Data Service."""
         self.config = config
         self.regionhandler = regionhandler
         self.client = client
@@ -82,7 +82,7 @@ class Connector:
 
     @staticmethod
     def _header() -> dict:
-        """Create default request header"""
+        """Create default request header."""
         data = {"Content-Type": "application/json"}
         return data
 

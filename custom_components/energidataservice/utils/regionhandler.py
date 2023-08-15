@@ -72,7 +72,7 @@ class RegionHandler:
         self._currency = self.get_country_currency(self._country)
         self._description = self.region_to_description(self._region)
         self._vat = self.get_country_vat(self._country)
-        if not currency_override is None:
+        if currency_override is not None:
             self.currency = Currency(CURRENCY_LIST[currency_override])
         else:
             self.currency = Currency(self._currency)
@@ -88,7 +88,7 @@ class RegionHandler:
 
         for region in REGIONS.items():
             country = region[1][1]
-            if not country in countries:
+            if country not in countries:
                 countries.append(country)
 
         return countries if not sort else sorted(countries, reverse=descending)

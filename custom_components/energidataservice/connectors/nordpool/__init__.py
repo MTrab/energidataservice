@@ -43,7 +43,7 @@ class Connector:
     def __init__(
         self, regionhandler, client, tz, config  # pylint: disable=invalid-name
     ) -> None:
-        """Init API connection to Nordpool Group"""
+        """Init API connection to Nordpool Group."""
         self.config = config
         self.regionhandler = map_region(regionhandler)
         self.client = client
@@ -99,11 +99,11 @@ class Connector:
             return {}
 
     def _parse_json(self, data) -> list:
-        """Parse json response"""
+        """Parse json response."""
         # Timezone for data from Nord Pool Group are "Europe/Stockholm"
         timezone = pytz.timezone("Europe/Stockholm")
 
-        if not "data" in data:
+        if "data" not in data:
             return []
 
         # All relevant data is in data['data']
@@ -133,7 +133,7 @@ class Connector:
 
                 # Check if we already have this hour in dict
                 known = False
-                for i, val in enumerate(region_data):  # pylint: disable=unused-variable
+                for _i, val in enumerate(region_data):  # pylint: disable=unused-variable
                     if start_hour == val["HourUTC"]:
                         known = True
                         break
