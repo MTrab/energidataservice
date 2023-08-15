@@ -632,6 +632,7 @@ class EnergidataserviceSensor(SensorEntity):
             )
 
         tariff_value = 0
+        owner_tariff = 0
         elafgift = 0
         if (
             self._api.tariff_data is not None
@@ -651,7 +652,8 @@ class EnergidataserviceSensor(SensorEntity):
                     if tariff == "elafgift":
                         elafgift = float(additional_tariff)
 
-                tariff_value += float(chargeowner_tariff[str(fake_dt.hour)])
+                owner_tariff = float(chargeowner_tariff[str(fake_dt.hour)])
+                tariff_value += owner_tariff
             except KeyError:
                 _LOGGER.warning(
                     "Error adding tariffs for %s, no valid tariffs was found!", fake_dt
@@ -673,6 +675,7 @@ class EnergidataserviceSensor(SensorEntity):
             current_tariff=tariff_value,
             current_price=price,
             el_afgift=elafgift,
+            chargeowner_tariff=owner_tariff,
         )
 
         if not isinstance(template_value, (int, float)):

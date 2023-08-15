@@ -564,6 +564,7 @@ async def _validate_template(hass: HomeAssistant, user_template: Any) -> bool:
             current_tariff=0,
             current_price=0,
             el_afgift=0,
+            chargeowner_tariff=0,
         )
         return bool(isinstance(user_template, float))
     except Exception as err:  # pylint: disable=broad-except

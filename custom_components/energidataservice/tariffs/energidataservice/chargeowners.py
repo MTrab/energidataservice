@@ -24,7 +24,7 @@ CHARGEOWNERS = {
     "N1": {
         "gln": "5790001089030",
         "company": "N1 A/S - 131",
-        "type": ["CD", "CD R"],
+        "type": ["CD"],
     },
     "Dinel": {
         "gln": "5790000610099",

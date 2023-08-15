@@ -36,12 +36,6 @@ class Connector:
         self._all_tariffs = {}
         self._all_additional_tariffs = {}
 
-        # dt_now = datetime.now()
-        # for elafgift in FM_EL_AFGIFT:
-        #     if elafgift["from"] <= dt_now and elafgift["to"] > dt_now:
-        #         self._additional_tariff.update({"el_afgift": elafgift["value"]})
-        #         break
-
     @property
     def tariffs(self):
         """Return the tariff data."""
