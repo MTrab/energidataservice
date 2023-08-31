@@ -447,6 +447,7 @@ class EnergidataserviceSensor(SensorEntity):
                 "tomorrow_min": self._tomorrow_min or None,
                 "tomorrow_max": self._tomorrow_max or None,
                 "tomorrow_mean": self._tomorrow_mean or None,
+                "use_cent": self._cent,
                 "attribution": f"Data sourced from {self._api.source}",
             }
 
