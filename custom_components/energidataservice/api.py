@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from functools import partial
 from importlib import import_module
 from logging import getLogger
+from pytz import timezone
 
 import voluptuous as vol
 from aiohttp import ServerDisconnectedError
@@ -146,12 +147,13 @@ class APIConnector:
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
                 refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
                 now = datetime.utcnow()
+                now_local = datetime.now().astimezone(timezone(self._tz))
 
                 _LOGGER.debug(
-                    "Now: %s:%s:%s (UTC)",
-                    f"{now.hour:02d}",
-                    f"{now.minute:02d}",
-                    f"{now.second:02d}",
+                    "Now: %s:%s:%s (local time)",
+                    f"{now_local.hour:02d}",
+                    f"{now_local.minute:02d}",
+                    f"{now_local.second:02d}",
                 )
                 _LOGGER.debug(
                     "Refresh: %s:%s:%s (local time)",
@@ -161,9 +163,9 @@ class APIConnector:
                 )
                 if (
                     f"{midnight.hour}:{midnight.minute}:{midnight.second}"
-                    > f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+                    > f"{now_local.hour:02d}:{now_local.minute:02d}:{now_local.second:02d}"
                     and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
-                    <= f"{now.hour:02d}:{now.minute:02d}:{now.second:02d}"
+                    <= f"{now_local.hour:02d}:{now_local.minute:02d}:{now_local.second:02d}"
                 ):
                     retry_update(self)
                 else:
