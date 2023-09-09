@@ -6,7 +6,7 @@ from datetime import datetime
 from logging import getLogger
 
 from aiohttp import ClientSession
-from async_retrying_ng import retry
+from async_retrying_ng import retry, RetryError
 from homeassistant.util import slugify as util_slugify
 
 from .chargeowners import CHARGEOWNERS
@@ -109,6 +109,8 @@ class Connector:
                 "please reconfigure your integration.",
                 self._chargeowner,
             )
+        except RetryError:
+            _LOGGER.error("Retry attempts exceeded for tariffs request.")
 
     def get_dated_tariff(self, date: datetime) -> dict:
         """Get tariff for this specific date."""
@@ -153,28 +155,31 @@ class Connector:
 
         query = f"filter={search_filter}&limit={limit}"
 
-        dataset = await self.async_call_api(query)
+        try:
+            dataset = await self.async_call_api(query)
 
-        if len(dataset) == 0:
-            _LOGGER.warning(
-                "Could not fetch tariff data from Energi Data Service DataHub!"
-            )
-            return
-        else:
-            self._all_additional_tariffs = dataset
+            if len(dataset) == 0:
+                _LOGGER.warning(
+                    "Could not fetch tariff data from Energi Data Service DataHub!"
+                )
+                return
+            else:
+                self._all_additional_tariffs = dataset
 
-        check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
-        tariff_data = {}
-        for entry in self._all_additional_tariffs:
-            if self.__entry_in_range(entry, check_date):
-                if entry["Note"] not in tariff_data:
-                    tariff_data.update(
-                        {util_slugify(entry["Note"]): float(entry["Price1"])}
-                    )
+            check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
+            tariff_data = {}
+            for entry in self._all_additional_tariffs:
+                if self.__entry_in_range(entry, check_date):
+                    if entry["Note"] not in tariff_data:
+                        tariff_data.update(
+                            {util_slugify(entry["Note"]): float(entry["Price1"])}
+                        )
 
-        self._additional_tariff = tariff_data
+            self._additional_tariff = tariff_data
+        except RetryError:
+            _LOGGER.error("Retry attempts exceeded for retrieving system tariffs.")
 
-    @retry(attempts=5)
+    @retry(attempts=5, delay=10, max_delay=3600, backoff=1.5)
     async def async_call_api(self, query: str) -> dict:
         """Make the API calls."""
         try:
