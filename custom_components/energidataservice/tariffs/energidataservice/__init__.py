@@ -6,7 +6,7 @@ from datetime import datetime
 from logging import getLogger
 
 from aiohttp import ClientSession
-from async_retrying_ng import retry, RetryError
+from async_retrying_ng import RetryError, retry
 from homeassistant.util import slugify as util_slugify
 
 from .chargeowners import CHARGEOWNERS

@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from functools import partial
 from importlib import import_module
 from logging import getLogger
-from pytz import timezone
 
 import voluptuous as vol
 from aiohttp import ServerDisconnectedError
@@ -16,6 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later
+from pytz import timezone
 
 from .connectors import Connectors
 from .const import (
