@@ -649,12 +649,15 @@ class EnergidataserviceSensor(SensorEntity):
                     fake_dt
                 )
 
-                for tariff, additional_tariff in system_tariff.items():
-                    tariff_value += float(additional_tariff)
-                    if tariff == "elafgift":
-                        elafgift = float(additional_tariff)
+                if system_tariff:
+                    for tariff, additional_tariff in system_tariff.items():
+                        tariff_value += float(additional_tariff)
+                        if tariff == "elafgift":
+                            elafgift = float(additional_tariff)
 
-                owner_tariff = float(chargeowner_tariff[str(fake_dt.hour)])
+                owner_tariff = float(
+                    chargeowner_tariff[str(fake_dt.hour)] if chargeowner_tariff else 0
+                )
                 tariff_value += owner_tariff
             except KeyError:
                 _LOGGER.warning(
