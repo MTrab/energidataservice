@@ -25,6 +25,10 @@ categories:
       - chargeowner
       - chargeowners
 
+  - title: '🧬 New Charge Owner(s) added'
+    labels:
+      - 'new chargeowner'
+
   - title: '🧰 Maintenance'
     label: 'chore'
 
