@@ -7,6 +7,7 @@ updates:
     labels:
       - dependencies
       - patch
+      - skip-changelog
   - package-ecosystem: pip
     directory: "/.github/workflows"
     schedule:
@@ -14,6 +15,7 @@ updates:
     labels:
       - dependencies
       - patch
+      - skip-changelog
   - package-ecosystem: pip
     directory: "/"
     schedule:
