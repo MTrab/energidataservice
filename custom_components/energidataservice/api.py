@@ -197,23 +197,24 @@ class APIConnector:
                 self._carnot_apikey, self._carnot_user
             )
 
-            self.predictions[:] = (
-                value
-                for value in self.predictions
-                if value.hour.day >= (datetime.now() + timedelta(days=1)).day
-                or value.hour.month > (datetime.now() + timedelta(days=1)).month
-                or value.hour.year > datetime.now().year
-            )
-
-            if self._tomorrow_valid:
-                # Remove tomorrows predictions, as we have the actual values
+            if not isinstance(self.predictions, type(None)):
                 self.predictions[:] = (
                     value
                     for value in self.predictions
-                    if value.hour.day != (datetime.now() + timedelta(days=1)).day
+                    if value.hour.day >= (datetime.now() + timedelta(days=1)).day
+                    or value.hour.month > (datetime.now() + timedelta(days=1)).month
+                    or value.hour.year > datetime.now().year
                 )
 
-            self.api_predictions = self.predictions
+                if self._tomorrow_valid:
+                    # Remove tomorrows predictions, as we have the actual values
+                    self.predictions[:] = (
+                        value
+                        for value in self.predictions
+                        if value.hour.day != (datetime.now() + timedelta(days=1)).day
+                    )
+
+                self.api_predictions = self.predictions
 
     async def async_get_tariffs(self) -> None:
         """Get tariff data."""
