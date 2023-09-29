@@ -179,7 +179,7 @@ class Connector:
         except RetryError:
             _LOGGER.error("Retry attempts exceeded for retrieving system tariffs.")
 
-    @retry(attempts=5, delay=10, max_delay=3600, backoff=1.5)
+    @retry(attempts=10, delay=10, max_delay=3600, backoff=1.5)
     async def async_call_api(self, query: str) -> dict:
         """Make the API calls."""
         try:
