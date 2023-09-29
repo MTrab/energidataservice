@@ -91,8 +91,6 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Handle data on new day."""
         _LOGGER.debug("New day function called")
 
-        await api.async_get_tariffs()
-
         api.today = api.api_tomorrow
         api.today_calculated = False
         api.api_today = api.api_tomorrow
@@ -112,6 +110,8 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug("Getting latest dataset")
         await api.update()
         await api.update_carnot()
+        await api.async_get_tariffs()
+
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
 
     async def update_carnot(n):  # type: ignore pylint: disable=unused-argument, invalid-name
