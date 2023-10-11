@@ -14,7 +14,7 @@ CHARGEOWNERS = {
     "Konstant": {
         "gln": "5790000704842",
         "company": "Konstant Net A/S - 151",
-        "type": ["151-NT01T"],
+        "type": ["151-NT01T", "151-NRA04T"],
     },
     "Cerius": {
         "gln": "5790000705184",
@@ -24,12 +24,12 @@ CHARGEOWNERS = {
     "N1": {
         "gln": "5790001089030",
         "company": "N1 A/S - 131",
-        "type": ["CD"],
+        "type": ["CD", "CD R"],
     },
     "Dinel": {
         "gln": "5790000610099",
         "company": "Dinel A/S",
-        "type": ["TCL>100_02"],
+        "type": ["TCL>100_02", "TCL<100_52"],
     },
     "TREFOR El-net": {
         "gln": "5790000392261",
@@ -84,7 +84,7 @@ CHARGEOWNERS = {
     "Ikast El Net": {
         "gln": "5790000682102",
         "company": "Ikast El Net A/S",
-        "type": ["IEV-NT-01", "IEV-NT-11"],
+        "type": ["IEV-NT-11"],
     },
     "FLOW Elnet": {
         "gln": "5790000392551",
@@ -114,7 +114,7 @@ CHARGEOWNERS = {
     "Tarm Elværk Net": {
         "gln": "5790000706419",
         "company": "Tarm Elværk Net A/S",
-        "type": ["TEV-NT-01"],
+        "type": ["TEV-NT-01", "TEV-NT-01R"],
     },
     "Zeanet": {
         "gln": "5790001089375",
@@ -139,11 +139,11 @@ CHARGEOWNERS = {
     "Sunds Net": {
         "gln": "5790001095444",
         "company": "Sunds Net A.m.b.A",
-        "type": ["SEF-NT-05"],
+        "type": ["SEF-NT-05", "SEF-NT-05R"],
     },
     "Aal El-Net": {
         "gln": "5790001095451",
         "company": "Aal El-Net A.m.b.A",
-        "type": ["AAL-NT-05"],
+        "type": ["AAL-NT-05", "AAL-NTR05"],
     },
 }

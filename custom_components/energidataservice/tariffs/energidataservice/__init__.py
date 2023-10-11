@@ -60,6 +60,7 @@ class Connector:
 
         try:
             chargeowner = CHARGEOWNERS[self._chargeowner]
+
             limit = "limit=500"
             objfilter = 'filter=%7B"chargetypecode": {},"gln_number": ["{}"]%7D'.format(  # pylint: disable=consider-using-f-string
                 str(chargeowner["type"]).replace("'", '"'), chargeowner["gln"]
@@ -67,6 +68,7 @@ class Connector:
             sort = "sort=ValidFrom desc"
 
             query = f"{objfilter}&{sort}&{limit}"
+            _LOGGER.info(query)
             resp = await self.async_call_api(query)
 
             if len(resp) == 0:
@@ -76,6 +78,7 @@ class Connector:
                 return
             else:
                 # We got data from the DataHub - update the dataset
+
                 self._all_tariffs = resp
 
             check_date = (datetime.utcnow()).strftime("%Y-%m-%d")
@@ -91,17 +94,18 @@ class Connector:
                         if "Price" in key:
                             hour = str(int("".join(filter(str.isdigit, key))) - 1)
 
+                            current_val = val if val is not None else baseprice
+
+                            if len(tariff_data) == 24:
+                                current_val += tariff_data[hour]
+
                             tariff_data.update(
-                                {hour: val if val is not None else baseprice}
+                                {hour: current_val}
                             )
 
                     if len(tariff_data) == 24:
-                        self._tariffs = tariff_data
-                        break
+                        self._tariffs.update(tariff_data)
 
-            _LOGGER.debug(
-                "Tariffs:\n%s", json.dumps(self.tariffs, indent=2, default=str)
-            )
             return self.tariffs
         except KeyError:
             _LOGGER.error(
@@ -126,14 +130,19 @@ class Connector:
                     if "Price" in key:
                         hour = str(int("".join(filter(str.isdigit, key))) - 1)
 
+                        current_val = val if val is not None else baseprice
+
+                        if len(tariff_data) == 24:
+                            current_val += tariff_data[hour]
+
                         tariff_data.update(
-                            {hour: val if val is not None else baseprice}
+                            {hour: current_val}
                         )
 
-                if len(tariff_data) == 24:
-                    return tariff_data
-
-        return {}
+        if len(tariff_data) == 24:
+            return tariff_data
+        else:
+            return {}
 
     def get_dated_system_tariff(self, date: datetime) -> dict:
         """Get system tariffs for this specific date."""
