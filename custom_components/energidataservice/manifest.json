@@ -15,5 +15,5 @@
         "async-retrying-ng==0.1.3",
         "CurrencyConverter==0.17.11"
     ],
-    "version": "1.3.13"
+    "version": "1.4.0"
 }
