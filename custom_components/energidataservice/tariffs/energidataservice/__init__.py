@@ -62,8 +62,10 @@ class Connector:
             chargeowner = CHARGEOWNERS[self._chargeowner]
 
             limit = "limit=500"
-            objfilter = 'filter=%7B"chargetypecode": {},"gln_number": ["{}"]%7D'.format(  # pylint: disable=consider-using-f-string
-                str(chargeowner["type"]).replace("'", '"'), chargeowner["gln"]
+            objfilter = 'filter=%7B"chargetypecode": {},"gln_number": ["{}"],"chargetype": {}%7D'.format(  # pylint: disable=consider-using-f-string
+                str(chargeowner["type"]).replace("'", '"'),
+                chargeowner["gln"],
+                str(chargeowner["chargetype"]).replace("'", '"'),
             )
             sort = "sort=ValidFrom desc"
 
@@ -99,9 +101,7 @@ class Connector:
                             if len(tariff_data) == 24:
                                 current_val += tariff_data[hour]
 
-                            tariff_data.update(
-                                {hour: current_val}
-                            )
+                            tariff_data.update({hour: current_val})
 
                     if len(tariff_data) == 24:
                         self._tariffs.update(tariff_data)
@@ -135,9 +135,7 @@ class Connector:
                         if len(tariff_data) == 24:
                             current_val += tariff_data[hour]
 
-                        tariff_data.update(
-                            {hour: current_val}
-                        )
+                        tariff_data.update({hour: current_val})
 
         if len(tariff_data) == 24:
             return tariff_data
