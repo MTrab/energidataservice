@@ -78,7 +78,7 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 
 async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Setup the integration using a config entry."""
+    """Do the integration setup from a config entry."""
     integration = await async_get_integration(hass, DOMAIN)
     _LOGGER.info(STARTUP, integration.version)
     rand_min = randint(5, 40)
@@ -101,7 +101,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
 
     async def new_hour(n):  # type: ignore pylint: disable=unused-argument, invalid-name
-        """Callback to tell the sensors to update on a new hour."""
+        """Tell the sensor to update to a new hour."""
         _LOGGER.debug("New hour, updating state")
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
 

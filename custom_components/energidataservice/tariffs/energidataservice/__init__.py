@@ -1,7 +1,6 @@
 """Energi Data Service tariff connector."""
 from __future__ import annotations
 
-import json
 from datetime import datetime
 from logging import getLogger
 

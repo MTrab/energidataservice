@@ -539,6 +539,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: Any | None  # pylint: disable=unused-argument
     ) -> Any:
         """Import a config entry.
+
         Special type of import, we're not actually going to store any data.
         Instead, we're going to rely on the values that are in config file.
         """
