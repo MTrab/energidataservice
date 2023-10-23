@@ -58,7 +58,7 @@ CHARGEOWNERS = {
     "Elnet Midt": {
         "gln": "5790001100520",
         "company": "Elnet Midt A/S",
-        "type": ["T3002"],
+        "type": ["T3001"],
         "chargetype": ["D03"],
     },
     "Hurup Elværk Net": {
