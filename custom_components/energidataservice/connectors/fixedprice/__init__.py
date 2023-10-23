@@ -64,7 +64,7 @@ class Connector:
         self.value = self.config.options.get(CONF_FIXED_PRICE_VALUE)
 
     async def async_get_spotprices(self) -> None:
-        """Returns the fixed price set in the configuration flow."""
+        """Return the fixed price set in the configuration flow."""
         _LOGGER.debug("Returning the fixed value of '%s'", self.value)
         return self.value
 

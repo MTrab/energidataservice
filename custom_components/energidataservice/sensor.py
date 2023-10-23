@@ -69,7 +69,7 @@ def show_with_vat(dataset: dict, vat: float, decimals: int = 3) -> dict:
 
 
 async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_devices):
-    """Setup sensor platform from a config entry."""
+    """Do the sensor platform setup from a config entry."""
     config = config_entry
     _setup(hass, config, async_add_devices)
     return True
@@ -88,7 +88,7 @@ def mean(data: list) -> float:
 
 
 def _setup(hass, config: ConfigEntry, add_devices):
-    """Setup the platform."""
+    """Do the platform setup."""
     area = config.options.get(CONF_AREA) or config.data.get(CONF_AREA)
     if area is None:
         area = "FIXED"
@@ -510,6 +510,7 @@ class EnergidataserviceSensor(SensorEntity):
 
     @property
     def device_info(self):
+        """Return the device info."""
         return {
             "identifiers": {(DOMAIN, self.unique_id)},
             "name": self.name,
@@ -519,7 +520,8 @@ class EnergidataserviceSensor(SensorEntity):
 
     @property
     def today(self) -> list:
-        """Get todays prices
+        """Get todays prices.
+
         Returns:
             list: sorted list where today[0] is the price of hour 00.00 - 01.00.
         """
@@ -535,7 +537,8 @@ class EnergidataserviceSensor(SensorEntity):
 
     @property
     def tomorrow(self) -> list:
-        """Get tomorrows prices
+        """Get tomorrows prices.
+
         Returns:
             list: sorted where tomorrow[0] is the price of hour 00.00 - 01.00 etc.
         """

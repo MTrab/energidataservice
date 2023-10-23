@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-from importlib import import_module
 
 from ..forecasts import Forecast
 

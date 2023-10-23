@@ -146,7 +146,7 @@ class APIConnector:
 
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
                 refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
-                now = datetime.utcnow()
+                datetime.utcnow()
                 now_local = datetime.now().astimezone(timezone(self._tz))
 
                 _LOGGER.debug(
