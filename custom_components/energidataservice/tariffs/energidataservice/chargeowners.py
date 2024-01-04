@@ -94,7 +94,7 @@ CHARGEOWNERS = {
     "Nordvestjysk Elforsyning (NOE Net)": {
         "gln": "5790000395620",
         "company": "NOE Net A/S",
-        "type": ["Net C"],
+        "type": ["30030"],
         "chargetype": ["D03"],
     },
     "Ikast El Net": {
