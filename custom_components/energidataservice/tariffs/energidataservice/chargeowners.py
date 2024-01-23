@@ -100,7 +100,7 @@ CHARGEOWNERS = {
     "Ikast El Net": {
         "gln": "5790000682102",
         "company": "Ikast El Net A/S",
-        "type": ["IEV-NT-11"],
+        "type": ["IEV-NT-01"],
         "chargetype": ["D03"],
     },
     "FLOW Elnet": {
