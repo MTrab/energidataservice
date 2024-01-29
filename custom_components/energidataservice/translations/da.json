@@ -24,10 +24,24 @@
                     "pricetype": "Pris beregnes i",
                     "cost_template": "Skabelon til ekstra omkostninger",
                     "in_cent": "Vis priser i øre",
-                    "fixed_value": "Angiv den ønskede pris - UDEN moms",
-                    "fixed_vat": "Moms i procent"
+                    "fixed_value": "Angiv den ønskede pris - UDEN moms"
                 },
                 "description": "Set detaljer for {name} i {country}"
+            },
+            "enable_forecast": {
+                "title": "Aktiver prognoser?",
+                "data": {
+                    "enable_forecast": "Aktiver prognoser"
+                },
+                "description": "Skal {name} i {country} vise AI genererede prognoser?"
+            },
+            "carnot_credentials": {
+                "title": "API credentials for Carnot platform (https:\/\/www.carnot.dk\/)",
+                "data": {
+                    "email": "Email",
+                    "api_key": "API-key"
+                },
+                "description": "Se mere på https:\/\/www.carnot.dk"
             },
             "enable_extras": {
                 "title": "Aktiver ekstra services?",
@@ -37,17 +51,9 @@
                 },
                 "description": "Skal {name} i {country} gøre brug af nogle ekstra services?"
             },
-            "carnot_credentials": {
-                "title": "API bruger oplysninger til Carnot",
-                "description": "Se mere på https:\/\/www.carnot.dk",
-                "data": {
-                    "email": "Email",
-                    "api_key": "API-key"
-                }
-            },
             "tariff_settings": {
                 "title": "Vælg net leverandør",
-                "description": "Hvis du er i tvivl kan du finde din leverandør her: https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab",
+                "description": "Hvis du er i tvivl kan du finde din leverandør her: https:\/\/greenpowerdenmark.dk\/vejledning-teknik\/nettilslutning\/find-netselskab (KUN Danske operatører)",
                 "data": {
                     "tariff_charge_owner": "Vælg net leverandør"
                 }
@@ -62,14 +68,6 @@
             "already_configured": "Det angivede navn eksisterer allerede!"
         },
         "step": {
-            "user": {
-                "title": "Basis info",
-                "data": {
-                    "name": "Navn",
-                    "country": "Vælg land"
-                },
-                "description": "Indstil basis settings for sensoren"
-            },
             "region": {
                 "title": "Detaljerede oplysninger",
                 "data": {
@@ -79,10 +77,24 @@
                     "pricetype": "Pris beregnes i",
                     "cost_template": "Skabelon til ekstra omkostninger",
                     "in_cent": "Vis priser i øre",
-                    "fixed_value": "Angiv den ønskede pris - UDEN moms",
-                    "fixed_vat": "Moms i procent"
+                    "fixed_value": "Angiv den ønskede pris - UDEN moms"
                 },
                 "description": "Set detaljer for {name} i {country}"
+            },
+            "enable_forecast": {
+                "title": "Aktiver prognoser?",
+                "data": {
+                    "enable_forecast": "Aktiver prognoser"
+                },
+                "description": "Should {name} in {country} show AI predicted prices for the next 7 days?"
+            },
+            "carnot_credentials": {
+                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "data": {
+                    "email": "Email",
+                    "api_key": "API-key"
+                },
+                "description": "Se mere på https:\/\/www.carnot.dk"
             },
             "enable_extras": {
                 "title": "Aktiver ekstra services?",
@@ -92,20 +104,20 @@
                 },
                 "description": "Skal {name} i {country} gøre brug af nogle ekstra services?"
             },
-            "carnot_credentials": {
-                "title": "API bruger oplysninger til Carnot",
-                "description": "See https:\/\/www.carnot.dk",
-                "data": {
-                    "email": "Email",
-                    "api_key": "API-key"
-                }
-            },
             "tariff_settings": {
                 "title": "Vælg el net leverandør",
-                "description": "Hvis du er i tvivl kan du finde din leverandør her: https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab",
+                "description": "Hvis du er i tvivl kan du finde din leverandør her: https:\/\/greenpowerdenmark.dk\/vejledning-teknik\/nettilslutning\/find-netselskab (KUN Danske operatører)",
                 "data": {
                     "tariff_charge_owner": "Vælg leverandør"
                 }
+            },
+            "user": {
+                "title": "Basis info",
+                "data": {
+                    "name": "Navn",
+                    "country": "Vælg land"
+                },
+                "description": "Indstil basis settings for sensoren"
             }
         }
     }
