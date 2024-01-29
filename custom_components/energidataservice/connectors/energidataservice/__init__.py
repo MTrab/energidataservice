@@ -1,4 +1,5 @@
 """Energi Data Service connector."""
+
 from __future__ import annotations
 
 import json

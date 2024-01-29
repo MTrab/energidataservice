@@ -1,4 +1,5 @@
 """Diagnostics support for Energi Data Service integration."""
+
 from __future__ import annotations
 
 from typing import Any

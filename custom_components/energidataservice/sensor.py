@@ -1,4 +1,5 @@
 """Support for Energi Data Service sensor."""
+
 from __future__ import annotations
 
 import logging

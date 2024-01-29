@@ -1,4 +1,5 @@
 """Config flow for Energi Data Service spot prices."""
+
 from __future__ import annotations
 
 import logging
@@ -120,15 +121,19 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             self.options.update(user_input)
             _LOGGER.debug(
                 "Forecast selected: %s",
-                user_input[CONF_ENABLE_FORECAST]
-                if CONF_ENABLE_FORECAST in user_input
-                else "Unavailable",
+                (
+                    user_input[CONF_ENABLE_FORECAST]
+                    if CONF_ENABLE_FORECAST in user_input
+                    else "Unavailable"
+                ),
             )
             _LOGGER.debug(
                 "Tariffs selected: %s",
-                user_input[CONF_ENABLE_TARIFFS]
-                if CONF_ENABLE_TARIFFS in user_input
-                else "Unavailable",
+                (
+                    user_input[CONF_ENABLE_TARIFFS]
+                    if CONF_ENABLE_TARIFFS in user_input
+                    else "Unavailable"
+                ),
             )
             if CONF_ENABLE_FORECAST in user_input or CONF_ENABLE_TARIFFS in user_input:
                 if (

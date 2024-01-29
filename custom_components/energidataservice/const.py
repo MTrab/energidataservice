@@ -1,4 +1,5 @@
 """Energidataservice consts."""
+
 from collections import namedtuple
 
 STARTUP = """

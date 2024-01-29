@@ -1,4 +1,5 @@
 """Define config schema."""
+
 # pylint: disable=dangerous-default-value
 from __future__ import annotations
 
@@ -62,24 +63,30 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
         info_options = {
             CONF_NAME: options.get(CONF_NAME),
             CONF_COUNTRY: options.get(CONF_COUNTRY) or None,
-            CONF_FIXED_PRICE_VALUE: float(options.get(CONF_FIXED_PRICE_VALUE) / 1000)
-            if CONF_FIXED_PRICE_VALUE in options
-            else 0,
-            CONF_FIXED_PRICE_VAT: float(options.get(CONF_FIXED_PRICE_VAT))
-            if CONF_FIXED_PRICE_VAT in options
-            else 0,
-            CONF_CURRENCY_IN_CENT: options.get(CONF_CURRENCY_IN_CENT)
-            if not isinstance(options.get(CONF_CURRENCY_IN_CENT), type(None))
-            else False,
-            CONF_DECIMALS: options.get(CONF_DECIMALS)
-            if CONF_DECIMALS in options
-            else 3,
-            CONF_PRICETYPE: options.get(CONF_PRICETYPE)
-            if CONF_PRICETYPE in options
-            else "kWh",
-            CONF_TEMPLATE: options.get(CONF_TEMPLATE)
-            if CONF_TEMPLATE in options
-            else "",
+            CONF_FIXED_PRICE_VALUE: (
+                float(options.get(CONF_FIXED_PRICE_VALUE) / 1000)
+                if CONF_FIXED_PRICE_VALUE in options
+                else 0
+            ),
+            CONF_FIXED_PRICE_VAT: (
+                float(options.get(CONF_FIXED_PRICE_VAT))
+                if CONF_FIXED_PRICE_VAT in options
+                else 0
+            ),
+            CONF_CURRENCY_IN_CENT: (
+                options.get(CONF_CURRENCY_IN_CENT)
+                if not isinstance(options.get(CONF_CURRENCY_IN_CENT), type(None))
+                else False
+            ),
+            CONF_DECIMALS: (
+                options.get(CONF_DECIMALS) if CONF_DECIMALS in options else 3
+            ),
+            CONF_PRICETYPE: (
+                options.get(CONF_PRICETYPE) if CONF_PRICETYPE in options else "kWh"
+            ),
+            CONF_TEMPLATE: (
+                options.get(CONF_TEMPLATE) if CONF_TEMPLATE in options else ""
+            ),
         }
 
         schema = {
@@ -114,21 +121,25 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
             )
             or None,
             CONF_AREA: options.get(CONF_AREA) if CONF_AREA in options else None,
-            CONF_CURRENCY_IN_CENT: options.get(CONF_CURRENCY_IN_CENT)
-            if not isinstance(options.get(CONF_CURRENCY_IN_CENT), type(None))
-            else False,
-            CONF_DECIMALS: options.get(CONF_DECIMALS)
-            if CONF_DECIMALS in options
-            else 3,
-            CONF_PRICETYPE: options.get(CONF_PRICETYPE)
-            if CONF_PRICETYPE in options
-            else "kWh",
-            CONF_TEMPLATE: options.get(CONF_TEMPLATE)
-            if CONF_TEMPLATE in options
-            else "",
-            CONF_VAT: options.get(CONF_VAT)
-            if not isinstance(options.get(CONF_VAT), type(None))
-            else True,
+            CONF_CURRENCY_IN_CENT: (
+                options.get(CONF_CURRENCY_IN_CENT)
+                if not isinstance(options.get(CONF_CURRENCY_IN_CENT), type(None))
+                else False
+            ),
+            CONF_DECIMALS: (
+                options.get(CONF_DECIMALS) if CONF_DECIMALS in options else 3
+            ),
+            CONF_PRICETYPE: (
+                options.get(CONF_PRICETYPE) if CONF_PRICETYPE in options else "kWh"
+            ),
+            CONF_TEMPLATE: (
+                options.get(CONF_TEMPLATE) if CONF_TEMPLATE in options else ""
+            ),
+            CONF_VAT: (
+                options.get(CONF_VAT)
+                if not isinstance(options.get(CONF_VAT), type(None))
+                else True
+            ),
         }
 
         schema = {

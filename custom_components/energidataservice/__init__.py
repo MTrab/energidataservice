@@ -1,4 +1,5 @@
 """Adds support for Energi Data Service spot prices."""
+
 from __future__ import annotations
 
 from datetime import timedelta

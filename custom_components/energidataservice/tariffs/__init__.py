@@ -1,4 +1,5 @@
 """Dynamically load all available tariff providers."""
+
 from __future__ import annotations
 
 from collections import namedtuple
