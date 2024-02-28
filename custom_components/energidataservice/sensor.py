@@ -249,8 +249,9 @@ class EnergidataserviceCO2Sensor(SensorEntity):
     @property
     def device_info(self):
         """Return the device info."""
+        _LOGGER.debug("Master UUID: %s", self._api.master_uuid)
         return {
-            "identifiers": {(DOMAIN, self._api.master_uuid)},
+            "identifiers": {(DOMAIN, self._entry_id)},
             "model": f"Region code: {self.region.region}",
             "manufacturer": "Energi Data Service",
         }
@@ -350,8 +351,6 @@ class EnergidataserviceSensor(SensorEntity):
         )
         self._unique_id = util_slugify(f"{self._attr_name}_{self._entry_id}")
         _async_migrate_unique_id(hass, self._entity_id, self._unique_id)
-
-        self._api.master_uuid = self._entry_id
 
         # Holds current price
         self._attr_native_value = None

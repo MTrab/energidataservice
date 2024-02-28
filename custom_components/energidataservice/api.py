@@ -58,8 +58,6 @@ class APIConnector:
         self._rand_min: int = rand_min
         self._rand_sec: int = rand_sec
 
-        self.master_uuid = None
-
         self.co2 = None
         self.co2_refresh = None
         self.today = None
