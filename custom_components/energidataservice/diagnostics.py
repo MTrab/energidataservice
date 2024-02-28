@@ -35,6 +35,7 @@ async def async_get_config_entry_diagnostics(
         "predictions": api.predictions,
         "api_predictions": api.api_predictions,
         "tariff_data": api.tariff_data,
+        "co2dataset": api.co2,
         "next_update": api.next_data_refresh,
         "data_source": api._source,
         "home_assistant_tz": hass.config.time_zone,

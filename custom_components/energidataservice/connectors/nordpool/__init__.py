@@ -95,6 +95,8 @@ class Connector:
             _LOGGER.debug("Response for %s:", self.regionhandler.region)
             _LOGGER.debug(self._result)
             return res
+        elif resp.status == 500:
+            _LOGGER.warning("Server blocked request")
         else:
             _LOGGER.error("API returned error %s", str(resp.status))
             return {}
