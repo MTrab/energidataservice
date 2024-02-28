@@ -8,7 +8,7 @@ from logging import getLogger
 
 import pytz
 
-from ...const import INTERVAL, CO2INTERVAL
+from ...const import CO2INTERVAL, INTERVAL
 from .regions import CO2REGIONS, REGIONS
 
 _LOGGER = getLogger(__name__)
@@ -37,6 +37,7 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
             reslist.append(tmp)
 
     return reslist
+
 
 def prepare_co2_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     """Prepare the CO2 data and return a list."""
@@ -156,7 +157,9 @@ class Connector:
             start_date = (datetime.utcnow()).strftime("%Y-%m-%d")
             start = f"start={str(start_date)}"
             sort = "sort=Minutes5UTC%20ASC"
-            objfilter = f"filter=%7B%22PriceArea%22:[%22{str(self.regionhandler.region)}%22]%7D"
+            objfilter = (
+                f"filter=%7B%22PriceArea%22:[%22{str(self.regionhandler.region)}%22]%7D"
+            )
             return f"{url}?{start}&{sort}&{objfilter}"
 
     @property

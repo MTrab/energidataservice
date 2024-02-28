@@ -191,6 +191,7 @@ def _async_migrate_unique_id(hass: HomeAssistant, entity: str, new_id: str) -> N
     else:
         _LOGGER.debug("- Check didn't find anything")
 
+
 class EnergidataserviceCO2Sensor(SensorEntity):
     """Representation of Energi Data Service CO2 data."""
 
@@ -219,9 +220,10 @@ class EnergidataserviceCO2Sensor(SensorEntity):
         self._unique_id = util_slugify(f"{self._attr_name}_co2_{self._entry_id}")
         _async_migrate_unique_id(hass, self._entity_id, self._unique_id)
 
-        self._friendly_name = config.options.get(CONF_NAME) + " CO2" or config.data.get(
-            CONF_NAME
-        ) + " CO2"
+        self._friendly_name = (
+            config.options.get(CONF_NAME) + " CO2"
+            or config.data.get(CONF_NAME) + " CO2"
+        )
 
         self._attr_native_value = None
         self._attr_native_unit_of_measurement = "g/kWh"
@@ -259,10 +261,7 @@ class EnergidataserviceCO2Sensor(SensorEntity):
     async def update_data(self) -> None:
         """Update data for the sensor."""
         current_state_time = datetime.fromisoformat(
-            dt_utils.now()
-            .replace(microsecond=0)
-            .replace(second=0)
-            .isoformat()
+            dt_utils.now().replace(microsecond=0).replace(second=0).isoformat()
         )
         if self._api.co2:
             possible_dataset = []
@@ -297,6 +296,7 @@ class EnergidataserviceCO2Sensor(SensorEntity):
         async_dispatcher_connect(
             self._hass, UPDATE_EDS_5MIN.format(self._entry_id), self.update_data
         )
+
 
 class EnergidataserviceSensor(SensorEntity):
     """Representation of Energi Data Service data."""

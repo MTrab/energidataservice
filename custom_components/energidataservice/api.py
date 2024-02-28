@@ -114,7 +114,8 @@ class APIConnector:
                 try:
                     await api.async_get_co2emissions()
                     if api.co2data:
-                        _LOGGER.debug("%s got CO2 values from %s (namespace='%s')",
+                        _LOGGER.debug(
+                            "%s got CO2 values from %s (namespace='%s')",
                             self._region.region,
                             endpoint.module,
                             endpoint.namespace,
@@ -122,13 +123,13 @@ class APIConnector:
                         _LOGGER.debug(api.co2data)
                         self.co2 = api.co2data
                 except AttributeError:
-                    _LOGGER.debug("CO2 values not available from %s (namespace='%s')",
+                    _LOGGER.debug(
+                        "CO2 values not available from %s (namespace='%s')",
                         endpoint.module,
                         endpoint.namespace,
                     )
         except:
             _LOGGER.debug("No CO2 data for this region")
-
 
     async def update(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from API."""
