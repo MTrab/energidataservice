@@ -251,7 +251,6 @@ class EnergidataserviceCO2Sensor(SensorEntity):
         """Return the device info."""
         return {
             "identifiers": {(DOMAIN, self._entry_id)},
-            "name": self.name,
             "model": f"Region code: {self.region.region}",
             "manufacturer": "Energi Data Service",
         }
