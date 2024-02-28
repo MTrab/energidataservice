@@ -104,6 +104,10 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def new_hour(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Tell the sensor to update to a new hour."""
         _LOGGER.debug("New hour, updating state")
+
+        api.today_calculated = False
+        api.tomorrow_calculated = False
+
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
 
     async def get_new_data(n):  # type: ignore pylint: disable=unused-argument, invalid-name
