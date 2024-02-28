@@ -7,3 +7,8 @@ REGIONS = {
     "SE4",
     "NO2",
 }
+
+CO2REGIONS = {
+    "DK1",
+    "DK2",
+}
