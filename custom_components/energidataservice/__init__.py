@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from logging import getLogger
 from random import randint
 
@@ -11,14 +11,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 from homeassistant.loader import async_get_integration
+from homeassistant.util import dt as dt_utils
 
 from .api import APIConnector
-from .const import CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS
+from .const import CONF_ENABLE_FORECAST, DOMAIN, STARTUP, UPDATE_EDS, UPDATE_EDS_5MIN
 
 RETRY_MINUTES = 5
 MAX_RETRY_MINUTES = 60
 
 CARNOT_UPDATE = timedelta(minutes=30)
+CO2_UPDATE = timedelta(hours=1)
 
 DEBUG = False
 
@@ -85,6 +87,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     rand_min = randint(5, 40)
     rand_sec = randint(0, 59)
     api = APIConnector(hass, entry, rand_min, rand_sec)
+    # await api.updateco2()
     hass.data[DOMAIN][entry.entry_id] = api
     use_forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
 
@@ -99,7 +102,11 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         api.api_tomorrow = None
         api._tomorrow_valid = False  # pylint: disable=protected-access
         api.tomorrow_calculated = False
+
+        await api.updateco2()
+
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
+        async_dispatcher_send(hass, UPDATE_EDS_5MIN.format(entry.entry_id))
 
     async def new_hour(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Tell the sensor to update to a new hour."""
@@ -109,6 +116,20 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         api.tomorrow_calculated = False
 
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
+
+    async def five_min(n):  # type: ignore pylint: disable=unused-argument, invalid-name
+        """Tell the sensor to update when 5 minutes have passed."""
+        async_dispatcher_send(hass, UPDATE_EDS_5MIN.format(entry.entry_id))
+
+    async def refresh_co2_data(n):
+        """Update CO2 data hourly."""
+        _LOGGER.debug("Getting latest CO2 dataset")
+        await api.updateco2()
+        async_call_later(hass, CO2_UPDATE, refresh_co2_data)
+
+        api.co2_refresh = (dt_utils.now() + CO2_UPDATE).strftime("%H:%M:%S")
+
+        _LOGGER.debug("Next CO2 data refresh '%s'", api.co2_refresh)
 
     async def get_new_data(n):  # type: ignore pylint: disable=unused-argument, invalid-name
         """Fetch new data for tomorrows prices at 13:00ish CET."""
@@ -145,12 +166,17 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=1)
+    update_5min = async_track_time_change(hass, five_min, minute="/5", second=0)
+
+    # async_call_later(hass, timedelta(seconds=1), refresh_co2_data)
+    await refresh_co2_data(0)
 
     if use_forecast:
         async_call_later(hass, CARNOT_UPDATE, update_carnot)
 
     api.listeners.append(update_new_day)
     api.listeners.append(update_new_hour)
+    api.listeners.append(update_5min)
     api.listeners.append(update_tomorrow)
 
     await api.async_get_tariffs()

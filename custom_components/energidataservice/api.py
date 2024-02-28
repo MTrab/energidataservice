@@ -9,7 +9,7 @@ from importlib import import_module
 from logging import getLogger
 
 import voluptuous as vol
-from aiohttp import ServerDisconnectedError
+from aiohttp import ClientConnectorError, ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
@@ -58,6 +58,10 @@ class APIConnector:
         self._rand_min: int = rand_min
         self._rand_sec: int = rand_sec
 
+        self.master_uuid = None
+
+        self.co2 = None
+        self.co2_refresh = None
         self.today = None
         self.api_today = None
         self.tomorrow = None
@@ -88,6 +92,45 @@ class APIConnector:
         self._carnot_user = entry.options.get(CONF_EMAIL) or None
         self._carnot_apikey = entry.options.get(CONF_API_KEY) or None
 
+    async def updateco2(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument
+        """Fetch CO2 emissions from API."""
+        _LOGGER.debug("Updating CO2 emissions for '%s'", self._region.region)
+        connectors = self._connectors.get_connectors(self._region.region)
+        _LOGGER.debug(
+            "Valid connectors for '%s' is: %s", self._region.region, connectors
+        )
+        self.co2 = None
+
+        try:
+            for endpoint in connectors:
+                module = import_module(
+                    endpoint.namespace, __name__.removesuffix(".api")
+                )
+                api = module.Connector(
+                    self._region, self._client, self._tz, self._config
+                )
+                self.connector_currency = module.DEFAULT_CURRENCY
+                await api.async_get_spotprices()
+                try:
+                    await api.async_get_co2emissions()
+                    if api.co2data:
+                        _LOGGER.debug(
+                            "%s got CO2 values from %s (namespace='%s')",
+                            self._region.region,
+                            endpoint.module,
+                            endpoint.namespace,
+                        )
+                        _LOGGER.debug(api.co2data)
+                        self.co2 = api.co2data
+                except AttributeError:
+                    _LOGGER.debug(
+                        "CO2 values not available from %s (namespace='%s')",
+                        endpoint.module,
+                        endpoint.namespace,
+                    )
+        except:
+            _LOGGER.debug("No CO2 data for this region")
+
     async def update(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from API."""
         _LOGGER.debug("Updating data for '%s'", self._region.region)
@@ -110,6 +153,7 @@ class APIConnector:
                 )
                 self.connector_currency = module.DEFAULT_CURRENCY
                 await api.async_get_spotprices()
+
                 if api.today and not self.today:
                     self.today = api.today
                     self.api_today = api.today
@@ -194,9 +238,12 @@ class APIConnector:
             )
             carnot = forecast_module.Connector(self._region, self._client, self._tz)
             self.predictions_currency = forecast_module.DEFAULT_CURRENCY
-            self.predictions = await carnot.async_get_forecast(
-                self._carnot_apikey, self._carnot_user
-            )
+            try:
+                self.predictions = await carnot.async_get_forecast(
+                    self._carnot_apikey, self._carnot_user
+                )
+            except ClientConnectorError:
+                _LOGGER.warning("Error fetching data from Carnot")
 
             if not isinstance(self.predictions, type(None)):
                 self.predictions[:] = (

@@ -41,6 +41,7 @@ from .const import (
     DOMAIN,
     UNIT_TO_MULTIPLIER,
     UPDATE_EDS,
+    UPDATE_EDS_5MIN,
 )
 from .utils.regionhandler import RegionHandler
 
@@ -140,7 +141,16 @@ def _setup(hass, config: ConfigEntry, add_devices):
         state_class=None,
     )
     sens = EnergidataserviceSensor(config, hass, region, this_sensor)
+    add_devices([sens])
 
+    co2_sensor = SensorEntityDescription(
+        key="EnergiDataService_co2",
+        device_class=None,
+        icon="mdi:molecule-co2",
+        name=config.data.get(CONF_NAME) + " CO2",
+        state_class=None,
+    )
+    sens = EnergidataserviceCO2Sensor(config, hass, region, co2_sensor)
     add_devices([sens])
 
 
@@ -180,6 +190,112 @@ def _async_migrate_unique_id(hass: HomeAssistant, entity: str, new_id: str) -> N
             _LOGGER.debug(" - New id not set, skipping")
     else:
         _LOGGER.debug("- Check didn't find anything")
+
+
+class EnergidataserviceCO2Sensor(SensorEntity):
+    """Representation of Energi Data Service CO2 data."""
+
+    def __init__(
+        self,
+        config: ConfigEntry,
+        hass: HomeAssistant,
+        region: RegionHandler,
+        description: SensorEntityDescription,
+    ) -> None:
+        """Initialize Energidataservice CO2 sensor."""
+        self.entity_description = description
+        self.entity_description = description
+        self.region = region
+
+        self._area = region.description
+        self._attr_name = self.entity_description.name
+        self._config = config
+        self._entry_id = config.entry_id
+        self._api = hass.data[DOMAIN][config.entry_id]
+        self._hass = hass
+
+        self._entity_id = sensor.ENTITY_ID_FORMAT.format(
+            util_slugify(f"{self._attr_name} {self._area}")
+        )
+        self._unique_id = util_slugify(f"{self._attr_name}_co2_{self._entry_id}")
+        _async_migrate_unique_id(hass, self._entity_id, self._unique_id)
+
+        self._friendly_name = (
+            config.options.get(CONF_NAME) + " CO2"
+            or config.data.get(CONF_NAME) + " CO2"
+        )
+
+        self._attr_native_value = None
+        self._attr_native_unit_of_measurement = "g/kWh"
+
+    @property
+    def unique_id(self):
+        """Return the unique id."""
+        return self._unique_id
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self._friendly_name
+
+    @property
+    def should_poll(self):
+        """No need to poll. Coordinator notifies entity of updates."""
+        return False
+
+    @property
+    def unit(self) -> str:
+        """Return currency unit."""
+        return self._attr_native_unit_of_measurement
+
+    @property
+    def device_info(self):
+        """Return the device info."""
+        _LOGGER.debug("Master UUID: %s", self._api.master_uuid)
+        return {
+            "identifiers": {(DOMAIN, self._api.master_uuid)},
+            "model": f"Region code: {self.region.region}",
+            "manufacturer": "Energi Data Service",
+        }
+
+    async def update_data(self) -> None:
+        """Update data for the sensor."""
+        current_state_time = datetime.fromisoformat(
+            dt_utils.now().replace(microsecond=0).replace(second=0).isoformat()
+        )
+        if self._api.co2:
+            possible_dataset = []
+            for dataset in self._api.co2:
+                if dataset.hour <= current_state_time:
+                    possible_dataset = dataset
+                else:
+                    self._attr_native_value = possible_dataset.value
+                    _LOGGER.debug(
+                        "Current CO2 value updated to %f for %s using dataset time %s",
+                        self._attr_native_value,
+                        self.region.region,
+                        possible_dataset.hour,
+                    )
+                    break
+
+            self._attr_extra_state_attributes = {"next_refresh": self._api.co2_refresh}
+
+            value_dict = {}
+            for i in self._api.co2:
+                value_dict.update({i.hour.strftime("%H:%M"): i.value})
+
+            self._attr_extra_state_attributes.update({"emissions": value_dict})
+
+        self.async_write_ha_state()
+
+    async def async_added_to_hass(self):
+        """Connect to dispatcher listening for entity data notifications."""
+        await super().async_added_to_hass()
+        _LOGGER.debug("Added sensor '%s' CO2", self._entity_id)
+        await self.update_data()
+        async_dispatcher_connect(
+            self._hass, UPDATE_EDS_5MIN.format(self._entry_id), self.update_data
+        )
 
 
 class EnergidataserviceSensor(SensorEntity):
@@ -235,6 +351,8 @@ class EnergidataserviceSensor(SensorEntity):
         )
         self._unique_id = util_slugify(f"{self._attr_name}_{self._entry_id}")
         _async_migrate_unique_id(hass, self._entity_id, self._unique_id)
+
+        self._api.master_uuid = self._unique_id
 
         # Holds current price
         self._attr_native_value = None

@@ -35,9 +35,11 @@ DEFAULT_TEMPLATE = "{{0.0|float}}"
 DOMAIN = "energidataservice"
 
 INTERVAL = namedtuple("Interval", "price hour")
+CO2INTERVAL = namedtuple("CO2Interval", "value hour")
 
 UNIQUE_ID = "unique_id"
 UPDATE_EDS = "eds_update_{}"
+UPDATE_EDS_5MIN = "eds_5m_update_{}"
 
 # Multiplier mappings
 UNIT_TO_MULTIPLIER = {"MWh": 0, "kWh": 1000, "Wh": 1000000}
