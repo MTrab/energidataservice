@@ -9,7 +9,7 @@ from importlib import import_module
 from logging import getLogger
 
 import voluptuous as vol
-from aiohttp import ServerDisconnectedError
+from aiohttp import ClientConnectorError, ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
@@ -194,9 +194,12 @@ class APIConnector:
             )
             carnot = forecast_module.Connector(self._region, self._client, self._tz)
             self.predictions_currency = forecast_module.DEFAULT_CURRENCY
-            self.predictions = await carnot.async_get_forecast(
-                self._carnot_apikey, self._carnot_user
-            )
+            try:
+                self.predictions = await carnot.async_get_forecast(
+                    self._carnot_apikey, self._carnot_user
+                )
+            except ClientConnectorError:
+                _LOGGER.warning("Error fetching data from Carnot")
 
             if not isinstance(self.predictions, type(None)):
                 self.predictions[:] = (
