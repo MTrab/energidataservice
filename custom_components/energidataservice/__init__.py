@@ -116,7 +116,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         api.today_calculated = False
         api.tomorrow = api.api_tomorrow
         api.tomorrow_calculated = False
-        api.forecast = api.api_predictions
+        api.predictions = api.api_predictions
         api.predictions_calculated = False
 
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
@@ -169,7 +169,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         second=0,
     )
 
-    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=1)
+    update_new_hour = async_track_time_change(hass, new_hour, minute="/5", second=1)
     update_5min = async_track_time_change(hass, five_min, minute="/5", second=0)
 
     # async_call_later(hass, timedelta(seconds=1), refresh_co2_data)
