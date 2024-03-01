@@ -119,20 +119,20 @@ tariffs | Object containing all tariffs used in calculations. additional_tariffs
 
 This table will show current supported countries with a marker of supported extras.<br/>
 All countries support the basic spot price
-Country | Carnot | Auto tariff data
----|:---:|:---:
-FIXED PRICE | | x
-Belgium | |
-Denmark | x | x
-Estonia | |
-Finland | |
-France | |
-Latvia | |
-Lithuania | |
-Luxemburg | |
-Netherlands | |
-Norway | |
-Sweden | |
+Country | Forecasts | Auto tariff data | CO2 sensor
+---|:---:|:---:|:---:
+FIXED PRICE | | x |
+Belgium | | |
+Denmark | x | x | x
+Estonia | | |
+Finland | | |
+France | | |
+Latvia | | |
+Lithuania | | |
+Luxemburg | | |
+Netherlands | | |
+Norway | | |
+Sweden | | |
 
 # Translation
 
