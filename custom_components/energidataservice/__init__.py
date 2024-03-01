@@ -112,8 +112,12 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Tell the sensor to update to a new hour."""
         _LOGGER.debug("New hour, updating state")
 
+        api.today = api.api_today
         api.today_calculated = False
+        api.tomorrow = api.api_tomorrow
         api.tomorrow_calculated = False
+        api.forecast = api.api_predictions
+        api.predictions_calculated = False
 
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
 
