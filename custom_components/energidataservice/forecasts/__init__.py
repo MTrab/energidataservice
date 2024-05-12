@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections import namedtuple
 import importlib
+from collections import namedtuple
 from logging import getLogger
 from os import listdir
 from posixpath import dirname
@@ -60,7 +60,7 @@ class Forecast:
         endpoints = []
 
         await self.load_modules()
-        
+
         for endpoint in self._forecasts:
             if region in endpoint.regions:
                 ForecastEndpoint = namedtuple("Forecast", "module namespace")

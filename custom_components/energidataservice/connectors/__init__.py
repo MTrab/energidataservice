@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections import namedtuple
 import importlib
+from collections import namedtuple
 from logging import getLogger
 from os import listdir
 from posixpath import dirname

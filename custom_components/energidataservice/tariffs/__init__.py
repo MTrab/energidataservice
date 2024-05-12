@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from collections import namedtuple
 import importlib
+from collections import namedtuple
 from logging import getLogger
 from os import listdir
 from posixpath import dirname
 
 from genericpath import isdir
-
 
 _LOGGER = getLogger(__name__)
 
@@ -56,7 +55,7 @@ class Tariff:
         endpoints = []
 
         await self.load_modules()
-        
+
         _LOGGER.debug("Finding valid endpoints for region '%s'", region)
         for endpoint in self._tariffs:
             if region in endpoint.regions or region is None:
