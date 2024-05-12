@@ -14,12 +14,12 @@ class TariffHandler:
     """Tariff handler."""
 
     @staticmethod
-    def get_chargeowners(
-        region: str, sort: bool = False, descending: bool = False
+    async def get_chargeowners(
+        region: str, hass, sort: bool = False, descending: bool = False
     ) -> list:
         """Get a list of chargeowners for this region."""
         chargeowners = []
-        connectors = Tariff().get_endpoint(region)
+        connectors = await Tariff(hass=hass).get_endpoint(region)
         _LOGGER.debug("Tariff connectors: %s", connectors)
         for endpoint in connectors:
             _LOGGER.debug("Getting chargeowner from '%s'", endpoint.namespace)

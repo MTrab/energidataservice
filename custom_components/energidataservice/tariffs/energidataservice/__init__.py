@@ -70,7 +70,6 @@ class Connector:
             sort = "sort=ValidFrom desc"
 
             query = f"{objfilter}&{sort}&{limit}"
-            _LOGGER.info(query)
             resp = await self.async_call_api(query)
 
             if len(resp) == 0:
