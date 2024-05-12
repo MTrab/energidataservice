@@ -221,7 +221,8 @@ def energidataservice_config_option_carnot_credentials(
     return schema
 
 
-def energidataservice_config_option_tariff_settings(
+async def energidataservice_config_option_tariff_settings(
+    hass,
     options: ConfigEntry = None,
 ) -> dict:
     """Return a schema for Eloverblik API configuration."""
@@ -229,15 +230,14 @@ def energidataservice_config_option_tariff_settings(
     if options is None:
         options = {CONF_TARIFF_CHARGE_OWNER: None}
 
+    tariff_options = await TariffHandler.get_chargeowners(
+        RegionHandler.description_to_region(options.get(CONF_AREA)), hass, True
+    )
     schema = {
         vol.Required(
             CONF_TARIFF_CHARGE_OWNER,
             default=options.get(CONF_TARIFF_CHARGE_OWNER),
-        ): vol.In(
-            TariffHandler.get_chargeowners(
-                RegionHandler.description_to_region(options.get(CONF_AREA)), True
-            )
-        ),
+        ): vol.In(tariff_options),
     }
 
     _LOGGER.debug("Schema: %s", schema)

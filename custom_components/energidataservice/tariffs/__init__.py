@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from importlib import import_module
+import importlib
 from logging import getLogger
 from os import listdir
 from posixpath import dirname
 
 from genericpath import isdir
+
 
 _LOGGER = getLogger(__name__)
 
@@ -16,10 +17,14 @@ _LOGGER = getLogger(__name__)
 class Tariff:
     """Handle tariff modules."""
 
-    def __init__(self):
+    def __init__(self, hass):
         """Initialize tariff handler."""
 
+        self.hass = hass
         self._tariffs = []
+
+    async def load_modules(self) -> None:
+        """Load available modules."""
         for module in sorted(listdir(f"{dirname(__file__)}")):
             mod_path = f"{dirname(__file__)}/{module}"
             if (
@@ -32,7 +37,9 @@ class Tariff:
                 )
                 _LOGGER.debug("Adding module %s", module)
                 api_ns = f".{module}"
-                mod = import_module(api_ns, __name__)
+                mod = await self.hass.async_add_executor_job(
+                    importlib.import_module, api_ns, __name__
+                )
                 con = Endpoint(
                     module, f".tariffs{api_ns}", mod.REGIONS, mod.CHARGEOWNERS
                 )
@@ -44,9 +51,12 @@ class Tariff:
         """Return valid tariff endpoints."""
         return self._tariffs
 
-    def get_endpoint(self, region: str) -> list:
+    async def get_endpoint(self, region: str) -> list:
         """Get valid endpoint(s) of a specific zone."""
         endpoints = []
+
+        await self.load_modules()
+        
         _LOGGER.debug("Finding valid endpoints for region '%s'", region)
         for endpoint in self._tariffs:
             if region in endpoint.regions or region is None:

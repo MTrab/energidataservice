@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from importlib import import_module
+import importlib
 from logging import getLogger
 from os import listdir
 from posixpath import dirname
@@ -18,10 +18,14 @@ _LOGGER = getLogger(__name__)
 class Forecast:
     """Handle forecast modules."""
 
-    def __init__(self):
+    def __init__(self, hass):
         """Initialize forecast handler."""
 
+        self.hass = hass
         self._forecasts = []
+
+    async def load_modules(self) -> None:
+        """Load available modules."""
         for module in sorted(listdir(f"{dirname(__file__)}")):
             mod_path = f"{dirname(__file__)}/{module}"
             if (
@@ -32,7 +36,10 @@ class Forecast:
                 Endpoint = namedtuple("Endpoint", "module namespace regions")
                 _LOGGER.debug("Adding module %s", module)
                 api_ns = f".{module}"
-                mod = import_module(api_ns, __name__)
+
+                mod = await self.hass.async_add_executor_job(
+                    importlib.import_module, api_ns, __name__
+                )
                 con = Endpoint(module, f".forecasts{api_ns}", mod.REGIONS)
 
                 if hasattr(mod, "EXTRA_REGIONS"):
@@ -48,10 +55,12 @@ class Forecast:
         """Return valid forecast endpoints."""
         return self._forecasts
 
-    def get_endpoint(self, region: str) -> list:
+    async def get_endpoint(self, region: str) -> list:
         """Get endpoint(s) of a specific zone."""
         endpoints = []
 
+        await self.load_modules()
+        
         for endpoint in self._forecasts:
             if region in endpoint.regions:
                 ForecastEndpoint = namedtuple("Forecast", "module namespace")

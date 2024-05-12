@@ -87,6 +87,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     rand_min = randint(5, 40)
     rand_sec = randint(0, 59)
     api = APIConnector(hass, entry, rand_min, rand_sec)
+    await api.initialize()
     # await api.updateco2()
     hass.data[DOMAIN][entry.entry_id] = api
     use_forecast = entry.options.get(CONF_ENABLE_FORECAST) or False

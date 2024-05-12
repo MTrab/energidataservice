@@ -43,14 +43,14 @@ from .utils.tariffhandler import TariffHandler
 _LOGGER = logging.getLogger(__name__)
 
 
-def get_options(area) -> list:
+async def get_options(area, hass) -> list:
     """Get available options for a given region."""
 
     options = []
 
     region = RegionHandler.description_to_region(area)
-    tariff_connectors = TariffHandler.get_chargeowners(region)
-    forecast_connectors = ForecastHandler.get_forecasts_connectors(region)
+    tariff_connectors = await TariffHandler.get_chargeowners(region, hass)
+    forecast_connectors = await ForecastHandler.get_forecasts_connectors(region, hass)
 
     if len(tariff_connectors) > 0:
         options.append("tariff")
@@ -66,8 +66,8 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize Energidataservice options flow."""
-        self.connectors = Connectors()
-        self.forecasts = Forecast()
+        self.connectors = Connectors(hass=self.hass)
+        self.forecasts = Forecast(hass=self.hass)
         self.config_entry = config_entry
         self._errors = {}
         # Cast from MappingProxy to dict to allow update.
@@ -156,8 +156,8 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_ENABLE_TARIFFS in user_input
                     and user_input[CONF_ENABLE_TARIFFS]
                 ):
-                    creds = energidataservice_config_option_tariff_settings(
-                        self.options
+                    creds = await energidataservice_config_option_tariff_settings(
+                        self.hass, self.options
                     )
                     return self.async_show_form(
                         step_id="tariff_settings",
@@ -181,7 +181,7 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                     data=self.options,
                 )
 
-        options = get_options(self.config_entry.options.get(CONF_AREA))
+        options = await get_options(self.config_entry.options.get(CONF_AREA), self.hass)
         enable_extra_schema = energidataservice_config_option_extras(
             self.config_entry.options, options
         )
@@ -207,7 +207,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             _LOGGER.debug(self.options)
 
             if self.options.get(CONF_ENABLE_TARIFFS):
-                creds = energidataservice_config_option_tariff_settings(self.options)
+                creds = await energidataservice_config_option_tariff_settings(
+                    self.hass, self.options
+                )
                 return self.async_show_form(
                     step_id="tariff_settings",
                     data_schema=vol.Schema(creds),
@@ -254,8 +256,8 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             )
 
         _LOGGER.debug(self.config_entry.options)
-        creds = energidataservice_config_option_tariff_settings(
-            self.config_entry.options
+        creds = await energidataservice_config_option_tariff_settings(
+            self.hass, self.config_entry.options
         )
         return self.async_show_form(
             step_id="tariff_settings",
@@ -291,7 +293,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
 
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
             if template_ok:
-                options = get_options(self.config_entry.options.get(CONF_AREA))
+                options = await get_options(
+                    self.config_entry.options.get(CONF_AREA), self.hass
+                )
                 if len(options) > 0:
                     enable_extra_schema = energidataservice_config_option_extras(
                         self.options, options
@@ -341,8 +345,8 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         """Initialize the config flow."""
-        self.connectors = Connectors()
-        self.forecasts = Forecast()
+        self.connectors = Connectors(hass=self.hass)
+        self.forecasts = Forecast(hass=self.hass)
         self._errors = {}
         self.user_input = {}
 
@@ -387,7 +391,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             template_ok = await _validate_template(self.hass, user_input[CONF_TEMPLATE])
             self._async_abort_entries_match({CONF_NAME: user_input[CONF_NAME]})
             if template_ok:
-                options = get_options(self.user_input.get(CONF_AREA))
+                options = await get_options(self.user_input.get(CONF_AREA), self.hass)
                 if len(options) > 0:
                     enable_extra_schema = energidataservice_config_option_extras(
                         self.user_input, options
@@ -442,7 +446,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 )
             elif CONF_ENABLE_TARIFFS in user_input and user_input[CONF_ENABLE_TARIFFS]:
-                creds = energidataservice_config_option_tariff_settings(user_input)
+                creds = await energidataservice_config_option_tariff_settings(
+                    self.hass, user_input
+                )
                 return self.async_show_form(
                     step_id="tariff_settings",
                     data_schema=vol.Schema(creds),
@@ -459,7 +465,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options=user_input,
                 )
 
-        options = get_options(self.user_input.get(CONF_AREA))
+        options = await get_options(self.user_input.get(CONF_AREA), self.hass)
         enable_extra_schema = energidataservice_config_option_extras(
             self.user_input, options
         )
@@ -484,7 +490,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             user_input = {**user_input, **self.user_input}
             self.user_input = user_input
             if user_input[CONF_ENABLE_TARIFFS]:
-                creds = energidataservice_config_option_tariff_settings(user_input)
+                creds = await energidataservice_config_option_tariff_settings(
+                    self.hass, user_input
+                )
                 return self.async_show_form(
                     step_id="tariff_settings",
                     data_schema=vol.Schema(creds),
@@ -529,7 +537,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 options=user_input,
             )
 
-        creds = energidataservice_config_option_tariff_settings(self.user_input)
+        creds = await energidataservice_config_option_tariff_settings(
+            self.hass, self.user_input
+        )
         return self.async_show_form(
             step_id="tariff_settings",
             data_schema=vol.Schema(creds),

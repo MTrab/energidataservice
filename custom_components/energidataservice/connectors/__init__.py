@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from importlib import import_module
+import importlib
 from logging import getLogger
 from os import listdir
 from posixpath import dirname
@@ -18,17 +18,24 @@ _LOGGER = getLogger(__name__)
 class Connectors:
     """Handle connector modules."""
 
-    def __init__(self):
+    def __init__(self, hass):
         """Initialize connector handler."""
 
+        self.hass = hass
         self._connectors = []
+
+    async def load_connectors(self) -> None:
+        """Load available connectors."""
         for module in sorted(listdir(f"{dirname(__file__)}")):
             mod_path = f"{dirname(__file__)}/{module}"
             if isdir(mod_path) and not module.endswith("__pycache__"):
                 Connector = namedtuple("Connector", "module namespace regions")
-                _LOGGER.debug("Adding module %s", module)
+                _LOGGER.debug("Adding module %s in path %s", module, mod_path)
                 api_ns = f".{module}"
-                mod = import_module(api_ns, __name__)
+
+                mod = await self.hass.async_add_executor_job(
+                    importlib.import_module, api_ns, __name__
+                )
                 con = Connector(module, f".connectors{api_ns}", mod.REGIONS)
 
                 if hasattr(mod, "EXTRA_REGIONS"):
