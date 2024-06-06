@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timedelta
 from logging import getLogger
 
-import pytz
+import homeassistant.util.dt as dt_util
 
 from ...const import CO2INTERVAL, INTERVAL
 from .regions import CO2REGIONS, REGIONS
@@ -24,15 +24,15 @@ __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY"]
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
-    local_tz = pytz.timezone(tz)
+    local_tz = dt_util.get_default_time_zone()
     reslist = []
     for dataset in indata:
         tmpdate = (
             datetime.fromisoformat(dataset["HourUTC"])
-            .replace(tzinfo=pytz.utc)
+            .replace(tzinfo=dt_util.UTC)
             .astimezone(local_tz)
         )
-        tmp = INTERVAL(dataset["SpotPriceEUR"], local_tz.normalize(tmpdate))
+        tmp = INTERVAL(dataset["SpotPriceEUR"], tmpdate)
         if date in tmp.hour.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
@@ -41,15 +41,15 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
 
 def prepare_co2_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     """Prepare the CO2 data and return a list."""
-    local_tz = pytz.timezone(tz)
+    local_tz = dt_util.get_default_time_zone()
     reslist = []
     for dataset in indata:
         tmpdate = (
             datetime.fromisoformat(dataset["Minutes5UTC"])
-            .replace(tzinfo=pytz.utc)
+            .replace(tzinfo=dt_util.UTC)
             .astimezone(local_tz)
         )
-        tmp = CO2INTERVAL(dataset["CO2Emission"], local_tz.normalize(tmpdate))
+        tmp = CO2INTERVAL(dataset["CO2Emission"], tmpdate)
         if date in tmp.hour.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 

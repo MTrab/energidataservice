@@ -8,6 +8,7 @@ from functools import partial
 from importlib import import_module
 from logging import getLogger
 
+import homeassistant.util.dt as dt_util
 import voluptuous as vol
 from aiohttp import ClientConnectorError, ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
@@ -85,7 +86,8 @@ class APIConnector:
         self._region = RegionHandler(
             (entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA)) or "FIXED"
         )
-        self._tz = hass.config.time_zone
+        # self._tz = hass.config.time_zone
+        self._tz = dt_util.get_default_time_zone()
         self._source = None
         self.forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
         self.tariff = entry.options.get(CONF_ENABLE_TARIFFS) or False
@@ -202,8 +204,7 @@ class APIConnector:
 
                 midnight = datetime.strptime("23:59:59", "%H:%M:%S")
                 refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
-                datetime.utcnow()
-                now_local = datetime.now().astimezone(timezone(self._tz))
+                now_local = dt_util.now(self._tz)
 
                 _LOGGER.debug(
                     "Now: %s:%s:%s (local time)",
