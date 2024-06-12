@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from logging import getLogger
 
-import pytz
+import homeassistant.util.dt as dt_util
 
 from ...const import INTERVAL
 from .regions import REGIONS
@@ -23,20 +23,20 @@ __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "DEFAULT_UNIT"]
 
 def prepare_data(indata, tz) -> list | None:  # pylint: disable=invalid-name
     """Get today prices."""
-    local_tz = pytz.timezone(tz)
+    local_tz = dt_util.get_default_time_zone()
     reslist = []
     if not isinstance(indata, type(None)):
         now = datetime.now()
         for dataset in indata:
             tmpdate = (
                 datetime.fromisoformat(dataset["utctime"])
-                .replace(tzinfo=pytz.utc)
+                .replace(tzinfo=dt_util.UTC)
                 .astimezone(local_tz)
             )
             if tmpdate.day != now.day:
                 if tmpdate.month == now.month and tmpdate.day < now.day:
                     continue
-                tmp = INTERVAL(dataset["prediction"], local_tz.normalize(tmpdate))
+                tmp = INTERVAL(dataset["prediction"], tmpdate)
                 reslist.append(tmp)
         return reslist
 

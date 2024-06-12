@@ -6,6 +6,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 
+import homeassistant.util.dt as dt_util
 import pytz
 
 from ...const import INTERVAL
@@ -22,16 +23,18 @@ SOURCE_NAME = "Nord Pool"
 
 DEFAULT_CURRENCY = "EUR"
 
+TIMEZONE = pytz.timezone("Europe/Stockholm")
+
 __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY"]
 
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
-    local_tz = pytz.timezone(tz)
+    local_tz = dt_util.get_default_time_zone()
     reslist = []
     for dataset in indata:
         tmpdate = datetime.fromisoformat(dataset["HourUTC"]).astimezone(local_tz)
-        tmp = INTERVAL(dataset["SpotPriceEUR"], local_tz.normalize(tmpdate))
+        tmp = INTERVAL(dataset["SpotPriceEUR"], tmpdate)
         if date in tmp.hour.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
@@ -104,7 +107,6 @@ class Connector:
     def _parse_json(self, data) -> list:
         """Parse json response."""
         # Timezone for data from Nord Pool Group are "Europe/Stockholm"
-        timezone = pytz.timezone("Europe/Stockholm")
 
         if "data" not in data:
             return []
@@ -122,8 +124,8 @@ class Connector:
         # Loop through response rows
         for row in data["Rows"]:
             start_hour = datetime.isoformat(
-                timezone.localize(datetime.fromisoformat(row["StartTime"])).astimezone(
-                    pytz.utc
+                TIMEZONE.localize(datetime.fromisoformat(row["StartTime"])).astimezone(
+                    dt_util.UTC
                 )
             )
 
