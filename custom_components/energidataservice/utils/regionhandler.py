@@ -10,6 +10,7 @@ from ..const import CURRENCY_LIST, REGIONS
 
 _LOGGER = logging.getLogger(__name__)
 
+_CONVERTER = CurrencyConverter()
 
 class Currency:
     """Define currency class."""
@@ -21,7 +22,7 @@ class Currency:
         self._name = currency["name"]
         self._symbol = currency["symbol"]
         self._cent = currency["cent"]
-        self._converter = CurrencyConverter()
+        self._converter = _CONVERTER
 
     def convert(
         self, value: float, to_currency: str, from_currency: str = "EUR"
