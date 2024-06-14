@@ -1,7 +1,7 @@
 {
     "name": "Energi Data Service",
     "render_readme": true,
-    "homeassistant": "2023.3.0",
+    "homeassistant": "2024.6.0",
     "zip_release": true,
     "filename": "energidataservice.zip",
     "country": ["DK", "SE", "NO", "FI", "EE", "LV", "LT", "FR", "NL", "BE", "AT", "DE", "LU"]
