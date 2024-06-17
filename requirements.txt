@@ -3,4 +3,4 @@ CurrencyConverter==0.17.23
 colorlog==6.8.2
 homeassistant==2024.6.2
 pip>=21.0,<24.1
-ruff==0.4.8
+ruff==0.4.9
