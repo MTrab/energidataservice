@@ -24,7 +24,8 @@
                     "pricetype": "Price calculated in",
                     "cost_template": "Template for additional costs",
                     "in_cent": "Show prices in cent",
-                    "fixed_value": "Insert price - WITHOUT VAT"
+                    "fixed_value": "Insert price - WITHOUT VAT",
+                    "fixed_vat": "VAT value in % (ie 25 for 25% VAT)"
                 },
                 "description": "Set details for {name} in {country}"
             },
@@ -77,7 +78,8 @@
                     "pricetype": "Price calculated in",
                     "cost_template": "Template for additional costs",
                     "in_cent": "Show prices in cent",
-                    "fixed_value": "Insert price - WITHOUT VAT"
+                    "fixed_value": "Insert price - WITHOUT VAT",
+                    "fixed_vat": "VAT value in % (ie 25 for 25% VAT)"
                 },
                 "description": "Set details for {name} in {country}"
             },
