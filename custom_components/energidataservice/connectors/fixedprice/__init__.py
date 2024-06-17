@@ -23,13 +23,8 @@ def prepare_data(value, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
     local_tz = dt_util.get_default_time_zone()
     dt = dt_util.now(local_tz)  # pylint: disable=invalid-name
-    tmp_offset = str(dt).split(":")
+    offset = (str(dt).split('+'))[1]
 
-    offset = tmp_offset[0]
-    if len(offset) < 2:
-        offset = f"0{tmp_offset[0]}"
-
-    offset += f":{tmp_offset[1]}"
     reslist = []
     i = 0
     while i < 24:
@@ -38,7 +33,7 @@ def prepare_data(value, date, tz) -> list:  # pylint: disable=invalid-name
             hour = f"0{hour}"
 
         # tmpdate = datetime.fromisoformat(f"{date}T{hour}:00:00+{offset}")
-        tmpdate = dt_util.parse_datetime(f"{date}T{hour}:00:00")
+        tmpdate = dt_util.parse_datetime(f"{date}T{hour}:00:00+{offset}")
         tmp = INTERVAL(value, tmpdate)
         if date in tmp.hour.strftime("%Y-%m-%d"):
             reslist.append(tmp)
