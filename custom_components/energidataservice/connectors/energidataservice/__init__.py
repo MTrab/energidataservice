@@ -118,6 +118,9 @@ class Connector:
             elif resp.status == 411:
                 _LOGGER.error("API returned error 411, Invalid Request!")
                 self._result = {}
+            elif resp.status == 500:
+                _LOGGER.error("Energidataservice API returned errorcode 500, which is an internal error at the energidataservice.dk site. This kind of error typically goes away in a couple of hours on weekdays, but can persist for some time during e.g. weekends. There is nothing this integration can do to work around this, so the sensor will be marked 'unknown' or 'unavailable' as long as this error code is returned. The sensor will return to normal eventually.")
+                self._result = {}
             elif resp.status == 200:
                 res = await resp.json()
                 self._co2_result = res["records"]
