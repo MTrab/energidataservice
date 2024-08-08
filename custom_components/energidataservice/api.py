@@ -124,6 +124,11 @@ class APIConnector:
                 )
                 self.connector_currency = module.DEFAULT_CURRENCY
                 await api.async_get_spotprices()
+
+                if api.status != 200:
+                    retry_update(self)
+                    break
+                
                 try:
                     await api.async_get_co2emissions()
                     if api.co2data:
@@ -166,6 +171,10 @@ class APIConnector:
                 )
                 self.connector_currency = module.DEFAULT_CURRENCY
                 await api.async_get_spotprices()
+
+                if api.status != 200:
+                    retry_update(self)
+                    break
 
                 if api.today and not self.today:
                     self.today = api.today
