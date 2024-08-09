@@ -69,6 +69,7 @@ class Connector:
         self._result = {}
         self._co2_result = {}
         self._tz = tz
+        self.status = 418
 
     async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
@@ -80,6 +81,7 @@ class Connector:
             url,
         )
         resp = await self.client.get(url, headers=headers)
+        self.status = resp.status
 
         if resp.status == 400:
             _LOGGER.error("API returned error 400, Bad Request!")
@@ -96,6 +98,8 @@ class Connector:
                 self.regionhandler.region,
                 json.dumps(self._result, indent=2, default=str),
             )
+        elif resp.status >= 500 and resp.status <= 503:
+            _LOGGER.error("API unavailable. E%s", str(resp.status))
         else:
             _LOGGER.error("API returned error %s", str(resp.status))
 
@@ -127,8 +131,12 @@ class Connector:
                     self.regionhandler.region,
                     json.dumps(self._co2_result, indent=2, default=str),
                 )
+            elif resp.status >= 500 and resp.status <= 503:
+                _LOGGER.error("API unavailable. E%s", str(resp.status))
+                self._result = {}
             else:
                 _LOGGER.error("API returned error %s", str(resp.status))
+                self._result = {}
         else:
             _LOGGER.debug("CO2 values not found for this region")
 
