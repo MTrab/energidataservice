@@ -58,6 +58,7 @@ class Connector:
         self.tz = tz  # pylint: disable=invalid-name
         self.regionhandler = regionhandler
         self.value = self.config.options.get(CONF_FIXED_PRICE_VALUE)
+        self.status = 200
 
     async def async_get_spotprices(self) -> None:
         """Return the fixed price set in the configuration flow."""

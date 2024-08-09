@@ -53,6 +53,7 @@ class Connector:
         self.client = client
         self._result = {}
         self._tz = tz
+        self.status = 200
 
     async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""

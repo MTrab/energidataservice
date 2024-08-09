@@ -127,7 +127,6 @@ class APIConnector:
 
                 if api.status != 200:
                     retry_update(self)
-                    break
                 
                 try:
                     await api.async_get_co2emissions()
@@ -174,7 +173,6 @@ class APIConnector:
 
                 if api.status != 200:
                     retry_update(self)
-                    break
 
                 if api.today and not self.today:
                     self.today = api.today
