@@ -12,6 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _CONVERTER = CurrencyConverter()
 
+
 class Currency:
     """Define currency class."""
 

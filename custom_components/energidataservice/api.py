@@ -127,7 +127,7 @@ class APIConnector:
 
                 if api.status != 200:
                     retry_update(self, self.updateco2)
-                
+
                 try:
                     await api.async_get_co2emissions()
                     if api.co2data:

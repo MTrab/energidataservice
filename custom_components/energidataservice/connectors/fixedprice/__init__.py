@@ -23,7 +23,7 @@ def prepare_data(value, date, tz) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
     local_tz = dt_util.get_default_time_zone()
     dt = dt_util.now(local_tz)  # pylint: disable=invalid-name
-    offset = (str(dt).split('+'))[1]
+    offset = (str(dt).split("+"))[1]
 
     reslist = []
     i = 0
