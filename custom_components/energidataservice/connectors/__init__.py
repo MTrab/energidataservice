@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+from asyncio import get_running_loop
 from collections import namedtuple
 from logging import getLogger
 from os import listdir
@@ -26,7 +27,9 @@ class Connectors:
 
     async def load_connectors(self) -> None:
         """Load available connectors."""
-        for module in sorted(listdir(f"{dirname(__file__)}")):
+        loop = get_running_loop()
+        modules = await loop.run_in_executor(None, listdir, f"{dirname(__file__)}")
+        for module in sorted(modules):
             mod_path = f"{dirname(__file__)}/{module}"
             if isdir(mod_path) and not module.endswith("__pycache__"):
                 Connector = namedtuple("Connector", "module namespace regions")
