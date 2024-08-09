@@ -126,7 +126,7 @@ class APIConnector:
                 await api.async_get_spotprices()
 
                 if api.status != 200:
-                    retry_update(self)
+                    retry_update(self, self.updateco2)
                 
                 try:
                     await api.async_get_co2emissions()
@@ -325,12 +325,14 @@ class APIConnector:
         return self._entry_id
 
 
-def retry_update(self) -> None:
+def retry_update(self, update_function=None) -> None:
     """Retry update on error."""
     self.retry_count += 1
     self.next_retry_delay = RETRY_MINUTES * self.retry_count
     if self.next_retry_delay > MAX_RETRY_MINUTES:
         self.next_retry_delay = MAX_RETRY_MINUTES
+    if update_function is None:
+        update_function = self.update
 
     _LOGGER.warning(
         "Couldn't get data from Energi Data Service, retrying in %s minutes.",
@@ -347,5 +349,5 @@ def retry_update(self) -> None:
     async_call_later(
         self.hass,
         timedelta(minutes=self.next_retry_delay),
-        partial(self.update),
+        partial(update_function),
     )
