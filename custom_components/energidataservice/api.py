@@ -82,7 +82,7 @@ class APIConnector:
         self.next_retry_delay = RETRY_MINUTES
         self.retry_count = 0
 
-        self._client = async_get_clientsession(hass)
+        self._client = async_get_clientsession(hass, False)
         self._region = RegionHandler(
             (entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA)) or "FIXED"
         )
