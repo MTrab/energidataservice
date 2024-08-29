@@ -19,7 +19,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.template import Template, attach
+from homeassistant.helpers.template import Template
 from homeassistant.util import dt as dt_utils
 from homeassistant.util import slugify as util_slugify
 from jinja2 import pass_context
@@ -392,8 +392,6 @@ class EnergidataserviceSensor(SensorEntity):
         else:
             if self._cost_template.template in ("", None):
                 self._cost_template = cv.template(DEFAULT_TEMPLATE)
-
-        attach(self._hass, self._cost_template)
 
     async def validate_data(self) -> None:
         """Validate sensor data."""
