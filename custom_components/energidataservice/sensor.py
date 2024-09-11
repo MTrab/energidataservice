@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
@@ -138,7 +139,7 @@ def _setup(hass, config: ConfigEntry, add_devices):
         device_class=SensorDeviceClass.MONETARY,
         icon="mdi:flash",
         name=config.data.get(CONF_NAME),
-        state_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
     )
     sens = EnergidataserviceSensor(config, hass, region, this_sensor)
     add_devices([sens])
