@@ -1,9 +1,9 @@
 default_config:
 
-#logger:
-#  default: warning
-#  logs:
-#    custom_components.energidataservice: debug
+logger:
+  default: warning
+  logs:
+    custom_components.energidataservice: debug
 
 # If you need to debug uncomment the line below (doc: https://www.home-assistant.io/integrations/debugpy/)
 # debugpy:
