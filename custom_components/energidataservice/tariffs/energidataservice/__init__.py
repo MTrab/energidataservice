@@ -35,6 +35,7 @@ class Connector:
         self._additional_tariff = {}
         self._all_tariffs = {}
         self._all_additional_tariffs = {}
+        self.status = 418
 
     @property
     def tariffs(self):
@@ -44,6 +45,7 @@ class Connector:
         tariffs = {
             "additional_tariffs": self._additional_tariff,
             "tariffs": self._tariffs,
+            "status": self.status,
         }
 
         return tariffs
@@ -191,6 +193,7 @@ class Connector:
         try:
             headers = self._header()
             resp = await self.client.get(f"{BASE_URL}?{query}", headers=headers)
+            self.status = resp.status
             resp.raise_for_status()
 
             if resp.status == 400:
