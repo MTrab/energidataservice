@@ -147,10 +147,10 @@ def _setup(hass, config: ConfigEntry, add_devices):
 
     co2_sensor = SensorEntityDescription(
         key="EnergiDataService_co2",
-        device_class=SensorDeviceClass.CO2,
+        device_class=None,
         icon="mdi:molecule-co2",
         name=config.data.get(CONF_NAME) + " CO2",
-        state_class=SensorStateClass.TOTAL,
+        state_class=SensorStateClass.MEASUREMENT,
         last_reset=None,
     )
     sens = EnergidataserviceCO2Sensor(config, hass, region, co2_sensor)
