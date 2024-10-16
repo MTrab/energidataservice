@@ -63,6 +63,7 @@ class APIConnector:
 
         self.co2 = None
         self.co2_refresh = None
+        self.has_co2 = False
         self.today = None
         self.api_today = None
         self.tomorrow = None

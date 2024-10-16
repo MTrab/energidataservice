@@ -15,8 +15,8 @@ _LOGGER = getLogger(__name__)
 SOURCE_NAME = "Fixed Price"
 
 DEFAULT_CURRENCY = None
-
-__all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY"]
+CO2REGIONS = []
+__all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "CO2REGIONS"]
 
 
 def prepare_data(value, date, tz) -> list:  # pylint: disable=invalid-name

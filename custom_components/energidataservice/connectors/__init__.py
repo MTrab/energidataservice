@@ -32,14 +32,18 @@ class Connectors:
         for module in sorted(modules):
             mod_path = f"{dirname(__file__)}/{module}"
             if isdir(mod_path) and not module.endswith("__pycache__"):
-                Connector = namedtuple("Connector", "module namespace regions")
+                Connector = namedtuple(
+                    "Connector", "module namespace regions co2regions"
+                )
                 _LOGGER.debug("Adding module %s in path %s", module, mod_path)
                 api_ns = f".{module}"
 
                 mod = await self.hass.async_add_executor_job(
                     importlib.import_module, api_ns, __name__
                 )
-                con = Connector(module, f".connectors{api_ns}", mod.REGIONS)
+                con = Connector(
+                    module, f".connectors{api_ns}", mod.REGIONS, mod.CO2REGIONS
+                )
 
                 if hasattr(mod, "EXTRA_REGIONS"):
                     REGIONS.update(mod.EXTRA_REGIONS)
@@ -61,7 +65,11 @@ class Connectors:
         for connector in self._connectors:
             _LOGGER.debug("%s = %s", connector, connector.regions)
             if region in connector.regions:
-                Connector = namedtuple("Connector", "module namespace")
-                connectors.append(Connector(connector.module, connector.namespace))
+                Connector = namedtuple("Connector", "module namespace co2regions")
+                connectors.append(
+                    Connector(
+                        connector.module, connector.namespace, connector.co2regions
+                    )
+                )
 
         return connectors
