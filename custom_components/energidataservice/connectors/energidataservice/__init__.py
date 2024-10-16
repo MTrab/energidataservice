@@ -19,7 +19,7 @@ SOURCE_NAME = "Energi Data Service"
 
 DEFAULT_CURRENCY = "EUR"
 
-__all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY"]
+__all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "CO2REGIONS"]
 
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
