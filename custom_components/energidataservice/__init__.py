@@ -86,7 +86,15 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     rand_sec = randint(0, 59)
     api = APIConnector(hass, entry, rand_min, rand_sec)
     await api.initialize()
-    # await api.updateco2()
+
+    connectors = api._connectors.get_connectors(api._region.region)
+    for connector in connectors:
+        if connector.co2regions == []:
+            api.has_co2 = False
+        else:
+            api.has_co2 = True
+            break
+
     hass.data[DOMAIN][entry.entry_id] = api
     use_forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
 

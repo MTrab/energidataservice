@@ -26,8 +26,9 @@ SOURCE_NAME = "Nord Pool"
 DEFAULT_CURRENCY = "EUR"
 
 TIMEZONE = pytz.timezone("Europe/Stockholm")
+CO2REGIONS = []
 
-__all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY"]
+__all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "CO2REGIONS"]
 
 
 def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
