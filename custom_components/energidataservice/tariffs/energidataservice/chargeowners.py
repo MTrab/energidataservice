@@ -80,9 +80,9 @@ CHARGEOWNERS = {
         "chargetype": ["D03"],
     },
     "Netselskabet Elværk": {
-        "gln": "5790000681075",
-        "company": "Netselskabet Elværk A/S - 042",
-        "type": ["0NCFF"],
+        "gln": "5790000681358",
+        "company": "Netselskabet Elværk A/S - 331",
+        "type": ["5NCFF"],
         "chargetype": ["D03"],
     },
     "Nord Energi Net": {
