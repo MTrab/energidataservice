@@ -119,6 +119,13 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Tell the sensor to update to a new hour."""
         _LOGGER.debug("New hour, updating state")
 
+        if not api.tomorrow_valid and dt_utils.now().hour > 13:
+            _LOGGER.info(
+                "Prices for tomorrow is missing - trying to fetch data from API"
+            )
+            await api.update()
+            await api.async_get_tariffs()
+
         api.today = api.api_today
         api.today_calculated = False
         api.tomorrow = api.api_tomorrow
