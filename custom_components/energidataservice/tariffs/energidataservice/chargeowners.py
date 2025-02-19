@@ -106,7 +106,7 @@ CHARGEOWNERS = {
     "FLOW Elnet": {
         "gln": "5790000392551",
         "company": "FLOW Elnet A/S",
-        "type": ["FE2 NT-01"],
+        "type": ["FE1 NT-01"],
         "chargetype": ["D03"],
     },
     "Elinord": {
