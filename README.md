@@ -4,7 +4,7 @@
 
 Energi Data Service for Home Assistant integrates Day Ahead spotprices for electricity, from the Energi Data Service API and provides fallback to Nord Pool if Energi Data Service for some reason does not have the given region.
 
-The integration adds posibility to get a 5 day price forecast for the next week thru [Carnot.dk](https://carnot.dk) and also supports automatic pull and addition of tariffs to the price by selecting your charge owner (net operator, and only supported for the regions listed HERE)
+The integration adds posibility to get a 5 day price forecast for the next week thru [Carnot.dk](https://carnot.dk) and also supports automatic pull and addition of tariffs to the price by selecting your charge owner (net operator, and only supported for the regions listed [HERE](#supported-countries-and-functions))
 
 For additional Tips & Tricks, see the [wiki pages](https://github.com/MTrab/energidataservice/wiki) - this includes examples on how to [display prices in ApexChart](https://github.com/MTrab/energidataservice/wiki/Displaying-prices-in-Apexchart-card) and [some template examples](https://github.com/MTrab/energidataservice/wiki/How-to-add-costs-of-subscription-and-delivery%3F).
 
@@ -121,7 +121,7 @@ This table will show current supported countries with a marker of supported extr
 All countries support the basic spot price
 Country | Forecasts | Auto tariff data | CO2 sensor
 ---|:---:|:---:|:---:
-FIXED PRICE | | x |
+FIXED PRICE | | x (Denmark) |
 Belgium | | |
 Denmark | x | x | x
 Estonia | | |
