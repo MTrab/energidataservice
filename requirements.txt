@@ -1,5 +1,5 @@
 async-retrying==0.2.2
-CurrencyConverter==0.18.3
+CurrencyConverter==0.18.4
 colorlog==6.9.0
 homeassistant==2025.2.4
 ruff==0.9.6
