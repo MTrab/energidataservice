@@ -1,6 +1,6 @@
 {
     "name": "Energi Data Service",
-    "image": "mcr.microsoft.com/devcontainers/python:3.13-bullseye",
+    "image": "mcr.microsoft.com/devcontainers/python:3.13-bookworm",
     "postCreateCommand": "scripts/setup",
     "appPort": [
         "9124:8123"
@@ -11,32 +11,34 @@
             "onAutoForward": "notify"
         }
     },
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-python.python",
-                "github.vscode-pull-request-github",
-                "ryanluker.vscode-coverage-gutters",
-                "ms-python.vscode-pylance"
-            ],
-            "settings": {
-                "files.eol": "\n",
-                "editor.tabSize": 4,
-                "terminal.integrated.shell.linux": "/bin/bash",
-                "python.defaultInterpreterPath": "/usr/bin/python3",
-                "python.analysis.autoSearchPaths": false,
-                "python.linting.pylintEnabled": true,
-                "python.linting.enabled": true,
-                "python.formatting.provider": "black",
-                "editor.formatOnPaste": false,
-                "editor.formatOnSave": true,
-                "editor.formatOnType": true,
-                "files.trimTrailingWhitespace": true
-            }
-        }
-    },
-    "remoteUser": "root",
-    "features": {
-        "ghcr.io/devcontainers/features/rust:1": {}
-    }
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"github.vscode-pull-request-github",
+				"ryanluker.vscode-coverage-gutters",
+				"ms-python.vscode-pylance",
+				"ms-python.isort",
+				"ms-python.black-formatter"
+			],
+			"settings": {
+				"files.eol": "\n",
+				"editor.tabSize": 4,
+				"terminal.integrated.shell.linux": "/bin/bash",
+				"python.defaultInterpreterPath": "/usr/bin/python3",
+				"python.analysis.autoSearchPaths": false,
+				"python.linting.pylintEnabled": true,
+				"python.linting.enabled": true,
+				"python.formatting.provider": "black",
+				"editor.formatOnPaste": false,
+				"editor.formatOnSave": true,
+				"editor.formatOnType": true,
+				"files.trimTrailingWhitespace": true
+			}
+		}
+	},
+	"remoteUser": "root",
+	"features": {
+		"ghcr.io/devcontainers/features/rust:1": {}
+	}
 }
