@@ -12,6 +12,7 @@ _REGION_MAP = {
     "NO4": "Tromsø",
     "NO5": "Bergen",
     "LU": "DE-LU",
+    "DE": "GER",
 }
 
 

@@ -52,7 +52,7 @@ class Connector:
     ) -> None:
         """Init API connection to Nordpool Group."""
         self.config = config
-        self.regionhandler = regionhandler
+        self.regionhandler =map_region(regionhandler)
         self.client = client
         self._result = {}
         self._tz = tz
