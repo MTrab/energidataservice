@@ -5,12 +5,6 @@ from __future__ import annotations
 from ...utils.regionhandler import RegionHandler
 
 _REGION_MAP = {
-    "DE": "DE-LU",
-    "NO1": "Oslo",
-    "NO2": "Kr.Sand",
-    "NO3": "Molde",
-    "NO4": "Tromsø",
-    "NO5": "Bergen",
     "LU": "DE-LU",
     "DE": "GER",
 }
