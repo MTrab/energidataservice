@@ -154,7 +154,7 @@ CHARGEOWNERS = {
     "L-Net": {
         "gln": "5790001090111",
         "company": "L-Net A/S",
-        "type": ["4010"],
+        "type": ["3000"],
         "chargetype": ["D03"],
     },
     "Midtfyns Elforsyning": {
