@@ -175,4 +175,10 @@ CHARGEOWNERS = {
         "type": ["AAL-NT-05", "AAL-NTR05"],
         "chargetype": ["D03"],
     },
+    "Forsyning Elnet": {
+        "gln": "5790001088309",
+        "company": "Forsyning Elnet A/S",
+        "type": ["STR-NT-03"],
+        "chargetype": ["D03"],
+    },
 }
