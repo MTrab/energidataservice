@@ -20,4 +20,6 @@ REGIONS = {
     "AT",
     "DE",
     "LU",
+    "DK1",
+    "DK2",
 }
