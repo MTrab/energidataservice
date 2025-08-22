@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components import sensor
@@ -272,7 +272,7 @@ class EnergidataserviceCO2Sensor(SensorEntity):
         if self._api.co2:
             possible_dataset = []
             for dataset in self._api.co2:
-                if dataset.hour <= current_state_time:
+                if dataset.time <= current_state_time:
                     possible_dataset = dataset
                 else:
                     self._attr_native_value = possible_dataset.value
@@ -280,7 +280,7 @@ class EnergidataserviceCO2Sensor(SensorEntity):
                         "Current CO2 value updated to %f for %s using dataset time %s",
                         self._attr_native_value,
                         self.region.region,
-                        possible_dataset.hour,
+                        possible_dataset.time,
                     )
                     break
 
@@ -288,7 +288,7 @@ class EnergidataserviceCO2Sensor(SensorEntity):
 
             value_dict = {}
             for i in self._api.co2:
-                value_dict.update({i.hour.strftime("%H:%M"): i.value})
+                value_dict.update({i.time.strftime("%H:%M"): i.value})
 
             self._attr_extra_state_attributes.update({"emissions": value_dict})
 
@@ -543,7 +543,14 @@ class EnergidataserviceSensor(SensorEntity):
         )
         if self._api.today:
             for dataset in self._api.today:
-                if dataset.hour == current_state_time:
+                if dataset.time.hour == dt_utils.now().hour and (
+                    len(self._api.today) == 24
+                    or (
+                        dataset.time.minute <= dt_utils.now().minute
+                        and (dataset.time + timedelta(minutes=15)).minute
+                        > dt_utils.now().minute
+                    )
+                ):
                     self._attr_native_value = dataset.price
                     _LOGGER.debug(
                         "Current price updated to %f for %s",
@@ -685,7 +692,7 @@ class EnergidataserviceSensor(SensorEntity):
         lst = []
         for i in data:
             ret = {
-                "hour": i.hour,
+                "hour": i.time,
                 "price": round(i.price, decimals),
             }
             lst.append(ret)
@@ -854,14 +861,14 @@ class EnergidataserviceSensor(SensorEntity):
             pass
 
         _start = datetime.now().timestamp()
-        Interval = namedtuple("Interval", "price hour")
+        Interval = namedtuple("Interval", "price time")
         for i in data:
             price = self._calculate(
                 i.price,
-                fake_dt=dt_utils.as_local(i.hour),
+                fake_dt=dt_utils.as_local(i.time),
                 default_currency=default_currency,
             )
-            formatted_pricelist.append(Interval(price, i.hour))
+            formatted_pricelist.append(Interval(price, i.time))
 
         _stop = datetime.now().timestamp()
         _ttf = round(_stop - _start, 2)
@@ -894,7 +901,7 @@ class EnergidataserviceSensor(SensorEntity):
             if data:
                 res = min(data, key=lambda k: k.price)
                 ret = {
-                    "hour": res.hour,
+                    "hour": res.time,
                     "price": round(res.price, decimals),
                 }
 
@@ -904,7 +911,7 @@ class EnergidataserviceSensor(SensorEntity):
         elif datatype in ["MAX", "Max", "max"]:
             if data:
                 res = max(data, key=lambda k: k.price)
-                ret = {"hour": res.hour, "price": round(res.price, decimals)}
+                ret = {"hour": res.time, "price": round(res.price, decimals)}
 
                 return ret
             else:

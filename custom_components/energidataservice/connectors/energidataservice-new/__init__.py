@@ -74,7 +74,7 @@ class Connector:
     async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
         headers = self._header()
-        url = self._prepare_url(BASE_URL + "elspotprices")
+        url = self._prepare_url(BASE_URL + "DayAheadPrices")
         _LOGGER.debug(
             "Request body for %s via Energi Data Service API URL: %s",
             self.regionhandler.region,
@@ -157,8 +157,8 @@ class Connector:
             objfilter = (
                 f"filter=%7B%22PriceArea%22:%22{str(self.regionhandler.region)}%22%7D"
             )
-            sort = "sort=HourUTC%20asc"
-            columns = "columns=HourUTC,SpotPriceEUR"
+            sort = "sort=TimeUTC%20asc"
+            columns = "columns=TimeUTC,DayAheadPriceEUR"
 
             return f"{url}?{start}&{end}&{objfilter}&{sort}&{columns}&{limit}"
         else:
