@@ -38,7 +38,7 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     for dataset in indata:
         tmpdate = datetime.fromisoformat(dataset["HourUTC"]).astimezone(local_tz)
         tmp = INTERVAL(dataset["SpotPriceEUR"], tmpdate)
-        if date in tmp.hour.strftime("%Y-%m-%d"):
+        if date in tmp.time.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
     return reslist
@@ -52,7 +52,7 @@ class Connector:
     ) -> None:
         """Init API connection to Nordpool Group."""
         self.config = config
-        self.regionhandler =map_region(regionhandler)
+        self.regionhandler = map_region(regionhandler)
         self.client = client
         self._result = {}
         self._tz = tz

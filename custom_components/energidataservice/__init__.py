@@ -115,9 +115,9 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
         async_dispatcher_send(hass, UPDATE_EDS_5MIN.format(entry.entry_id))
 
-    async def new_hour(n):  # type: ignore pylint: disable=unused-argument, invalid-name
-        """Tell the sensor to update to a new hour."""
-        _LOGGER.debug("New hour, updating state")
+    async def new_price(n):  # type: ignore pylint: disable=unused-argument, invalid-name
+        """Tell the sensor to update to a new quarter."""
+        _LOGGER.debug("New quarter, updating state")
 
         if not api.tomorrow_valid and dt_utils.now().hour > 13:
             _LOGGER.info(
@@ -183,8 +183,8 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         second=0,
     )
 
-    update_new_hour = async_track_time_change(hass, new_hour, minute=0, second=1)
-    update_5min = async_track_time_change(hass, five_min, minute="/5", second=0)
+    update_new_price = async_track_time_change(hass, new_price, minute="/15", second=1)
+    update_5min = async_track_time_change(hass, five_min, minute="/5", second=1)
 
     # async_call_later(hass, timedelta(seconds=1), refresh_co2_data)
     await refresh_co2_data(0)
@@ -193,7 +193,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_call_later(hass, CARNOT_UPDATE, update_carnot)
 
     api.listeners.append(update_new_day)
-    api.listeners.append(update_new_hour)
+    api.listeners.append(update_new_price)
     api.listeners.append(update_5min)
     api.listeners.append(update_tomorrow)
 

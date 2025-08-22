@@ -34,8 +34,8 @@ DEFAULT_NAME = "Energidataservice"
 DEFAULT_TEMPLATE = "{{0.0|float}}"
 DOMAIN = "energidataservice"
 
-INTERVAL = namedtuple("Interval", "price hour")
-CO2INTERVAL = namedtuple("CO2Interval", "value hour")
+INTERVAL = namedtuple("Interval", "price time")
+CO2INTERVAL = namedtuple("CO2Interval", "value time")
 
 UNIQUE_ID = "unique_id"
 UPDATE_EDS = "eds_update_{}"

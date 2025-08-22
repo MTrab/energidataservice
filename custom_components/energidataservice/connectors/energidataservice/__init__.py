@@ -33,7 +33,7 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
             .astimezone(local_tz)
         )
         tmp = INTERVAL(dataset["SpotPriceEUR"], tmpdate)
-        if date in tmp.hour.strftime("%Y-%m-%d"):
+        if date in tmp.time.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
     return reslist
@@ -50,7 +50,7 @@ def prepare_co2_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
             .astimezone(local_tz)
         )
         tmp = CO2INTERVAL(dataset["CO2Emission"], tmpdate)
-        if date in tmp.hour.strftime("%Y-%m-%d"):
+        if date in tmp.time.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
     return reslist
