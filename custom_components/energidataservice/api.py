@@ -271,9 +271,9 @@ class APIConnector:
                 self.predictions[:] = (
                     value
                     for value in self.predictions
-                    if value.hour.day >= (datetime.now() + timedelta(days=1)).day
-                    or value.hour.month > (datetime.now() + timedelta(days=1)).month
-                    or value.hour.year > datetime.now().year
+                    if value.time.day >= (datetime.now() + timedelta(days=1)).day
+                    or value.time.month > (datetime.now() + timedelta(days=1)).month
+                    or value.time.year > datetime.now().year
                 )
 
                 if self._tomorrow_valid:
@@ -281,7 +281,7 @@ class APIConnector:
                     self.predictions[:] = (
                         value
                         for value in self.predictions
-                        if value.hour.day != (datetime.now() + timedelta(days=1)).day
+                        if value.time.day != (datetime.now() + timedelta(days=1)).day
                     )
 
                 self.api_predictions = self.predictions
