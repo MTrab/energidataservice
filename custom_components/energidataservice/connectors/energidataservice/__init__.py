@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from logging import getLogger
 
 import homeassistant.util.dt as dt_util
+from async_retrying_ng import RetryError, retry
 
 from ...const import CO2INTERVAL, INTERVAL
 from .regions import CO2REGIONS, REGIONS
@@ -66,11 +67,12 @@ class Connector:
         self.config = config
         self.regionhandler = regionhandler
         self.client = client
-        self._result = {}
+        self.result = {}
         self._co2_result = {}
         self._tz = tz
         self.status = 418
 
+    @retry(attempts=10, delay=10, max_delay=3600, backoff=2)
     async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
         headers = self._header()
@@ -85,24 +87,29 @@ class Connector:
 
         if resp.status == 400:
             _LOGGER.error("API returned error 400, Bad Request!")
-            self._result = {}
+            self.result = {}
+        elif resp.status == 403:
+            self.result = {}
         elif resp.status == 411:
             _LOGGER.error("API returned error 411, Invalid Request!")
-            self._result = {}
+            self.result = {}
+        elif resp.status == 429:
+            self.result = {}
         elif resp.status == 200:
             res = await resp.json()
-            self._result = res["records"]
+            self.result = res["records"]
 
-            _LOGGER.debug(
-                "Response for %s:\n%s",
-                self.regionhandler.region,
-                json.dumps(self._result, indent=2, default=str),
-            )
+            # _LOGGER.debug(
+            #     "Response for %s:\n%s",
+            #     self.regionhandler.region,
+            #     json.dumps(self.result, indent=2, default=str),
+            # )
         elif resp.status >= 500 and resp.status <= 503:
             _LOGGER.error("API unavailable. E%s", str(resp.status))
         else:
             _LOGGER.error("API returned error %s", str(resp.status))
 
+    @retry(attempts=10, delay=10, max_delay=3600, backoff=2)
     async def async_get_co2emissions(self) -> None:
         """Fetch CO2 emissions."""
 
@@ -115,28 +122,33 @@ class Connector:
                 url,
             )
             resp = await self.client.get(url, headers=headers)
+            self.status = resp.status
 
             if resp.status == 400:
                 _LOGGER.error("API returned error 400, Bad Request!")
-                self._result = {}
+                self.result = {}
+            elif resp.status == 403:
+                self.result = {}
             elif resp.status == 411:
                 _LOGGER.error("API returned error 411, Invalid Request!")
-                self._result = {}
+                self.result = {}
+            elif resp.status == 429:
+                self.result = {}
             elif resp.status == 200:
                 res = await resp.json()
                 self._co2_result = res["records"]
 
-                _LOGGER.debug(
-                    "Response for %s CO2:\n%s",
-                    self.regionhandler.region,
-                    json.dumps(self._co2_result, indent=2, default=str),
-                )
+                # _LOGGER.debug(
+                #     "Response for %s CO2:\n%s",
+                #     self.regionhandler.region,
+                #     json.dumps(self._co2_result, indent=2, default=str),
+                # )
             elif resp.status >= 500 and resp.status <= 503:
                 _LOGGER.error("API unavailable. E%s", str(resp.status))
-                self._result = {}
+                self.result = {}
             else:
                 _LOGGER.error("API returned error %s", str(resp.status))
-                self._result = {}
+                self.result = {}
         else:
             _LOGGER.debug("CO2 values not found for this region")
 
@@ -174,13 +186,13 @@ class Connector:
     def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
-        return prepare_data(self._result, date, self._tz)
+        return prepare_data(self.result, date, self._tz)
 
     @property
     def tomorrow(self) -> list:
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        return prepare_data(self._result, date, self._tz)
+        return prepare_data(self.result, date, self._tz)
 
     @property
     def co2data(self) -> list:

@@ -186,6 +186,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     update_new_price = async_track_time_change(hass, new_price, minute="/15", second=1)
     update_5min = async_track_time_change(hass, five_min, minute="/5", second=1)
 
+    await get_new_data(0)
     # async_call_later(hass, timedelta(seconds=1), refresh_co2_data)
     await refresh_co2_data(0)
 
