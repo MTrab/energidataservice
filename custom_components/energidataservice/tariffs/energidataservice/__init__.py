@@ -187,7 +187,7 @@ class Connector:
         except RetryError:
             _LOGGER.error("Retry attempts exceeded for retrieving system tariffs.")
 
-    @retry(attempts=10, delay=10, max_delay=3600, backoff=1.5)
+    @retry(attempts=10, delay=10, max_delay=3600, backoff=2)
     async def async_call_api(self, query: str) -> dict:
         """Make the API calls."""
         try:
@@ -199,9 +199,13 @@ class Connector:
             if resp.status == 400:
                 _LOGGER.error("API returned error 400, Bad Request!")
                 return {}
+            elif resp.status == 403:
+                self._result = {}
             elif resp.status == 411:
                 _LOGGER.error("API returned error 411, Invalid Request!")
-                return {}
+                self._result = {}
+            elif resp.status == 429:
+                self._result = {}
             elif resp.status == 200:
                 res = await resp.json()
                 return res["records"]

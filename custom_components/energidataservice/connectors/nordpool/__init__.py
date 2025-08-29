@@ -54,7 +54,7 @@ class Connector:
         self.config = config
         self.regionhandler = map_region(regionhandler)
         self.client = client
-        self._result = {}
+        self.result = {}
         self._tz = tz
         self.status = 200
 
@@ -76,10 +76,10 @@ class Connector:
         for i in res:
             raw = raw + self._parse_json(i)
 
-        self._result = raw
+        self.result = raw
 
         _LOGGER.debug("Dataset for %s:", self.regionhandler.region)
-        _LOGGER.debug(self._result)
+        _LOGGER.debug(self.result)
 
     async def _fetch(self, enddate: datetime) -> str:
         """Fetch data from API."""
@@ -105,8 +105,8 @@ class Connector:
             return {}
         elif resp.status == 200:
             res = await resp.json()
-            _LOGGER.debug("Response for %s:", self.regionhandler.region)
-            _LOGGER.debug(res)
+            # _LOGGER.debug("Response for %s:", self.regionhandler.region)
+            # _LOGGER.debug(res)
             return res
         elif resp.status == 204:
             return {}
@@ -154,13 +154,13 @@ class Connector:
     def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
-        return prepare_data(self._result, date, self._tz)
+        return prepare_data(self.result, date, self._tz)
 
     @property
     def tomorrow(self) -> list:
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        data = prepare_data(self._result, date, self._tz)
+        data = prepare_data(self.result, date, self._tz)
         if len(data) > 20:
             return data
         else:

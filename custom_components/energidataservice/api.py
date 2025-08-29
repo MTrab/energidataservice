@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import datetime
 import json
-from datetime import datetime, timedelta
 from functools import partial
 from importlib import import_module
 from logging import getLogger
@@ -33,7 +33,7 @@ from .utils.regionhandler import RegionHandler
 RETRY_MINUTES = 5
 MAX_RETRY_MINUTES = 60
 
-CARNOT_UPDATE = timedelta(minutes=30)
+CARNOT_UPDATE = datetime.timedelta(minutes=30)
 
 EMPTY_SCHEME = vol.All(cv.make_entity_service_schema({}))
 
@@ -80,14 +80,14 @@ class APIConnector:
         self.forecast_currency = "EUR"
         self.listeners = []
 
+        # Retry handling
+        self.retry_count = {}
         self.next_retry_delay = RETRY_MINUTES
-        self.retry_count = 0
 
         self._client = async_get_clientsession(hass)
         self._region = RegionHandler(
             (entry.options.get(CONF_AREA) or entry.data.get(CONF_AREA)) or "FIXED"
         )
-        # self._tz = hass.config.time_zone
         self._tz = dt_util.get_default_time_zone()
         self._source = None
         self.forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
@@ -106,7 +106,7 @@ class APIConnector:
         self.tariffs = Tariff(hass=self.hass)
         await self.tariffs.load_modules()
 
-    async def updateco2(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument
+    async def updateco2(self, dt=None, request_module=None) -> None:  # type: ignore pylint: disable=unused-argument
         """Fetch CO2 emissions from API."""
         _LOGGER.debug("Updating CO2 emissions for '%s'", self._region.region)
         connectors = self._connectors.get_connectors(self._region.region)
@@ -124,13 +124,17 @@ class APIConnector:
                     self._region, self._client, self._tz, self._config
                 )
                 self.connector_currency = module.DEFAULT_CURRENCY
-                await api.async_get_spotprices()
-
-                if api.status != 200:
-                    retry_update(self, self.updateco2)
+                # await api.async_get_spotprices()
 
                 try:
                     await api.async_get_co2emissions()
+
+                    if api.status != 200:
+                        self.retry_update(endpoint.module + "_co2", self.updateco2)
+                        continue
+                    else:
+                        self.retry_count.pop(endpoint.module + "_co2", None)
+
                     if api.co2data:
                         _LOGGER.debug(
                             "%s got CO2 values from %s (namespace='%s')",
@@ -138,7 +142,7 @@ class APIConnector:
                             endpoint.module,
                             endpoint.namespace,
                         )
-                        _LOGGER.debug(api.co2data)
+                        # _LOGGER.debug(api.co2data)
                         self.co2 = api.co2data
                 except AttributeError:
                     _LOGGER.debug(
@@ -149,7 +153,7 @@ class APIConnector:
         except:
             _LOGGER.debug("No CO2 data for this region")
 
-    async def update(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
+    async def update(self, dt=None, request_module=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
         """Fetch latest prices from API."""
         _LOGGER.debug("Updating data for '%s'", self._region.region)
         connectors = self._connectors.get_connectors(self._region.region)
@@ -170,85 +174,102 @@ class APIConnector:
                     self._region, self._client, self._tz, self._config
                 )
                 self.connector_currency = module.DEFAULT_CURRENCY
-                await api.async_get_spotprices()
+                if (
+                    isinstance(request_module, type(None))
+                    or request_module == endpoint.module
+                ):
+                    await api.async_get_spotprices()
 
-                if api.status != 200:
-                    retry_update(self)
+                    if api.status != 200:
+                        self.retry_update(endpoint.module)
+                        continue
+                    else:
+                        self.retry_count.pop(endpoint.module, None)
 
-                if api.today and not self.today:
-                    self.today = api.today
-                    self.api_today = api.today
-                    _LOGGER.debug(
-                        "%s got values from %s (namespace='%s')",
-                        self._region.region,
-                        endpoint.module,
-                        endpoint.namespace,
-                    )
-                    self._source = module.SOURCE_NAME
+                    if len(api.result) == 0:
+                        _LOGGER.debug("No data received from %s", endpoint.module)
+                        continue
 
-                if api.tomorrow and not self.tomorrow:
-                    self.today = api.today
-                    self.api_today = api.today
-                    self.tomorrow = api.tomorrow
-                    self.api_tomorrow = api.tomorrow
+                    if api.today and not self.today:
+                        self.today = api.today
+                        self.api_today = api.today
+                        _LOGGER.debug(
+                            "%s got values from %s (namespace='%s')",
+                            self._region.region,
+                            endpoint.module,
+                            endpoint.namespace,
+                        )
+                        self._source = module.SOURCE_NAME
 
-                    _LOGGER.debug(
-                        "%s got values from %s (namespace='%s')",
-                        self._region.region,
-                        endpoint.module,
-                        endpoint.namespace,
-                    )
+                    if api.tomorrow and not self.tomorrow:
+                        self.today = api.today
+                        self.api_today = api.today
+                        self.tomorrow = api.tomorrow
+                        self.api_tomorrow = api.tomorrow
 
-                    self._source = module.SOURCE_NAME
+                        _LOGGER.debug(
+                            "%s got values from %s (namespace='%s')",
+                            self._region.region,
+                            endpoint.module,
+                            endpoint.namespace,
+                        )
+
+                        self._source = module.SOURCE_NAME
                     break
 
-            if (not self.tomorrow or not self.api_tomorrow) or (
-                self.tomorrow is None or self.api_tomorrow is None
+            if (
+                isinstance(request_module, type(None))
+                or request_module == endpoint.module
             ):
-                _LOGGER.debug("No data found for tomorrow")
-                self._tomorrow_valid = False
-                self.tomorrow = None
-                self.api_tomorrow = None
-
-                midnight = datetime.strptime("23:59:59", "%H:%M:%S")
-                refresh = datetime.strptime(self.next_data_refresh, "%H:%M:%S")
-                now_local = dt_util.now(self._tz)
-
-                _LOGGER.debug(
-                    "Now: %s:%s:%s (local time)",
-                    f"{now_local.hour:02d}",
-                    f"{now_local.minute:02d}",
-                    f"{now_local.second:02d}",
-                )
-                _LOGGER.debug(
-                    "Refresh: %s:%s:%s (local time)",
-                    f"{refresh.hour:02d}",
-                    f"{refresh.minute:02d}",
-                    f"{refresh.second:02d}",
-                )
-                if (
-                    f"{midnight.hour}:{midnight.minute}:{midnight.second}"
-                    > f"{now_local.hour:02d}:{now_local.minute:02d}:{now_local.second:02d}"
-                    and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
-                    <= f"{now_local.hour:02d}:{now_local.minute:02d}:{now_local.second:02d}"
+                if (not self.tomorrow or not self.api_tomorrow) or (
+                    self.tomorrow is None or self.api_tomorrow is None
                 ):
-                    retry_update(self)
-                else:
-                    _LOGGER.debug(
-                        "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
+                    _LOGGER.debug("No data found for tomorrow")
+                    self._tomorrow_valid = False
+                    self.tomorrow = None
+                    self.api_tomorrow = None
+
+                    midnight = datetime.datetime.strptime("23:59:59", "%H:%M:%S")
+                    refresh = datetime.datetime.strptime(
+                        self.next_data_refresh, "%H:%M:%S"
                     )
-            else:
-                _LOGGER.debug(
-                    "Tomorrow:\n%s", json.dumps(self.tomorrow, indent=2, default=str)
-                )
-                self.retry_count = 0
-                self._tomorrow_valid = True
+                    now_local = dt_util.now(self._tz)
+
+                    _LOGGER.debug(
+                        "Now: %s:%s:%s (local time)",
+                        f"{now_local.hour:02d}",
+                        f"{now_local.minute:02d}",
+                        f"{now_local.second:02d}",
+                    )
+                    _LOGGER.debug(
+                        "Refresh: %s:%s:%s (local time)",
+                        f"{refresh.hour:02d}",
+                        f"{refresh.minute:02d}",
+                        f"{refresh.second:02d}",
+                    )
+                    if (
+                        f"{midnight.hour}:{midnight.minute}:{midnight.second}"
+                        > f"{now_local.hour:02d}:{now_local.minute:02d}:{now_local.second:02d}"
+                        and f"{refresh.hour:02d}:{refresh.minute:02d}:{refresh.second:02d}"
+                        <= f"{now_local.hour:02d}:{now_local.minute:02d}:{now_local.second:02d}"
+                    ):
+                        self.retry_update(endpoint.module)
+                    else:
+                        _LOGGER.debug(
+                            "Not forcing refresh, as we are past midnight and haven't reached next update time"  # pylint: disable=line-too-long
+                        )
+                else:
+                    # _LOGGER.debug(
+                    #     "Tomorrow:\n%s",
+                    #     json.dumps(self.tomorrow, indent=2, default=str),
+                    # )
+                    self._tomorrow_valid = True
 
         except ServerDisconnectedError:
             _LOGGER.warning("Err.")
-            retry_update(self)
+            self.retry_update(endpoint.module)
 
-    async def update_carnot(self, dt=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
+    async def update_carnot(self, dt=None, request_module=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
         """Update Carnot data if enabled."""
         if self.forecast:
             self.predictions_calculated = False
@@ -271,9 +292,11 @@ class APIConnector:
                 self.predictions[:] = (
                     value
                     for value in self.predictions
-                    if value.time.day >= (datetime.now() + timedelta(days=1)).day
-                    or value.time.month > (datetime.now() + timedelta(days=1)).month
-                    or value.time.year > datetime.now().year
+                    if value.time.day
+                    >= (datetime.datetime.now() + datetime.timedelta(days=1)).day
+                    or value.time.month
+                    > (datetime.datetime.now() + datetime.timedelta(days=1)).month
+                    or value.time.year > datetime.datetime.now().year
                 )
 
                 if self._tomorrow_valid:
@@ -281,12 +304,13 @@ class APIConnector:
                     self.predictions[:] = (
                         value
                         for value in self.predictions
-                        if value.time.day != (datetime.now() + timedelta(days=1)).day
+                        if value.time.day
+                        != (datetime.datetime.now() + datetime.timedelta(days=1)).day
                     )
 
                 self.api_predictions = self.predictions
 
-    async def async_get_tariffs(self) -> None:
+    async def async_get_tariffs(self, request_module=None) -> None:
         """Get tariff data."""
 
         if self.tariff:
@@ -308,8 +332,11 @@ class APIConnector:
             self.tariff_data = await tariff.async_get_tariffs()
 
             if self.tariff_data["status"] != 200:
-                retry_update(self, self.async_get_tariffs)
-
+                self.retry_update(
+                    tariff_endpoint[0].module + "_tariff", self.async_get_tariffs
+                )
+            else:
+                self.retry_count.pop(tariff_endpoint[0].module + "_tariff", None)
 
     @property
     def tomorrow_valid(self) -> bool:
@@ -331,30 +358,48 @@ class APIConnector:
         """Return entry_id."""
         return self._entry_id
 
+    def retry_update(self, module: str, update_function=None) -> None:
+        """Retry update on error."""
+        retry_info = {
+            module: {
+                "count": (
+                    self.retry_count[module]["count"] + 1
+                    if module in self.retry_count
+                    else 1
+                ),
+                "next_delay": min(
+                    RETRY_MINUTES
+                    * (
+                        self.retry_count[module]["count"] + 1
+                        if module in self.retry_count
+                        else 1
+                    ),
+                    MAX_RETRY_MINUTES,
+                ),
+            }
+        }
+        self.retry_count.update(retry_info)
+        self.next_retry_delay = self.retry_count[module]["next_delay"]
+        if update_function is None:
+            update_function = self.update
 
-def retry_update(self, update_function=None) -> None:
-    """Retry update on error."""
-    self.retry_count += 1
-    self.next_retry_delay = RETRY_MINUTES * self.retry_count
-    if self.next_retry_delay > MAX_RETRY_MINUTES:
-        self.next_retry_delay = MAX_RETRY_MINUTES
-    if update_function is None:
-        update_function = self.update
+        _LOGGER.warning(
+            "Couldn't get data from %s, retrying in %s minutes.",
+            module,
+            self.next_retry_delay,
+        )
 
-    _LOGGER.warning(
-        "Couldn't get data from Energi Data Service, retrying in %s minutes.",
-        self.next_retry_delay,
-    )
-
-    now = datetime.utcnow() + timedelta(minutes=self.next_retry_delay)
-    _LOGGER.debug(
-        "Next retry: %s:%s:%s (UTC)",
-        f"{now.hour:02d}",
-        f"{now.minute:02d}",
-        f"{now.second:02d}",
-    )
-    async_call_later(
-        self.hass,
-        timedelta(minutes=self.next_retry_delay),
-        partial(update_function),
-    )
+        now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            minutes=self.next_retry_delay
+        )
+        _LOGGER.debug(
+            "Next retry: %s:%s:%s (UTC)",
+            f"{now.hour:02d}",
+            f"{now.minute:02d}",
+            f"{now.second:02d}",
+        )
+        async_call_later(
+            self.hass,
+            datetime.timedelta(minutes=self.next_retry_delay),
+            partial(update_function, request_module=module),
+        )
