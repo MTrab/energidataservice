@@ -23,7 +23,9 @@ class TariffHandler:
         _LOGGER.debug("Tariff connectors: %s", connectors)
         for endpoint in connectors:
             _LOGGER.debug("Getting chargeowner from '%s'", endpoint.namespace)
-            module = import_module(f"..{endpoint.namespace}", __name__)
+            module = await hass.async_add_executor_job(
+                import_module, f"..{endpoint.namespace}", __name__
+            )
             for chargeowner in module.CHARGEOWNERS:
                 chargeowners.append(chargeowner)
 
