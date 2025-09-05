@@ -816,7 +816,7 @@ class EnergidataserviceSensor(SensorEntity):
             chargeowner_tariff=owner_tariff,
         )
 
-        if not isinstance(template_value, int | float):
+        if not isinstance(template_value, int | float | type(None)):
             try:
                 template_value = float(template_value)
             except (TypeError, ValueError):
@@ -826,6 +826,9 @@ class EnergidataserviceSensor(SensorEntity):
                     type(template_value),
                 )
                 raise
+
+        if isinstance(template_value, type(None)):
+            template_value = 0
 
         try:
             price += template_value + tariff_value
