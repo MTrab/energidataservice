@@ -29,11 +29,11 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
     reslist = []
     for dataset in indata:
         tmpdate = (
-            datetime.fromisoformat(dataset["HourUTC"])
+            datetime.fromisoformat(dataset["TimeUTC"])
             .replace(tzinfo=dt_util.UTC)
             .astimezone(local_tz)
         )
-        tmp = INTERVAL(dataset["SpotPriceEUR"], tmpdate)
+        tmp = INTERVAL(dataset["DayAheadPriceEUR"], tmpdate)
         if date in tmp.time.strftime("%Y-%m-%d"):
             reslist.append(tmp)
 
@@ -72,11 +72,10 @@ class Connector:
         self._tz = tz
         self.status = 418
 
-    @retry(attempts=10, delay=10, max_delay=3600, backoff=2)
     async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
         headers = self._header()
-        url = self._prepare_url(BASE_URL + "elspotprices")
+        url = self._prepare_url(BASE_URL + "DayAheadPrices")
         _LOGGER.debug(
             "Request body for %s via Energi Data Service API URL: %s",
             self.regionhandler.region,
@@ -109,7 +108,6 @@ class Connector:
         else:
             _LOGGER.error("API returned error %s", str(resp.status))
 
-    @retry(attempts=10, delay=10, max_delay=3600, backoff=2)
     async def async_get_co2emissions(self) -> None:
         """Fetch CO2 emissions."""
 
@@ -165,12 +163,13 @@ class Connector:
             end_date = (datetime.utcnow() + timedelta(days=2)).strftime("%Y-%m-%d")
             start = f"start={str(start_date)}"
             end = f"end={str(end_date)}"
-            limit = "limit=150"
+            # limit = "limit=150"
+            limit = ""
             objfilter = (
                 f"filter=%7B%22PriceArea%22:%22{str(self.regionhandler.region)}%22%7D"
             )
-            sort = "sort=HourUTC%20asc"
-            columns = "columns=HourUTC,SpotPriceEUR"
+            sort = "sort=TimeUTC%20asc"
+            columns = "columns=TimeUTC,DayAheadPriceEUR"
 
             return f"{url}?{start}&{end}&{objfilter}&{sort}&{columns}&{limit}"
         else:
