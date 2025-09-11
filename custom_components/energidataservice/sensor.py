@@ -543,12 +543,18 @@ class EnergidataserviceSensor(SensorEntity):
         )
         if self._api.today:
             for dataset in self._api.today:
-                if dataset.time.hour == dt_utils.now().hour and (
-                    len(self._api.today) == 24
-                    or (
-                        dataset.time.minute <= dt_utils.now().minute
-                        and (dataset.time + timedelta(minutes=15)).minute
+                if not dataset.time.hour == dt_utils.now().hour:
+                    continue
+
+                if (
+                    dataset.time.hour == dt_utils.now().hour
+                    and len(self._api.today) == 24
+                ) or (
+                    dataset.time.minute <= dt_utils.now().minute
+                    and (
+                        (dataset.time + timedelta(minutes=15)).minute
                         > dt_utils.now().minute
+                        or (dataset.time + timedelta(minutes=15)).minute == 0
                     )
                 ):
                     self._attr_native_value = dataset.price
