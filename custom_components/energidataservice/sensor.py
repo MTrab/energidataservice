@@ -52,6 +52,7 @@ from .const import (
     CONF_AREA,
     CONF_COUNTRY,
     CONF_CURRENCY_IN_CENT,
+    CONF_ENABLE_HOURLY_INTERVAL,
     CONF_DECIMALS,
     CONF_ENABLE_FORECAST,
     CONF_ENABLE_TARIFFS,
@@ -128,6 +129,9 @@ def _setup(hass, config: ConfigEntry, add_devices):
         "Show in cent: %s", config.options.get(CONF_CURRENCY_IN_CENT) or False
     )
     _LOGGER.debug(
+        "Prices in hourly interval: %s", config.options.get(CONF_ENABLE_HOURLY_INTERVAL) or False
+    )
+    _LOGGER.debug(
         "Get AI predictions? %s", config.options.get(CONF_ENABLE_FORECAST) or False
     )
     _LOGGER.debug(
@@ -148,15 +152,15 @@ def _setup(hass, config: ConfigEntry, add_devices):
         region.set_region(area, hass.config.currency)
 
     this_sensor = SensorEntityDescription(
-        key="EnergiDataService_{}_{}_{}_{}_{}_{}_{}".format(  # pylint: disable=consider-using-f-string
+        key="EnergiDataService_{}_{}_{}_{}_{}_{}_{}_{}".format(  # pylint: disable=consider-using-f-string
             config.options.get(CONF_AREA) or config.data.get(CONF_AREA),
             config.options.get(CONF_VAT) or config.data.get(CONF_VAT),
-            config.options.get(CONF_CURRENCY_IN_CENT)
-            or config.data.get(CONF_CURRENCY_IN_CENT),
+            config.options.get(CONF_CURRENCY_IN_CENT) or config.data.get(CONF_CURRENCY_IN_CENT),
             config.options.get(CONF_DECIMALS) or config.data.get(CONF_DECIMALS),
             config.options.get(CONF_PRICETYPE) or config.data.get(CONF_PRICETYPE),
             config.options.get(CONF_NAME) or config.data.get(CONF_NAME),
             config.options.get(CONF_COUNTRY) or config.data.get(CONF_COUNTRY),
+            config.options.get(CONF_ENABLE_HOURLY_INTERVAL) or config.data.get(CONF_ENABLE_HOURLY_INTERVAL),
         ),
         device_class=SensorDeviceClass.MONETARY,
         icon="mdi:flash",
@@ -405,6 +409,7 @@ class EnergidataserviceSensor(SensorEntity):
             self._attr_native_unit_of_measurement = (
                 f"{region.currency.name}/{config.options[CONF_PRICETYPE]}"
             )
+
         # Holds the raw data
         self._today_raw = None
         self._tomorrow_raw = None

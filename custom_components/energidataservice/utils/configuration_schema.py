@@ -24,6 +24,7 @@ from ..const import (
     CONF_TEMPLATE,
     CONF_VAT,
     UNIT_TO_MULTIPLIER,
+    CONF_ENABLE_HOURLY_INTERVAL,
 )
 from .regionhandler import RegionHandler
 from .tariffhandler import TariffHandler
@@ -140,6 +141,11 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
                 if not isinstance(options.get(CONF_VAT), type(None))
                 else True
             ),
+            CONF_ENABLE_HOURLY_INTERVAL: (
+                options.get(CONF_ENABLE_HOURLY_INTERVAL)
+                if not isinstance(options.get(CONF_ENABLE_HOURLY_INTERVAL), type(None))
+                else False
+            ),
         }
 
         schema = {
@@ -150,6 +156,10 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
             vol.Required(
                 CONF_CURRENCY_IN_CENT,
                 default=info_options.get(CONF_CURRENCY_IN_CENT) or False,
+            ): bool,
+            vol.Required(
+                CONF_ENABLE_HOURLY_INTERVAL,
+                default=info_options.get(CONF_ENABLE_HOURLY_INTERVAL) or False,
             ): bool,
             vol.Optional(
                 CONF_DECIMALS, default=info_options.get(CONF_DECIMALS)

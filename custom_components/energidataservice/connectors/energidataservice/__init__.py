@@ -9,7 +9,7 @@ from logging import getLogger
 import homeassistant.util.dt as dt_util
 from async_retrying_ng import RetryError, retry
 
-from ...const import CO2INTERVAL, INTERVAL
+from ...const import CO2INTERVAL, INTERVAL, CONF_ENABLE_HOURLY_INTERVAL
 from .regions import CO2REGIONS, REGIONS
 
 _LOGGER = getLogger(__name__)
@@ -23,8 +23,8 @@ DEFAULT_CURRENCY = "EUR"
 __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "CO2REGIONS"]
 
 
-def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
-    """Get today prices."""
+def prepare_data(indata, date) -> list:  # pylint: disable=invalid-name
+    """Get prices in 15 minutes intervals """
     local_tz = dt_util.get_default_time_zone()
     reslist = []
     for dataset in indata:
@@ -39,8 +39,27 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
 
     return reslist
 
+def prepare_data_hourly(indata, date) -> list:  # pylint: disable=invalid-name
+    """Get prices in hourly intervals """
+    local_tz = dt_util.get_default_time_zone()
+    reslist = []
+    for i in range(0, len(indata), 4):
+        group = indata[i:i+4]
+        if len(group) < 4:
+            continue  # Skip incomplete groups although it shouldn't happen
+        avg_price = sum(float(item["DayAheadPriceEUR"]) for item in group) / 4
+        for dataset in group:
+            tmpdate = (
+                datetime.fromisoformat(dataset["TimeUTC"])
+                .replace(tzinfo=dt_util.UTC)
+                .astimezone(local_tz)
+            )
+            tmp = INTERVAL(avg_price, tmpdate)
+            if date in tmp.time.strftime("%Y-%m-%d"):
+                reslist.append(tmp)
+    return reslist
 
-def prepare_co2_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
+def prepare_co2_data(indata, date) -> list:  # pylint: disable=invalid-name
     """Prepare the CO2 data and return a list."""
     local_tz = dt_util.get_default_time_zone()
     reslist = []
@@ -185,16 +204,20 @@ class Connector:
     def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
-        return prepare_data(self.result, date, self._tz)
+        if self.config.options.get(CONF_ENABLE_HOURLY_INTERVAL) is True:
+            return prepare_data_hourly(self.result, date)
+        return prepare_data(self.result, date)
 
     @property
     def tomorrow(self) -> list:
-        """Return raw dataset for today."""
+        """Return raw dataset for tomorrow."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        return prepare_data(self.result, date, self._tz)
+        if self.config.options.get(CONF_ENABLE_HOURLY_INTERVAL) is True:
+            return prepare_data_hourly(self.result, date)
+        return prepare_data(self.result, date)
 
     @property
     def co2data(self) -> list:
         """Return raw CO2 dataset."""
         date = datetime.now().strftime("%Y-%m-%d")
-        return prepare_co2_data(self._co2_result, date, self._tz)
+        return prepare_co2_data(self._co2_result, date)
