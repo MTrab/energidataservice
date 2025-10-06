@@ -19,7 +19,7 @@ CO2REGIONS = []
 __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "CO2REGIONS"]
 
 
-def prepare_data(value, date, tz) -> list:  # pylint: disable=invalid-name
+def prepare_data(value, date) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
     local_tz = dt_util.get_default_time_zone()
     dt = dt_util.now(local_tz)  # pylint: disable=invalid-name
@@ -70,10 +70,10 @@ class Connector:
     def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
-        return prepare_data(self.value, date, self.tz)
+        return prepare_data(self.value, date)
 
     @property
     def tomorrow(self) -> list:
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        return prepare_data(self.value, date, self.tz)
+        return prepare_data(self.value, date)

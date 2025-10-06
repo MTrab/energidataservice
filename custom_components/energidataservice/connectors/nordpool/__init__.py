@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import homeassistant.util.dt as dt_util
 import pytz
 
-from ...const import INTERVAL
+from ...const import INTERVAL, CONF_ENABLE_HOURLY_INTERVAL
 from .mapping import map_region
 from .regions import REGIONS
 
@@ -31,8 +31,8 @@ CO2REGIONS = []
 __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "CO2REGIONS"]
 
 
-def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
-    """Get today prices."""
+def prepare_data(indata, date) -> list:  # pylint: disable=invalid-name
+    """Get prices in 15 minutes intervals """
     local_tz = dt_util.get_default_time_zone()
     reslist = []
     for dataset in indata:
@@ -43,6 +43,21 @@ def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
 
     return reslist
 
+def prepare_data_hourly(indata, date) -> list:  # pylint: disable=invalid-name
+    """Get prices in hourly intervals """
+    local_tz = dt_util.get_default_time_zone()
+    reslist = []
+    for i in range(0, len(indata), 4):
+        group = indata[i:i+4]
+        if len(group) < 4:
+            continue  # Skip incomplete groups although it shouldn't happen
+        avg_price = sum(float(item["SpotPriceEUR"]) for item in group) / 4
+        for dataset in group:
+            tmpdate = datetime.fromisoformat(dataset["HourUTC"]).astimezone(local_tz)
+            tmp = INTERVAL(avg_price, tmpdate)
+            if date in tmp.time.strftime("%Y-%m-%d"):
+                reslist.append(tmp)
+    return reslist
 
 class Connector:
     """Define Nordpool Connector Class."""
@@ -154,13 +169,18 @@ class Connector:
     def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
-        return prepare_data(self.result, date, self._tz)
+        if self.config.options.get(CONF_ENABLE_HOURLY_INTERVAL) is True:
+            return prepare_data_hourly(self.result, date)
+        return prepare_data(self.result, date)
 
     @property
     def tomorrow(self) -> list:
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        data = prepare_data(self.result, date, self._tz)
+        if self.config.options.get(CONF_ENABLE_HOURLY_INTERVAL) is True:
+            data = prepare_data_hourly(self.result, date)
+        else:
+            data = prepare_data(self.result, date)
         if len(data) > 20:
             return data
         else:
