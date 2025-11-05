@@ -53,6 +53,8 @@ Add "Energi Data Service" integration *(If it doesn't show, try CTRL+F5 to force
   * Will automatically add VAT to the prices, depending on the country selected.
 * Show prices in cent
   * Convert prices to be displayed as cents
+* Prices in hourly intervals
+  * Use price be hour instead of 15 minutes interval. Use if your electricity contract is calculated on hourly cost.
 * Decimals
   * Round the prices to this number of decimals
 * Price calculated in

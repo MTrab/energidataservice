@@ -25,7 +25,8 @@
                     "cost_template": "Template for additional costs",
                     "in_cent": "Show prices in cent",
                     "fixed_value": "Insert price - WITHOUT VAT",
-                    "fixed_vat": "VAT value in % (ie 25 for 25% VAT)"
+                    "fixed_vat": "VAT value in % (ie 25 for 25% VAT)",
+                    "hourly_interval": "Prices in hourly intervals"
                 },
                 "description": "Set details for {name} in {country}"
             },
@@ -79,7 +80,8 @@
                     "cost_template": "Template for additional costs",
                     "in_cent": "Show prices in cent",
                     "fixed_value": "Insert price - WITHOUT VAT",
-                    "fixed_vat": "VAT value in % (ie 25 for 25% VAT)"
+                    "fixed_vat": "VAT value in % (ie 25 for 25% VAT)",
+                    "hourly_interval": "Prices in hourly intervals"
                 },
                 "description": "Set details for {name} in {country}"
             },

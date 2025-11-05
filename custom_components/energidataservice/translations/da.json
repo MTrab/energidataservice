@@ -25,7 +25,8 @@
                     "cost_template": "Skabelon til ekstra omkostninger",
                     "in_cent": "Vis priser i øre",
                     "fixed_value": "Angiv den ønskede pris - UDEN moms",
-                    "fixed_vat": "Momsværdi i % (dvs. 25 for 25 % moms)"
+                    "fixed_vat": "Momsværdi i % (dvs. 25 for 25 % moms)",
+                    "hourly_interval": "Priser i time interval"
                 },
                 "description": "Set detaljer for {name} i {country}"
             },
@@ -79,7 +80,8 @@
                     "cost_template": "Skabelon til ekstra omkostninger",
                     "in_cent": "Vis priser i øre",
                     "fixed_value": "Angiv den ønskede pris - UDEN moms",
-                    "fixed_vat": "Momsværdi i % (dvs. 25 for 25 % moms)"
+                    "fixed_vat": "Momsværdi i % (dvs. 25 for 25 % moms)",
+                    "hourly_interval": "Priser i time interval"
                 },
                 "description": "Set detaljer for {name} i {country}"
             },

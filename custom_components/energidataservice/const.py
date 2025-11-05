@@ -51,6 +51,7 @@ CONF_FIXED_PRICE = "fixed_price"
 CONF_FIXED_PRICE_VALUE = "fixed_value"
 CONF_FIXED_PRICE_VAT = "fixed_vat"
 CONF_TARIFF_CHARGE_OWNER = "tariff_charge_owner"
+CONF_ENABLE_HOURLY_INTERVAL = "hourly_interval"
 
 DATA = "data"
 DEFAULT_NAME = "Energidataservice"

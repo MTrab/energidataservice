@@ -24,7 +24,8 @@
                     "pricetype": "Preis berechnet in",
                     "cost_template": "Vorlage für zusätzliche Kosten",
                     "in_cent": "Preise in Cent anzeigen",
-                    "fixed_value": "Preis einfügen - OHNE MwSt."
+                    "fixed_value": "Preis einfügen - OHNE MwSt.",
+                    "hourly_interval": "Preise im Stundentakt"
                 },
                 "description": "Details für {name} in {country} festlegen"
             },
@@ -77,7 +78,8 @@
                     "pricetype": "Preis wird berechnet in",
                     "cost_template": "Vorlage für zusätzliche Kosten",
                     "in_cent": "Preise in Cent anzeigen",
-                    "fixed_value": "Preis - OHNE MwSt. - eingeben"
+                    "fixed_value": "Preis - OHNE MwSt. - eingeben",
+                    "hourly_interval": "Preise im Stundentakt"
                 },
                 "description": "Details für {name} in {country} festlegen"
             },
