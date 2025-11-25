@@ -31,7 +31,7 @@ jobs:
           cd custom_components/energidataservice
           zip energidataservice.zip -r ./
       - name: Upload zip to release
-        uses: svenstaro/upload-release-action@2.11.2
+        uses: svenstaro/upload-release-action@2.11.3
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./custom_components/energidataservice/energidataservice.zip
