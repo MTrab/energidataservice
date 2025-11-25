@@ -35,6 +35,8 @@ ATTR_ATTRIBUTION = "attribution"
 ATTR_FORECAST = "forecast"
 ATTR_NET_OPERATOR = "net_operator"
 ATTR_TARIFFS = "tariffs"
+ATTR_RESOLUTION_60MIN = True
+ATTR_RESOLUTION_15MIN = False
 
 CONF_AREA = "area"
 CONF_COUNTRY = "country"
@@ -51,6 +53,7 @@ CONF_FIXED_PRICE = "fixed_price"
 CONF_FIXED_PRICE_VALUE = "fixed_value"
 CONF_FIXED_PRICE_VAT = "fixed_vat"
 CONF_TARIFF_CHARGE_OWNER = "tariff_charge_owner"
+CONF_RESOLUTION = "resolution"
 
 DATA = "data"
 DEFAULT_NAME = "Energidataservice"

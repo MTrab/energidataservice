@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import homeassistant.util.dt as dt_util
 import pytz
 
-from ...const import INTERVAL
+from ...const import CONF_RESOLUTION, INTERVAL
 from .mapping import map_region
 from .regions import REGIONS
 
@@ -31,15 +31,33 @@ CO2REGIONS = []
 __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "CO2REGIONS"]
 
 
-def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
+def prepare_data(
+    indata, date, tz, resolution: bool = False
+) -> list:  # pylint: disable=invalid-name
     """Get today prices."""
     local_tz = dt_util.get_default_time_zone()
     reslist = []
-    for dataset in indata:
-        tmpdate = datetime.fromisoformat(dataset["HourUTC"]).astimezone(local_tz)
-        tmp = INTERVAL(dataset["SpotPriceEUR"], tmpdate)
-        if date in tmp.time.strftime("%Y-%m-%d"):
-            reslist.append(tmp)
+
+    if resolution == True:
+        for i in range(0, len(indata), 4):
+            group = indata[i : i + 4]
+            if len(group) < 4:
+                continue  # Skip incomplete groups although it shouldn't happen
+            tmpdate = (
+                datetime.fromisoformat(group[0]["HourUTC"])
+                .replace(tzinfo=dt_util.UTC)
+                .astimezone(local_tz)
+            )
+            if date in tmpdate.strftime("%Y-%m-%d"):
+                avg_price = sum(float(item["SpotPriceEUR"]) for item in group) / 4
+                tmp = INTERVAL(avg_price, tmpdate)
+                reslist.append(tmp)
+    else:
+        for dataset in indata:
+            tmpdate = datetime.fromisoformat(dataset["HourUTC"]).astimezone(local_tz)
+            tmp = INTERVAL(dataset["SpotPriceEUR"], tmpdate)
+            if date in tmp.time.strftime("%Y-%m-%d"):
+                reslist.append(tmp)
 
     return reslist
 
@@ -154,13 +172,17 @@ class Connector:
     def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
-        return prepare_data(self.result, date, self._tz)
+        return prepare_data(
+            self.result, date, self._tz, self.config.options.get(CONF_RESOLUTION, True)
+        )
 
     @property
     def tomorrow(self) -> list:
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        data = prepare_data(self.result, date, self._tz)
+        data = prepare_data(
+            self.result, date, self._tz, self.config.options.get(CONF_RESOLUTION, True)
+        )
         if len(data) > 20:
             return data
         else:

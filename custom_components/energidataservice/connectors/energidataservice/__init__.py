@@ -9,7 +9,7 @@ from logging import getLogger
 import homeassistant.util.dt as dt_util
 from async_retrying_ng import RetryError, retry
 
-from ...const import CO2INTERVAL, INTERVAL
+from ...const import CO2INTERVAL, CONF_RESOLUTION, INTERVAL
 from .regions import CO2REGIONS, REGIONS
 
 _LOGGER = getLogger(__name__)
@@ -23,19 +23,37 @@ DEFAULT_CURRENCY = "EUR"
 __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "CO2REGIONS"]
 
 
-def prepare_data(indata, date, tz) -> list:  # pylint: disable=invalid-name
-    """Get today prices."""
+def prepare_data(
+    indata, date, tz, resolution: bool = False
+) -> list:  # pylint: disable=invalid-name
+    """Get prices in 15 minutes resolution."""
     local_tz = dt_util.get_default_time_zone()
     reslist = []
-    for dataset in indata:
-        tmpdate = (
-            datetime.fromisoformat(dataset["TimeUTC"])
-            .replace(tzinfo=dt_util.UTC)
-            .astimezone(local_tz)
-        )
-        tmp = INTERVAL(dataset["DayAheadPriceEUR"], tmpdate)
-        if date in tmp.time.strftime("%Y-%m-%d"):
-            reslist.append(tmp)
+
+    if resolution == True:
+        for i in range(0, len(indata), 4):
+            group = indata[i : i + 4]
+            if len(group) < 4:
+                continue  # Skip incomplete groups although it shouldn't happen
+            tmpdate = (
+                datetime.fromisoformat(group[0]["TimeUTC"])
+                .replace(tzinfo=dt_util.UTC)
+                .astimezone(local_tz)
+            )
+            if date in tmpdate.strftime("%Y-%m-%d"):
+                avg_price = sum(float(item["DayAheadPriceEUR"]) for item in group) / 4
+                tmp = INTERVAL(avg_price, tmpdate)
+                reslist.append(tmp)
+    else:
+        for dataset in indata:
+            tmpdate = (
+                datetime.fromisoformat(dataset["TimeUTC"])
+                .replace(tzinfo=dt_util.UTC)
+                .astimezone(local_tz)
+            )
+            tmp = INTERVAL(dataset["DayAheadPriceEUR"], tmpdate)
+            if date in tmp.time.strftime("%Y-%m-%d"):
+                reslist.append(tmp)
 
     return reslist
 
@@ -185,13 +203,17 @@ class Connector:
     def today(self) -> list:
         """Return raw dataset for today."""
         date = datetime.now().strftime("%Y-%m-%d")
-        return prepare_data(self.result, date, self._tz)
+        return prepare_data(
+            self.result, date, self._tz, self.config.options.get(CONF_RESOLUTION, True)
+        )
 
     @property
     def tomorrow(self) -> list:
         """Return raw dataset for today."""
         date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-        return prepare_data(self.result, date, self._tz)
+        return prepare_data(
+            self.result, date, self._tz, self.config.options.get(CONF_RESOLUTION, True)
+        )
 
     @property
     def co2data(self) -> list:
