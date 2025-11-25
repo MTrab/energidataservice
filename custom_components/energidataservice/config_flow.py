@@ -68,11 +68,11 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize Energidataservice options flow."""
         self.connectors = Connectors(hass=self.hass)
         self.forecasts = Forecast(hass=self.hass)
-        self.config_entry = config_entry
+        # self.config_entry = config_entry
         self._errors = {}
         # Cast from MappingProxy to dict to allow update.
         self.options = dict(config_entry.options)
-        config = self.config_entry.options or self.config_entry.data
+        config = config_entry.options or config_entry.data
         _LOGGER.debug("Config: %s", config)
         _LOGGER.debug("Options: %s", self.options)
 
