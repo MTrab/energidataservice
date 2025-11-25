@@ -14,6 +14,7 @@ from aiohttp import ClientConnectorError, ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later
@@ -26,6 +27,7 @@ from .const import (
     CONF_ENABLE_TARIFFS,
     CONF_TARIFF_CHARGE_OWNER,
 )
+from .exceptions import UnknownChargeOwnerError
 from .forecasts import Forecast
 from .tariffs import Tariff
 from .utils.regionhandler import RegionHandler
@@ -329,14 +331,20 @@ class APIConnector:
 
             self.tariff_connector = tariff
 
-            self.tariff_data = await tariff.async_get_tariffs()
+            try:
+                self.tariff_data = await tariff.async_get_tariffs()
 
-            if self.tariff_data["status"] != 200:
-                self.retry_update(
-                    tariff_endpoint[0].module + "_tariff", self.async_get_tariffs
-                )
-            else:
-                self.retry_count.pop(tariff_endpoint[0].module + "_tariff", None)
+                if self.tariff_data["status"] != 200:
+                    self.retry_update(
+                        tariff_endpoint[0].module + "_tariff", self.async_get_tariffs
+                    )
+                else:
+                    self.retry_count.pop(tariff_endpoint[0].module + "_tariff", None)
+            except UnknownChargeOwnerError:
+                raise ConfigEntryNotReady(
+                    "Selected chargeowner, %s, is invalid - please reconfigure."
+                    % self._config.options.get(CONF_TARIFF_CHARGE_OWNER)
+                ) from None
 
     @property
     def tomorrow_valid(self) -> bool:
