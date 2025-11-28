@@ -11,6 +11,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL, CONF_NAME
 
 from ..const import (
+    ATTR_RESOLUTION_15MIN,
+    ATTR_RESOLUTION_60MIN,
     CONF_AREA,
     CONF_COUNTRY,
     CONF_CURRENCY_IN_CENT,
@@ -20,6 +22,7 @@ from ..const import (
     CONF_FIXED_PRICE_VALUE,
     CONF_FIXED_PRICE_VAT,
     CONF_PRICETYPE,
+    CONF_RESOLUTION,
     CONF_TARIFF_CHARGE_OWNER,
     CONF_TEMPLATE,
     CONF_VAT,
@@ -140,6 +143,11 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
                 if not isinstance(options.get(CONF_VAT), type(None))
                 else True
             ),
+            CONF_RESOLUTION: (
+                options.get(CONF_RESOLUTION)
+                if CONF_RESOLUTION in options
+                else ATTR_RESOLUTION_60MIN
+            ),
         }
 
         schema = {
@@ -150,6 +158,10 @@ def energidataservice_config_option_info_schema(options: ConfigEntry = {}) -> di
             vol.Required(
                 CONF_CURRENCY_IN_CENT,
                 default=info_options.get(CONF_CURRENCY_IN_CENT) or False,
+            ): bool,
+            vol.Required(
+                CONF_RESOLUTION,
+                default=info_options.get(CONF_RESOLUTION) or False,
             ): bool,
             vol.Optional(
                 CONF_DECIMALS, default=info_options.get(CONF_DECIMALS)
