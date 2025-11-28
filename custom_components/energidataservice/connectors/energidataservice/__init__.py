@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timedelta
 from logging import getLogger
 
@@ -153,7 +154,14 @@ class Connector:
     @staticmethod
     def _header() -> dict:
         """Create default request header."""
-        data = {"Content-Type": "application/json"}
+        with open("custom_components/energidataservice/manifest.json", "r") as file:
+            manifest = json.load(file)
+
+        data = {
+            "Content-Type": "application/json",
+            "User-Agent": f"HomeAssistant-EnergiDataService/{manifest['version']}",
+        }
+
         return data
 
     def _prepare_url(self, url: str, co2: bool = False) -> str:
