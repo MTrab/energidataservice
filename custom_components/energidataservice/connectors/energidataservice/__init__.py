@@ -80,7 +80,7 @@ class Connector:
     """Energi Data Service API."""
 
     def __init__(
-        self, regionhandler, client, tz, config  # pylint: disable=invalid-name
+        self, regionhandler, client, tz, config, version  # pylint: disable=invalid-name
     ) -> None:
         """Init API connection to Energi Data Service."""
         self.config = config
@@ -90,10 +90,11 @@ class Connector:
         self._co2_result = {}
         self._tz = tz
         self.status = 418
+        self._version = version
 
     async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
-        headers = self._header()
+        headers = self._header(self._version)
         url = self._prepare_url(BASE_URL + "DayAheadPrices")
         _LOGGER.debug(
             "Request body for %s via Energi Data Service API URL: %s",
@@ -131,7 +132,7 @@ class Connector:
         """Fetch CO2 emissions."""
 
         if self.regionhandler.region in CO2REGIONS:
-            headers = self._header()
+            headers = self._header(self._version)
             url = self._prepare_url(BASE_URL + "CO2EmisProg", True)
             _LOGGER.debug(
                 "CO2 Request body for %s via Energi Data Service API URL: %s",
@@ -170,14 +171,11 @@ class Connector:
             _LOGGER.debug("CO2 values not found for this region")
 
     @staticmethod
-    def _header() -> dict:
+    def _header(version) -> dict:
         """Create default request header."""
-        with open("custom_components/energidataservice/manifest.json", "r") as file:
-            manifest = json.load(file)
-
         data = {
             "Content-Type": "application/json",
-            "User-Agent": f"HomeAssistant-EnergiDataService/{manifest['version']}",
+            "User-Agent": f"HomeAssistant-EnergiDataService/{version}",
         }
 
         return data

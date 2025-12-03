@@ -47,18 +47,19 @@ class Connector:
     """Carnot forecast API."""
 
     def __init__(
-        self, regionhandler, client, tz  # pylint: disable=invalid-name
+        self, regionhandler, client, tz, version  # pylint: disable=invalid-name
     ) -> None:
         """Init API connection to Carnot."""
         self.regionhandler = regionhandler
         self.client = client
         self._result = {}
         self._tz = tz
+        self._version = version
 
     async def async_get_forecast(self, apikey: str, email: str) -> list | None:
         """Fetch forecast data from API."""
         self._result = None
-        headers = self._header(apikey, email)
+        headers = self._header(apikey, email, self._version)
         url = self._prepare_url(BASE_URL)
         _LOGGER.debug(
             "Request for '%s' at Carnot API URL: '%s' with headers %s",
@@ -90,10 +91,10 @@ class Connector:
         )
 
     @staticmethod
-    def _header(apikey: str, email: str) -> dict:
+    def _header(apikey: str, email: str, version) -> dict:
         """Create default request header."""
         data = {
-            "User-Agent": "HomeAssistant/Energidataservice",
+            "User-Agent": f"HomeAssistant/Energidataservice/{version}",
             "Content-Type": "application/json",
             "apikey": apikey,
             "username": email,

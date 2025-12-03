@@ -52,6 +52,7 @@ class Connector:
         client=None,  # pylint: disable=unused-argument
         tz=None,  # pylint: disable=invalid-name
         config=None,
+        version=None,
     ) -> None:
         """Init API connection to Energi Data Service."""
         self.config = config
@@ -60,6 +61,7 @@ class Connector:
         self.value = self.config.options.get(CONF_FIXED_PRICE_VALUE)
         self.status = 200
         self.result = {"Static": "OK"}
+        self._version=version
 
     async def async_get_spotprices(self) -> None:
         """Return the fixed price set in the configuration flow."""

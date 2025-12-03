@@ -84,7 +84,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info(STARTUP, integration.version)
     rand_min = randint(5, 40)
     rand_sec = randint(0, 59)
-    api = APIConnector(hass, entry, rand_min, rand_sec)
+    api = APIConnector(hass, entry, rand_min, rand_sec, integration.version)
     await api.initialize()
 
     connectors = api._connectors.get_connectors(api._region.region)

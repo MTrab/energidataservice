@@ -44,13 +44,19 @@ class APIConnector:
     """An object to store Energi Data Service data."""
 
     def __init__(
-        self, hass: HomeAssistant, entry: ConfigEntry, rand_min: int, rand_sec: int
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        rand_min: int,
+        rand_sec: int,
+        version,
     ) -> None:
         """Initialize Energi Data Service Connector."""
         self._connectors = None
         self.forecasts = None
         self.tariffs = None
         self.hass = hass
+        self._version = version
         self._last_tick = None
         self._tomorrow_valid = False
         self._entry_id = entry.entry_id
@@ -121,7 +127,7 @@ class APIConnector:
                     import_module, endpoint.namespace, __name__.removesuffix(".api")
                 )
                 api = module.Connector(
-                    self._region, self._client, self._tz, self._config
+                    self._region, self._client, self._tz, self._config, self._version
                 )
                 self.connector_currency = module.DEFAULT_CURRENCY
                 # await api.async_get_spotprices()
@@ -171,7 +177,7 @@ class APIConnector:
                     import_module, endpoint.namespace, __name__.removesuffix(".api")
                 )
                 api = module.Connector(
-                    self._region, self._client, self._tz, self._config
+                    self._region, self._client, self._tz, self._config, self._version
                 )
                 self.connector_currency = module.DEFAULT_CURRENCY
                 if (
@@ -279,7 +285,9 @@ class APIConnector:
                 forecast_endpoint[0].namespace,
                 __name__.removesuffix(".api"),
             )
-            carnot = forecast_module.Connector(self._region, self._client, self._tz)
+            carnot = forecast_module.Connector(
+                self._region, self._client, self._tz, self._version
+            )
             self.predictions_currency = forecast_module.DEFAULT_CURRENCY
             try:
                 self.predictions = await carnot.async_get_forecast(
