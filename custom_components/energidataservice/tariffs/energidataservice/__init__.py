@@ -25,7 +25,7 @@ class Connector:
     """Energi Data Service API."""
 
     def __init__(
-        self, hass, client: ClientSession, chargeowner: str | None = None
+        self, hass, client: ClientSession, chargeowner: str | None = None, version=None
     ) -> None:
         """Init API connection to Energi Data Service."""
         self.hass = hass
@@ -36,6 +36,7 @@ class Connector:
         self._all_tariffs = {}
         self._all_additional_tariffs = {}
         self.status = 418
+        self._version = version
 
     @property
     def tariffs(self):
@@ -51,9 +52,12 @@ class Connector:
         return tariffs
 
     @staticmethod
-    def _header() -> dict:
+    def _header(version) -> dict:
         """Create default request header."""
-        data = {"Content-Type": "application/json"}
+        data = {
+            "Content-Type": "application/json",
+            "User-Agent": f"HomeAssistant-EnergiDataService/{version}",
+        }
         return data
 
     async def async_get_tariffs(self):
@@ -191,7 +195,7 @@ class Connector:
     async def async_call_api(self, query: str) -> dict:
         """Make the API calls."""
         try:
-            headers = self._header()
+            headers = self._header(self._version)
             resp = await self.client.get(f"{BASE_URL}?{query}", headers=headers)
             self.status = resp.status
             resp.raise_for_status()

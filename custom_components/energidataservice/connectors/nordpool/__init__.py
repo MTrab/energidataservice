@@ -66,7 +66,7 @@ class Connector:
     """Define Nordpool Connector Class."""
 
     def __init__(
-        self, regionhandler, client, tz, config  # pylint: disable=invalid-name
+        self, regionhandler, client, tz, config, version  # pylint: disable=invalid-name
     ) -> None:
         """Init API connection to Nordpool Group."""
         self.config = config
@@ -75,6 +75,7 @@ class Connector:
         self.result = {}
         self._tz = tz
         self.status = 200
+        self._version = version
 
     async def async_get_spotprices(self) -> None:
         """Fetch latest spotprices, excl. VAT and tariff."""
