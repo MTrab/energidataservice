@@ -63,8 +63,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
 
     if unload_ok:
-        for unsub in hass.data[DOMAIN][entry.entry_id].listeners:
+        api = hass.data[DOMAIN][entry.entry_id]
+        api.is_unloading = True
+        for unsub in api.listeners:
             unsub()
+        api.cancel_retry_updates()
         hass.data[DOMAIN].pop(entry.entry_id)
 
         return True
@@ -143,7 +146,9 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Update CO2 data hourly."""
         _LOGGER.debug("Getting latest CO2 dataset")
         await api.updateco2()
-        async_call_later(hass, CO2_UPDATE, refresh_co2_data)
+        if api.is_unloading:
+            return
+        api.co2_update_listener = async_call_later(hass, CO2_UPDATE, refresh_co2_data)
 
         api.co2_refresh = (dt_utils.now() + CO2_UPDATE).strftime("%H:%M:%S")
 
@@ -162,9 +167,25 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Fetch new data from Carnot every 30 minutes."""
         _LOGGER.debug("Getting latest Carnot forecast")
         await api.update_carnot()
+        if api.is_unloading:
+            return
 
-        async_call_later(hass, CARNOT_UPDATE, update_carnot)
+        api.carnot_update_listener = async_call_later(
+            hass, CARNOT_UPDATE, update_carnot
+        )
         async_dispatcher_send(hass, UPDATE_EDS.format(entry.entry_id))
+
+    def stop_co2_updates() -> None:
+        """Cancel pending CO2 update callback."""
+        if api.co2_update_listener is not None:
+            api.co2_update_listener()
+            api.co2_update_listener = None
+
+    def stop_carnot_updates() -> None:
+        """Cancel pending Carnot callback."""
+        if api.carnot_update_listener is not None:
+            api.carnot_update_listener()
+            api.carnot_update_listener = None
 
     # Handle dataset updates
     update_tomorrow = async_track_time_change(
@@ -191,13 +212,15 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await refresh_co2_data(0)
 
     if use_forecast:
-        async_call_later(hass, CARNOT_UPDATE, update_carnot)
+        api.carnot_update_listener = async_call_later(
+            hass, CARNOT_UPDATE, update_carnot
+        )
 
     api.listeners.append(update_new_day)
     api.listeners.append(update_new_price)
     api.listeners.append(update_5min)
     api.listeners.append(update_tomorrow)
-
-    await api.async_get_tariffs()
+    api.listeners.append(stop_co2_updates)
+    api.listeners.append(stop_carnot_updates)
 
     return True
