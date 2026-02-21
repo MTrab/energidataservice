@@ -1,7 +1,7 @@
 {
     "config": {
         "error": {
-            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https:\/\/github.com\/mtrab\/energidataservice"
+            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check {github_url}"
         },
         "abort": {
             "already_configured": "Det angivede navn eksisterer allerede!"
@@ -37,12 +37,12 @@
                 "description": "Skal {name} i {country} vise AI genererede prognoser?"
             },
             "carnot_credentials": {
-                "title": "API credentials for Carnot platform (https:\/\/www.carnot.dk\/)",
+                "title": "API credentials for Carnot platform ({carnot_url})",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
                 },
-                "description": "Se mere på https:\/\/www.carnot.dk"
+                "description": "Se mere på {carnot_url}"
             },
             "enable_extras": {
                 "title": "Aktiver ekstra services?",
@@ -54,7 +54,7 @@
             },
             "tariff_settings": {
                 "title": "Vælg net leverandør",
-                "description": "Hvis du er i tvivl kan du finde din leverandør her: https:\/\/greenpowerdenmark.dk\/vejledning-teknik\/nettilslutning\/find-netselskab (KUN Danske operatører)",
+                "description": "Hvis du er i tvivl kan du finde din leverandør her: {dk_netoperators} (KUN Danske operatører)",
                 "data": {
                     "tariff_charge_owner": "Vælg net leverandør"
                 }
@@ -63,7 +63,7 @@
     },
     "options": {
         "error": {
-            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check https:\/\/github.com\/mtrab\/energidataservice"
+            "invalid_template": "Skabelonen til ekstra omkostninger er ikke gyldig, check {github_url}"
         },
         "abort": {
             "already_configured": "Det angivede navn eksisterer allerede!"
@@ -91,12 +91,12 @@
                 "description": "Should {name} in {country} show AI predicted prices for the next 7 days?"
             },
             "carnot_credentials": {
-                "title": "API bruger oplysninger til Carnot (https:\/\/www.carnot.dk\/)",
+                "title": "API bruger oplysninger til Carnot ({carnot_url})",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
                 },
-                "description": "Se mere på https:\/\/www.carnot.dk"
+                "description": "Se mere på {carnot_url}"
             },
             "enable_extras": {
                 "title": "Aktiver ekstra services?",
@@ -108,7 +108,7 @@
             },
             "tariff_settings": {
                 "title": "Vælg el net leverandør",
-                "description": "Hvis du er i tvivl kan du finde din leverandør her: https:\/\/greenpowerdenmark.dk\/vejledning-teknik\/nettilslutning\/find-netselskab (KUN Danske operatører)",
+                "description": "Hvis du er i tvivl kan du finde din leverandør her: {dk_netoperators} (KUN Danske operatører)",
                 "data": {
                     "tariff_charge_owner": "Vælg leverandør"
                 }

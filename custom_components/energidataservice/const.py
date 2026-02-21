@@ -38,6 +38,8 @@ ATTR_TARIFFS = "tariffs"
 ATTR_RESOLUTION_60MIN = True
 ATTR_RESOLUTION_15MIN = False
 
+CARNOT_URL = "https://www.carnot.dk"
+
 CONF_AREA = "area"
 CONF_COUNTRY = "country"
 CONF_CURRENCY_IN_CENT = "in_cent"
@@ -58,7 +60,12 @@ CONF_RESOLUTION = "resolution"
 DATA = "data"
 DEFAULT_NAME = "Energidataservice"
 DEFAULT_TEMPLATE = "{{0.0|float}}"
+
+DK_NETOPERATORS = "https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab"
+
 DOMAIN = "energidataservice"
+
+GITHUB_URL = "https://github.com/mtrab/energidataservice"
 
 INTERVAL = namedtuple("Interval", "price time")
 CO2INTERVAL = namedtuple("CO2Interval", "value time")

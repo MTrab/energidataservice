@@ -19,6 +19,7 @@ from jinja2 import pass_context
 from . import async_setup_entry, async_unload_entry
 from .connectors import Connectors
 from .const import (
+    CARNOT_URL,
     CONF_AREA,
     CONF_COUNTRY,
     CONF_ENABLE_FORECAST,
@@ -26,7 +27,9 @@ from .const import (
     CONF_FIXED_PRICE_VALUE,
     CONF_TEMPLATE,
     DEFAULT_TEMPLATE,
+    DK_NETOPERATORS,
     DOMAIN,
+    GITHUB_URL,
 )
 from .forecasts import Forecast
 from .utils.configuration_schema import (
@@ -150,6 +153,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                         description_placeholders={
                             "name": self.config_entry.data[CONF_NAME],
                             "country": self.get_country(),
+                            "github_url": GITHUB_URL,
+                            "carnot_url": CARNOT_URL,
+                            "dk_netoperators": DK_NETOPERATORS,
                         },
                     )
                 elif (
@@ -166,6 +172,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                         description_placeholders={
                             "name": self.config_entry.options[CONF_NAME],
                             "country": self.get_country(),
+                            "github_url": GITHUB_URL,
+                            "carnot_url": CARNOT_URL,
+                            "dk_netoperators": DK_NETOPERATORS,
                         },
                     )
                 else:
@@ -192,6 +201,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             description_placeholders={
                 "name": self.config_entry.options[CONF_NAME],
                 "country": self.get_country(),
+                "github_url": GITHUB_URL,
+                "carnot_url": CARNOT_URL,
+                "dk_netoperators": DK_NETOPERATORS,
             },
         )
 
@@ -217,6 +229,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                     description_placeholders={
                         "name": self.options.get(CONF_NAME),
                         "country": self.options.get(CONF_COUNTRY),
+                        "github_url": GITHUB_URL,
+                        "carnot_url": CARNOT_URL,
+                        "dk_netoperators": DK_NETOPERATORS,
                     },
                 )
             else:
@@ -236,6 +251,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             description_placeholders={
                 "name": self.config_entry.data[CONF_NAME],
                 "country": self.get_country(),
+                "github_url": GITHUB_URL,
+                "carnot_url": CARNOT_URL,
+                "dk_netoperators": DK_NETOPERATORS,
             },
         )
 
@@ -266,6 +284,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             description_placeholders={
                 "name": self.config_entry.data[CONF_NAME],
                 "country": self.get_country(),
+                "github_url": GITHUB_URL,
+                "carnot_url": CARNOT_URL,
+                "dk_netoperators": DK_NETOPERATORS,
             },
         )
 
@@ -307,6 +328,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
                         description_placeholders={
                             "name": self.config_entry.data[CONF_NAME],
                             "country": self.get_country(),
+                            "github_url": GITHUB_URL,
+                            "carnot_url": CARNOT_URL,
+                            "dk_netoperators": DK_NETOPERATORS,
                         },
                     )
                 else:
@@ -325,6 +349,9 @@ class EnergidataserviceOptionsFlowHandler(config_entries.OptionsFlow):
             description_placeholders={
                 "name": self.config_entry.data[CONF_NAME],
                 "country": self.get_country(),
+                "github_url": GITHUB_URL,
+                "carnot_url": CARNOT_URL,
+                "dk_netoperators": DK_NETOPERATORS,
             },
         )
 
@@ -403,6 +430,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         description_placeholders={
                             "name": self.user_input[CONF_NAME],
                             "country": self.user_input[CONF_COUNTRY],
+                            "github_url": GITHUB_URL,
+                            "carnot_url": CARNOT_URL,
+                            "dk_netoperators": DK_NETOPERATORS,
                         },
                     )
                 else:
@@ -422,6 +452,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "name": self.user_input[CONF_NAME],
                 "country": self.user_input[CONF_COUNTRY],
+                "github_url": GITHUB_URL,
+                "carnot_url": CARNOT_URL,
+                "dk_netoperators": DK_NETOPERATORS,
             },
         )
 
@@ -443,6 +476,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     description_placeholders={
                         "name": self.user_input[CONF_NAME],
                         "country": self.user_input[CONF_COUNTRY],
+                        "github_url": GITHUB_URL,
+                        "carnot_url": CARNOT_URL,
+                        "dk_netoperators": DK_NETOPERATORS,
                     },
                 )
             elif CONF_ENABLE_TARIFFS in user_input and user_input[CONF_ENABLE_TARIFFS]:
@@ -456,6 +492,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     description_placeholders={
                         "name": self.user_input[CONF_NAME],
                         "country": self.user_input[CONF_COUNTRY],
+                        "github_url": GITHUB_URL,
+                        "carnot_url": CARNOT_URL,
+                        "dk_netoperators": DK_NETOPERATORS,
                     },
                 )
             else:
@@ -476,6 +515,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "name": self.user_input[CONF_NAME],
                 "country": self.user_input[CONF_COUNTRY],
+                "github_url": GITHUB_URL,
+                "carnot_url": CARNOT_URL,
+                "dk_netoperators": DK_NETOPERATORS,
             },
         )
 
@@ -500,6 +542,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     description_placeholders={
                         "name": self.user_input[CONF_NAME],
                         "country": self.user_input[CONF_COUNTRY],
+                        "github_url": GITHUB_URL,
+                        "carnot_url": CARNOT_URL,
+                        "dk_netoperators": DK_NETOPERATORS,
                     },
                 )
             else:
@@ -517,6 +562,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "name": self.user_input[CONF_NAME],
                 "country": self.user_input[CONF_COUNTRY],
+                "github_url": GITHUB_URL,
+                "carnot_url": CARNOT_URL,
+                "dk_netoperators": DK_NETOPERATORS,
             },
         )
 
@@ -547,6 +595,9 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "name": self.user_input[CONF_NAME],
                 "country": self.user_input[CONF_COUNTRY],
+                "github_url": GITHUB_URL,
+                "carnot_url": CARNOT_URL,
+                "dk_netoperators": DK_NETOPERATORS,
             },
         )
 

@@ -1,7 +1,7 @@
 {
     "config": {
         "error": {
-            "invalid_template": "Die Vorlage für die Zusatzkosten ist ungültig, siehe https:\/\/github.com\/mtrab\/energidataservice"
+            "invalid_template": "Die Vorlage für die Zusatzkosten ist ungültig, siehe {github_url}"
         },
         "abort": {
             "already_configured": "Der angegebene Name existiert bereits!"
@@ -36,12 +36,12 @@
                 "description": "Sollte {name} in {country} die von der KI vorhergesagten Preise für die nächsten 7 Tage anzeigen?"
             },
             "carnot_credentials": {
-                "title": "API-Anmeldeinformationen für die Carnot-Plattform (https:\/\/www.carnot.dk\/)",
+                "title": "API-Anmeldeinformationen für die Carnot-Plattform ({carnot_url})",
                 "data": {
                     "email": "E-Mail",
                     "api_key": "API-Schlüssel"
                 },
-                "description": "Siehe https:\/\/www.carnot.dk\/"
+                "description": "Siehe {carnot_url}"
             },
             "enable_extras": {
                 "title": "Zusätzliche Dienste aktivieren?",
@@ -53,7 +53,7 @@
             },
             "tariff_settings": {
                 "title": "Netzbetreiber auswählen",
-                "description": "Im Zweifel finden Sie Ihren Netzbetreiber hier: https:\/\/greenpowerdenmark.dk\/vejledning-teknik\/nettilslutning\/find-netselskab (NUR für dänische Übertragungsnetzbetreiber)",
+                "description": "Im Zweifel finden Sie Ihren Netzbetreiber hier: {dk_netoperators} (NUR für dänische Übertragungsnetzbetreiber)",
                 "data": {
                     "tariff_charge_owner": "Netzbetreiber auswählen"
                 }
@@ -62,7 +62,7 @@
     },
     "options": {
         "error": {
-            "invalid_template": "Die Vorlage für die Zusatzkosten ist ungültig, siehe https:\/\/github.com\/mtrab\/energidataservice"
+            "invalid_template": "Die Vorlage für die Zusatzkosten ist ungültig, siehe {github_url}"
         },
         "abort": {
             "already_configured": "Der angegebene Name existiert bereits!"
@@ -89,12 +89,12 @@
                 "description": "Sollte {name} in {country} die von der KI vorhergesagten Preise für die nächsten 7 Tage anzeigen?"
             },
             "carnot_credentials": {
-                "title": "API-Anmeldeinformationen für die Carnot-Plattform (https:\/\/www.carnot.dk\/)",
+                "title": "API-Anmeldeinformationen für die Carnot-Plattform ({carnot_url})",
                 "data": {
                     "email": "E-Mail",
                     "api_key": "API-Schlüssel"
                 },
-                "description": "Siehe https:\/\/www.carnot.dk"
+                "description": "Siehe {carnot_url}"
             },
             "enable_extras": {
                 "title": "Zusätzliche Dienste aktivieren?",
@@ -106,7 +106,7 @@
             },
             "tariff_settings": {
                 "title": "Wähle Netzbetreiber",
-                "description": "Im Zweifel finden Sie Ihren Netzbetreiber hier: https:\/\/greenpowerdenmark.dk\/vejledning-teknik\/nettilslutning\/find-netselskab (NUR für dänische Übertragungsnetzbetreiber)",
+                "description": "Im Zweifel finden Sie Ihren Netzbetreiber hier: {dk_netoperators} (NUR für dänische Übertragungsnetzbetreiber)",
                 "data": {
                     "tariff_charge_owner": "Wähle Netzbetreiber"
                 }
