@@ -223,6 +223,4 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     api.listeners.append(stop_co2_updates)
     api.listeners.append(stop_carnot_updates)
 
-    await api.async_get_tariffs()
-
     return True

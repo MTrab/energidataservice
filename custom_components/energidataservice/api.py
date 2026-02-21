@@ -345,11 +345,25 @@ class APIConnector:
 
             try:
                 self.tariff_data = await tariff.async_get_tariffs()
+                if self.tariff_data is None:
+                    self.tariff_data = {
+                        "additional_tariffs": {},
+                        "tariffs": {},
+                        "status": 503,
+                    }
 
                 if self.tariff_data["status"] != 200:
-                    self.retry_update(
-                        tariff_endpoint[0].module + "_tariff", self.async_get_tariffs
-                    )
+                    if self.tariff_data["status"] in [400, 403, 411]:
+                        _LOGGER.warning(
+                            "Tariff endpoint returned %s, skipping retry for now",
+                            self.tariff_data["status"],
+                        )
+                        self.clear_retry(tariff_endpoint[0].module + "_tariff")
+                    else:
+                        self.retry_update(
+                            tariff_endpoint[0].module + "_tariff",
+                            self.async_get_tariffs,
+                        )
                 else:
                     self.clear_retry(tariff_endpoint[0].module + "_tariff")
             except UnknownChargeOwnerError:

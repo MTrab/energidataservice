@@ -376,6 +376,7 @@ class EnergidataserviceConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             user_input = {**user_input, **self.user_input}
             self.user_input = user_input
             await self.async_set_unique_id(user_input[CONF_NAME])
+            self._abort_if_unique_id_configured()
 
             _LOGGER.debug(user_input)
 
