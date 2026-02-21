@@ -321,8 +321,10 @@ class EnergidataserviceCO2Sensor(SensorEntity):
         await super().async_added_to_hass()
         _LOGGER.debug("Added sensor '%s' CO2", self._entity_id)
         await self.update_data()
-        async_dispatcher_connect(
-            self._hass, UPDATE_EDS_5MIN.format(self._entry_id), self.update_data
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self._hass, UPDATE_EDS_5MIN.format(self._entry_id), self.update_data
+            )
         )
 
 
@@ -653,8 +655,10 @@ class EnergidataserviceSensor(SensorEntity):
         await super().async_added_to_hass()
         _LOGGER.debug("Added sensor '%s'", self._entity_id)
         await self.validate_data()
-        async_dispatcher_connect(
-            self._hass, UPDATE_EDS.format(self._entry_id), self.validate_data
+        self.async_on_remove(
+            async_dispatcher_connect(
+                self._hass, UPDATE_EDS.format(self._entry_id), self.validate_data
+            )
         )
 
     @property
