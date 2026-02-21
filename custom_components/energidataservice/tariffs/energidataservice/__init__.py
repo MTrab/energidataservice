@@ -10,7 +10,6 @@ from async_retrying_ng import RetryError, retry
 from homeassistant.util import slugify as util_slugify
 
 from ...exceptions import UnknownChargeOwnerError
-
 from .chargeowners import CHARGEOWNERS
 from .regions import REGIONS
 
