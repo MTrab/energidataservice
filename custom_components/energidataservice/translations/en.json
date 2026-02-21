@@ -1,7 +1,7 @@
 {
     "config": {
         "error": {
-            "invalid_template": "The additional cost template is invalid, check https:\/\/github.com\/mtrab\/energidataservice"
+            "invalid_template": "The additional cost template is invalid, check {github_url}"
         },
         "abort": {
             "already_configured": "The specified name exists!"
@@ -38,12 +38,12 @@
                 "description": "Should {name} in {country} show AI predicted prices for the next 7 days?"
             },
             "carnot_credentials": {
-                "title": "API credentials for Carnot platform (https:\/\/www.carnot.dk\/)",
+                "title": "API credentials for Carnot platform ({carnot_url})",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
                 },
-                "description": "See https:\/\/www.carnot.dk"
+                "description": "See {carnot_url}"
             },
             "enable_extras": {
                 "title": "Enable extra services?",
@@ -55,7 +55,7 @@
             },
             "tariff_settings": {
                 "title": "Select net operator",
-                "description": "If in doubt find more information here: https:\/\/greenpowerdenmark.dk\/vejledning-teknik\/nettilslutning\/find-netselskab (ONLY for Danish operators)",
+                "description": "If in doubt find more information here: {dk_netoperators} (ONLY for Danish operators)",
                 "data": {
                     "tariff_charge_owner": "Select net operator"
                 }
@@ -64,7 +64,7 @@
     },
     "options": {
         "error": {
-            "invalid_template": "The additional cost template is invalid, check https:\/\/github.com\/mtrab\/energidataservice"
+            "invalid_template": "The additional cost template is invalid, check {github_url}"
         },
         "abort": {
             "already_configured": "The specified name exists!"
@@ -93,12 +93,12 @@
                 "description": "Should {name} in {country} show AI predicted prices for the next 7 days?"
             },
             "carnot_credentials": {
-                "title": "API credentials for Carnot platform (https:\/\/www.carnot.dk\/)",
+                "title": "API credentials for Carnot platform ({carnot_url})",
                 "data": {
                     "email": "Email",
                     "api_key": "API-key"
                 },
-                "description": "See https:\/\/www.carnot.dk"
+                "description": "See {carnot_url}"
             },
             "enable_extras": {
                 "title": "Enable extra services?",
@@ -110,7 +110,7 @@
             },
             "tariff_settings": {
                 "title": "Select net operator",
-                "description": "If in doubt find more information here: https:\/\/greenpowerdenmark.dk\/vejledning-teknik\/nettilslutning\/find-netselskab (ONLY for Danish operators)",
+                "description": "If in doubt find more information here: {dk_netoperators} (ONLY for Danish operators)",
                 "data": {
                     "tariff_charge_owner": "Select net operator"
                 }
