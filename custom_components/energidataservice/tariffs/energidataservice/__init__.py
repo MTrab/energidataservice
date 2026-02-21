@@ -9,6 +9,8 @@ from aiohttp import ClientSession
 from async_retrying_ng import RetryError, retry
 from homeassistant.util import slugify as util_slugify
 
+from ...exceptions import UnknownChargeOwnerError
+
 from .chargeowners import CHARGEOWNERS
 from .regions import REGIONS
 
@@ -113,11 +115,12 @@ class Connector:
 
             return self.tariffs
         except KeyError:
-            _LOGGER.error(
-                "Error finding '%s' in the list of charge owners - "
-                "please reconfigure your integration.",
-                self._chargeowner,
-            )
+            # _LOGGER.error(
+            #     "Error finding '%s' in the list of charge owners - "
+            #     "please reconfigure your integration.",
+            #     self._chargeowner,
+            # )
+            raise UnknownChargeOwnerError(self._chargeowner) from None
         except RetryError:
             _LOGGER.error("Retry attempts exceeded for tariffs request.")
 
