@@ -13,7 +13,7 @@
     "issue_tracker": "https://github.com/MTrab/energidataservice/issues",
     "requirements": [
         "async-retrying-ng==0.1.3",
-        "CurrencyConverter==0.18.11"
+        "CurrencyConverter==0.18.14"
     ],
     "version": "1.6.16"
 }
