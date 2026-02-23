@@ -64,7 +64,7 @@ CHARGEOWNERS = {
     "Hurup Elværk Net": {
         "gln": "5790000610839",
         "company": "Hurup Elværk Net A/S",
-        "type": ["HEV-NT-01"],
+        "type": ["HEV-NT-01T"],
         "chargetype": ["D03"],
     },
     "Veksel": {
