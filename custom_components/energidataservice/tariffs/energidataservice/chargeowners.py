@@ -136,7 +136,7 @@ CHARGEOWNERS = {
     "Tarm Elværk Net": {
         "gln": "5790000706419",
         "company": "Tarm Elværk Net A/S",
-        "type": ["TEV-NT-01", "TEV-NT-01R"],
+        "type": ["TEV-NT-01T", "TEV-NT-01R"],
         "chargetype": ["D03"],
     },
     "Zeanet": {
