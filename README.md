@@ -23,8 +23,10 @@ For additional Tips & Tricks, see the [wiki pages](https://github.com/MTrab/ener
 ### Option 1 (easy) - HACS:
 
 - Ensure that HACS is installed.
-- Search for and install the "Energi Data Service" integration.
+- Search for and install the "Energi Data Service" integration (or click the blue button below, to take you there directly).
 - Restart Home Assistant.
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MTrab&repository=energidataservice)
 
 ### Option 2 - Manual installation:
 
