@@ -118,7 +118,7 @@ CHARGEOWNERS = {
     "Hammel Elforsyning Net": {
         "gln": "5790001090166",
         "company": "Hammel Elforsyning Net A/S",
-        "type": ["50001"],
+        "type": ["C-Tarif"],
         "chargetype": ["D03"],
     },
     "El-net Kongerslev": {
