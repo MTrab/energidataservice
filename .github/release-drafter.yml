@@ -62,3 +62,31 @@ autolabeler:
   - label: 'feature request'
     branch:
       - '/feature\/.+/'
+  - label: 'enhancement'
+    branch:
+      - '/enhancement\/.+/'
+  - label: 'chore'
+    branch:
+      - '/chore\/.+/'
+  - label: 'dependencies'
+    branch:
+      - '/dependabot\/.+/'
+      - '/dependency\/.+/'
+      - '/dependencies\/.+/'
+  - label: 'skip-changelog'
+    branch:
+      - '/dependabot\/.+/'
+  - label: 'documentation'
+    branch:
+      - '/documentation\/.+/'
+  - label: 'patch'
+    branch:
+      - '/patch\/.+/'
+      - '/dependabot\/.+/'
+      - '/dependency\/.+/'
+      - '/dependencies\/.+/'
+      - '/chore\/.+/'
+      - '/feature\/.+/'
+      - '/fix\/.+/'
+      - '/enhancement\/.+/'
+      - '/documentation\/.+/'
