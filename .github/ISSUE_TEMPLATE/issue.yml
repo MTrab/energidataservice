@@ -7,7 +7,11 @@ body:
   - type: markdown
     attributes:
       value: |
+        Note:
         This issue form is for reporting bugs only!
+        KEEP THE LANGUAGE AT ENGLISH PLEASE!
+
+        PLEASE MAKE SURE YOU HAVE INSTALLED THE LATEST VERSION BEFORE SUBMITTING A NEW ISSUE!
   - type: textarea
     validations:
       required: true
@@ -57,21 +61,21 @@ body:
     attributes:
       value: |
         # Details
-  - type: textarea
-    validations:
-      required: true
+  - type: upload
     attributes:
-      label: Diagnostics information
-      placeholder: "drag-and-drop the diagnostics data file here (do not copy-and-paste the content)"
+      label: Diagnostics file
       description: >-
-        This integrations provide the ability to [download diagnostic data](https://www.home-assistant.io/docs/configuration/troubleshooting/#debug-logs-and-diagnostics).
+        This integration provides the ability to [download diagnostic data](https://www.home-assistant.io/docs/configuration/troubleshooting/#download-diagnostics).
 
-        **It would really help if you could download the diagnostics data for the device you are having issues with,
-        and <ins>drag-and-drop that file into the textbox below.</ins>**
+        **Please upload the diagnostics JSON file here instead of copy-pasting its content.**
 
         It generally allows pinpointing defects and thus resolving issues faster.
-        
-        If you are unable to provide the diagnostics (ie. you cannot add the integration), please write **None** in this field.
+  - type: textarea
+    attributes:
+      label: If you could not provide diagnostics, explain why
+      description: >-
+        If you are unable to provide the diagnostics file (for example because you cannot add the integration),
+        explain why here. Otherwise leave this field empty.
   - type: textarea
     attributes:
       label: Anything in the logs that might be useful for us?
