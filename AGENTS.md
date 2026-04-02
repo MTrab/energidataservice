@@ -1,0 +1,206 @@
+# AGENTS.md — Energi Data Service Integration
+
+This document is intended for AI coding agents (e.g., OpenAI Codex) working in this repository.
+It defines setup, constraints, workflow, safety rules, and quality expectations for the Webast Connect integration.
+
+Agents must follow this document strictly.
+
+---
+
+## Agent Objectives
+
+1. Implement and maintain the Energi Data Service integration.
+2. Keep changes minimal, isolated, and testable.
+3. Prefer deterministic, explicit implementations over implicit or heuristic behavior.
+4. Never fabricate missing technical details.
+
+---
+
+## No-Assumption Rule (Facts Only)
+
+If required technical details are missing, the agent MUST:
+
+- Explicitly request clarification before implementing a dependent solution.
+
+The agent must NOT:
+
+- Invent API endpoints
+- Invent protocol structures
+- Guess authentication flows
+- Introduce undocumented environment variables
+
+If there is uncertainty, stop and request clarification.
+
+---
+
+## Repository Structure
+
+(Adjust once the structure is finalized.)
+
+- `custom_components/energidataservice` — Integration logic
+- `tests/` — Unit and integration tests
+- `docs/` — Protocol documentation, architecture notes
+- `scripts/` — Development utilities, mostly for running Home Assistant tasks
+
+If the repository becomes a monorepo, additional `AGENTS.md` files may exist in subdirectories with scoped instructions.
+
+## Environment & Setup
+
+The agent must use the exact versions defined in the project configuration files.
+
+### Requirements
+
+- Runtime: Python 3.14
+
+## Energi Data Service Integration Rules
+
+Devices must be treated as external hardware systems.
+
+The agent must:
+
+- Avoid changes that require physical hardware validation unless:
+  - Proper mocks are provided, or
+  - A clear manual test plan is included.
+- Ensure network calls include timeouts.
+- Avoid infinite retry loops.
+- Handle disconnections gracefully.
+
+If certificates or tokens are required:
+
+- Never commit them.
+- Never log them in plaintext.
+- Always load them from environment variables or a local secure store.
+- Document required environment variables clearly.
+
+---
+
+## Logging & Error Handling
+
+- Never log credentials, tokens, certificates, or sensitive identifiers.
+- Prefer structured errors where applicable.
+- Fail explicitly rather than silently ignoring errors.
+- Surface actionable error messages.
+- ALWAYS test for race conditions in relevant async/concurrent flows before considering a change complete.
+
+---
+
+## Code Standards
+
+- Follow existing project formatting and naming conventions.
+- Do not introduce large refactors in the same change as functional modifications unless explicitly requested.
+- Keep commits small and focused.
+- Avoid introducing new dependencies unless justified.
+- Use `ruff` as formatter/linter in this repository, if not found local, install it.
+- Run `ruff check --fix` as defined in `.pre-commit-config.yaml` when validating Python changes.
+
+## Home Assistant Compliance
+
+The integration MUST comply with Home Assistant integration standards and developer guidelines.
+
+The agent must:
+
+- Follow Home Assistant architecture patterns for config entries, setup/unload flows, and platform forwarding.
+- Implement entities according to Home Assistant entity model conventions (state, availability, device info, unique IDs, and naming).
+- Use `DataUpdateCoordinator` where periodic or shared polling is required.
+- Provide and maintain `config_flow`, diagnostics/repair handling (when relevant), and translations.
+- Missing translations may be added directly in this repository, including with AI assistance, as long as the result is consistent with the English source strings and current integration behavior.
+- Keep `manifest.json`, services, and supported features aligned with Home Assistant requirements.
+- Ensure changes target and maintain at least Home Assistant Silver quality expectations, and move toward Gold where feasible.
+- Add or update tests for behavior changes, especially setup, coordinator behavior, and entity state handling.
+
+---
+
+## Git Workflow
+
+Branch naming convention:
+
+```text
+feature/<name> - for introducing new features
+fix/<name> - fixing bugs
+enhancement/<name> - for code or stability enhancements
+chore/<name> - for repository and code chores
+dependency/<name> - for dependency version updates
+translation/<name> - for translation purposes
+chargeowner/<name> - for changes regarding charge owners
+```
+
+All new branches MUST be based on `master`, unless the user explicitly instructs otherwise.
+
+All code changes MUST start from a dedicated `feature/...`, `fix/...`, `chore/...`, `translation/...`, `enhancement/...`, `chargeowner/...` or `dependency/...` branch.
+
+The agent must NEVER push directly to `master` and NEVER merge directly to `master` unless the user explicitly asks for it in the current session.
+
+Before creating a commit, the agent MUST report the result of:
+
+- `git status`
+- `ruff format`
+- `ruff check`
+- the relevant tests run for the change
+
+Each PR must include:
+
+- A clear description of changes
+- Test strategy (automated or manual)
+- Known limitations
+- Any required configuration changes
+- The correct semver label (`patch`, `minor`, or `major`) before merge
+- A proposed semver label that is explicitly verified with the user before the label is set or changed - all other semver labels MUST be removed before merge
+- If the PR resolves an issue, include the text `Fixes #<issue-id>`
+- A shout, descriptive and human readable title
+
+The agent must NOT merge a PR without explicit permission
+
+The agent must NOT use administrative merge overrides (for example `gh pr merge --admin`).
+
+Before merging any PR, the agent MUST wait until all required CI/status checks are green/passing.
+
+If GitHub, CI, or local tooling is unstable or failing, the agent MUST stop and ask before taking any workaround that bypasses the normal branch -> PR -> merge flow.
+
+When a branch is merged it must also be deleted both local and remote, and changes merged to master must be pulled
+
+---
+
+## Release Notes
+
+- Release notes should ALWAYS be in english
+- Keep the existing release note structure unless explicitly asked to change it
+- The `## Changes` section should be short, easy to read, and written as plain prose without bullets
+- Prefer 2-3 short paragraphs under `## Changes` instead of one dense block of text
+- Base the `## Changes` text only on the PRs already included in the release draft unless told otherwise
+
+---
+
+## Security Constraints
+
+The agent must NOT:
+
+- Introduce telemetry without explicit approval
+- Send user data to third-party services
+- Add undocumented network endpoints
+- Disable encryption for convenience
+
+All cloud endpoints must be documented in `docs/`.
+
+---
+
+## When in Doubt
+
+The agent must stop and request clarification regarding:
+
+- Authentication flow
+- API contract details
+- CI expectations
+- Required vs optional features
+
+---
+
+## Definition of Done
+
+A change is considered complete when:
+
+- All relevant tests pass locally and in CI
+- New behavior is covered by tests (where feasible)
+- Documentation is updated if configuration or API changes
+- No secrets are committed
+- Linting and formatting checks pass
+- The implementation adheres strictly to the No-Assumption Rule
