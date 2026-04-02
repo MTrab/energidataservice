@@ -1,4 +1,4 @@
-""" Exceptions for the EnergiDataService integration. """
+"""Exceptions for the EnergiDataService integration."""
 
 
 class UnknownChargeOwnerError(Exception):

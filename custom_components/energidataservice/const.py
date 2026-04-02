@@ -61,7 +61,9 @@ DATA = "data"
 DEFAULT_NAME = "Energidataservice"
 DEFAULT_TEMPLATE = "{{0.0|float}}"
 
-DK_NETOPERATORS = "https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab"
+DK_NETOPERATORS = (
+    "https://greenpowerdenmark.dk/vejledning-teknik/nettilslutning/find-netselskab"
+)
 
 DOMAIN = "energidataservice"
 
