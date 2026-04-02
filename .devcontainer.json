@@ -1,6 +1,6 @@
 {
     "name": "Energi Data Service",
-    "image": "mcr.microsoft.com/devcontainers/python:3.13-bookworm",
+    "image": "mcr.microsoft.com/devcontainers/python:3.14-bookworm",
     "postCreateCommand": "scripts/setup",
     "appPort": [
         "9124:8123"
@@ -19,7 +19,8 @@
 				"ryanluker.vscode-coverage-gutters",
 				"ms-python.vscode-pylance",
 				"ms-python.isort",
-				"ms-python.black-formatter"
+				"ms-python.black-formatter",
+				"openai.chatgpt"
 			],
 			"settings": {
 				"files.eol": "\n",
@@ -37,8 +38,13 @@
 			}
 		}
 	},
-	"remoteUser": "root",
+	"remoteUser": "vscode",
 	"features": {
 		"ghcr.io/devcontainers/features/rust:1": {}
-	}
+	},
+	"mounts": [
+		"source=${localWorkspaceFolder}/config,target=/config,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/.codex/auth.json,target=/etc/codex/auth.json,readonly,type=bind",
+		"source=gh-config,target=/home/vscode/.config/gh,type=volume"
+	]
 }
