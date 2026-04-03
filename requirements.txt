@@ -1,6 +1,5 @@
 async-retrying==0.2.2
-aiohasupervisor==0.4.3
-CurrencyConverter==0.18.15
+CurrencyConverter==0.18.16
 colorlog==6.10.1
 homeassistant==2026.4.0
 pytest==9.0.2
