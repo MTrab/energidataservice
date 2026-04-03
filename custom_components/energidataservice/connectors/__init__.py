@@ -5,11 +5,10 @@ from __future__ import annotations
 import importlib
 from asyncio import get_running_loop
 from collections import namedtuple
+from genericpath import isdir
 from logging import getLogger
 from os import listdir
 from posixpath import dirname
-
-from genericpath import isdir
 
 from ..const import CURRENCY_LIST, REGIONS
 

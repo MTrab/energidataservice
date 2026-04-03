@@ -136,18 +136,20 @@ Netherlands | | |
 Norway | | |
 Sweden | | |
 
-# Translation
+## Use the custom template to show the next x cheapest hours
 
-To handle submissions of translated strings I'm using [Lokalise](https://lokalise.com/).<br/>
-They provide an amazing platform that is easy to use and maintain.<br/>
-<br/>
-To help out with the translation of this custom_component you need an account on Lokalise.<br/>
-The easiest way to get one is to [click here](https://lokalise.com/login/) then select "Log in with GitHub".<br/>
-<br/>
-When you have created your account, [clich here](https://app.lokalise.com/public/6177700562fcdf14ea2483.26249049/) to join the project on Lokalise.<br/>
-<br/>
-Check Lokalise documentation [here](https://docs.lokalise.com/en/) - it's really good.<br/>
-<br/>
-All languages for the countries currently supported by the integration, should be added to Lokalise - if you are missing a language, then please [submit a feature request](https://github.com/MTrab/energidataservice/issues/new?assignees=&labels=feature+request&template=feature_request.md&title=%5BFR%5D%3A+%3Ctitle%3E)<br/>
-<br/>
-Contributions to the translations will be updated on every release of this component.
+Copy the `custom_templates/CheapestPeriod.jinja` to the `custom_templates` directory in your config folder (if it doesn't exist then create the folder)
+Reload Home Assistant and use the Jinja template by inserting the example below in a template sensor helper
+
+```yaml
+  - sensor:
+      - name: "Cheapest 3 hours"
+        icon: "mdi:home-lightning-bolt-outline"
+        unique_id: "cheapest_3_hours"
+        state: >
+          {% from 'CheapestPeriod.jinja' import CheapestPeriod %}
+          {% set earliestStartTime = now() %}
+          {% set latestStartTime = now() + timedelta(days=7) %}
+          {% set periodLength = timedelta(minutes=180) %}
+          {{ CheapestPeriod(earliestStartTime , latestStartTime , periodLength, false) }}
+```

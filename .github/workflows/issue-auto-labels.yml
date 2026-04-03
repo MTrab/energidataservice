@@ -1,0 +1,280 @@
+name: Issue auto labels
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  add-issue-labels:
+    name: Add issue labels
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Apply labels from issue content
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const body = context.payload.issue.body ?? "";
+            const labels = new Set();
+            const diagnosticsMissingLabel = "diagnostics missing";
+            const featureRequestLabel = "feature request";
+            const featureRequestPrefix = "[FR]: ";
+
+            function escapeRegExp(value) {
+              return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            }
+
+            function getSectionValue(heading) {
+              const pattern = new RegExp(
+                `### ${escapeRegExp(heading)}\\s*([\\s\\S]*?)(?=\\n### |$)`,
+                "m",
+              );
+              const match = body.match(pattern);
+              return match ? match[1].trim() : "";
+            }
+
+            function hasMeaningfulValue(value) {
+              return value !== "" && value !== "_No response_";
+            }
+
+            function extractFirstUrl(value) {
+              const markdownLinkMatch = value.match(/\[[^\]]+\]\((https?:\/\/[^\s)]+)\)/i);
+              if (markdownLinkMatch) {
+                return markdownLinkMatch[1];
+              }
+
+              const urlMatch = value.match(/https?:\/\/\S+/i);
+              return urlMatch ? urlMatch[0] : null;
+            }
+
+            function normalizeVersion(value) {
+              if (typeof value !== "string") {
+                return null;
+              }
+
+              const normalized = value.trim().replace(/^v/i, "");
+              return normalized === "" ? null : normalized;
+            }
+
+            function compareVersions(left, right) {
+              const leftParts = left.split(".").map((part) => Number.parseInt(part, 10));
+              const rightParts = right.split(".").map((part) => Number.parseInt(part, 10));
+              const length = Math.max(leftParts.length, rightParts.length);
+
+              if (
+                leftParts.some((part) => Number.isNaN(part)) ||
+                rightParts.some((part) => Number.isNaN(part))
+              ) {
+                return null;
+              }
+
+              for (let index = 0; index < length; index += 1) {
+                const leftPart = leftParts[index] ?? 0;
+                const rightPart = rightParts[index] ?? 0;
+
+                if (leftPart > rightPart) {
+                  return 1;
+                }
+
+                if (leftPart < rightPart) {
+                  return -1;
+                }
+              }
+
+              return 0;
+            }
+
+            async function loadDiagnosticsJson(url) {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 10000);
+
+              try {
+                const response = await fetch(url, {
+                  signal: controller.signal,
+                  headers: {
+                    Accept: "application/json, text/plain;q=0.9, */*;q=0.8",
+                  },
+                });
+
+                if (!response.ok) {
+                  throw new Error(`Diagnostics download failed with status ${response.status}`);
+                }
+
+                return await response.json();
+              } finally {
+                clearTimeout(timeout);
+              }
+            }
+
+            function getInstalledIntegrationVersion(diagnosticsJson) {
+              // Home Assistant diagnostics expose custom integration versions here.
+              return normalizeVersion(
+                diagnosticsJson?.custom_components?.energidataservice?.version,
+              );
+            }
+
+            //            const mowerMakeLabels = {
+            //              "Worx Landroid": "Worx Landroid",
+            //              "Landroid Vision": "Landroid Vision",
+            //              "Kress": "Kress",
+            //              "LandXcape": "LandXcape",
+            //            };
+
+            //            for (const [fieldValue, label] of Object.entries(mowerMakeLabels)) {
+            //              const pattern = new RegExp(
+            //                `### What make of mower does this concern\\?\\s+${escapeRegExp(fieldValue)}(?:\\s|$)`,
+            //                "m",
+            //              );
+            //              if (pattern.test(body)) {
+            //                labels.add(label);
+            //                break;
+            //              }
+            //            }
+
+            //            const textMatchers = [
+            //              { pattern: /\bpyworxcloud\b/i, label: "pyworxcloud" },
+            //            ];
+
+            const textMatchers = [];
+
+            const existingLabels = (context.payload.issue.labels ?? []).map(
+              (label) => label.name,
+            );
+            const isFeatureRequest = existingLabels.includes(featureRequestLabel);
+
+            if (
+              isFeatureRequest &&
+              !context.payload.issue.title.startsWith(featureRequestPrefix)
+            ) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                title: `${featureRequestPrefix}${context.payload.issue.title}`,
+              });
+            }
+
+            for (const matcher of textMatchers) {
+              if (matcher.pattern.test(body)) {
+                labels.add(matcher.label);
+              }
+            }
+
+            const diagnosticsFile = getSectionValue("Diagnostics file");
+            const diagnosticsExplanation = getSectionValue(
+              "If you could not provide diagnostics, explain why",
+            );
+
+            const diagnosticsMissing =
+              !hasMeaningfulValue(diagnosticsFile) &&
+              !hasMeaningfulValue(diagnosticsExplanation);
+
+            const latestRelease = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const latestVersion = normalizeVersion(latestRelease.data.tag_name);
+
+            if (!isFeatureRequest && diagnosticsMissing) {
+              labels.add(diagnosticsMissingLabel);
+
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: diagnosticsMissingLabel,
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: diagnosticsMissingLabel,
+                  color: "B60205",
+                  description: "Issue is missing diagnostics and no reason was provided",
+                });
+              }
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: [
+                  "Thanks for opening this issue.",
+                  "",
+                  "No diagnostics file was attached, and no explanation was provided for why diagnostics could not be included.",
+                  "Please upload the diagnostics JSON file, or reply with the reason you cannot provide it.",
+                  "You can find the official instructions for downloading diagnostics here: https://www.home-assistant.io/docs/configuration/troubleshooting/#download-diagnostics",
+                  "",
+                  "Also, please make sure to test with the latest version of the integration before we continue troubleshooting this issue.",
+                  `Latest available release is \`${latestVersion}\`.`,
+                ].join("\n"),
+              });
+            }
+
+            if (!isFeatureRequest && hasMeaningfulValue(diagnosticsFile)) {
+              const diagnosticsUrl = extractFirstUrl(diagnosticsFile);
+
+              if (!diagnosticsUrl) {
+                core.info("Diagnostics section had content, but no URL could be extracted.");
+              } else {
+                try {
+                  const diagnosticsJson = await loadDiagnosticsJson(diagnosticsUrl);
+                  const installedVersion =
+                    getInstalledIntegrationVersion(diagnosticsJson);
+
+                  if (!installedVersion) {
+                    core.info("Could not determine installed integration version from diagnostics.");
+                  } else {
+                    if (!latestVersion) {
+                      core.info("Latest release did not contain a comparable version tag.");
+                    } else {
+                      const comparison = compareVersions(installedVersion, latestVersion);
+
+                      if (comparison === null) {
+                        core.info(
+                          `Could not compare installed version ${installedVersion} with latest version ${latestVersion}.`,
+                        );
+                      } else if (comparison < 0) {
+                        await github.rest.issues.createComment({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                          body: [
+                            `The uploaded diagnostics indicate that you are running Energi Data Service version \`${installedVersion}\`, while the latest available release is \`${latestVersion}\`.`,
+                            "Please update to the latest release and test again before we continue troubleshooting this issue.",
+                          ].join("\n"),
+                        });
+                      } else {
+                        core.info(
+                          `Installed version ${installedVersion} is up to date compared to latest release ${latestVersion}.`,
+                        );
+                      }
+                    }
+                  }
+                } catch (error) {
+                  core.warning(`Unable to validate integration version from diagnostics: ${error.message}`);
+                }
+              }
+            }
+
+            if (labels.size === 0) {
+              core.info("No additional labels matched.");
+              return;
+            }
+
+            const labelsToAdd = [...labels];
+            core.info(`Adding labels: ${labelsToAdd.join(", ")}`);
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labelsToAdd,
+            });

@@ -1,40 +1,140 @@
 name: Release
 
 on:
-  workflow_dispatch:
   release:
     types: [published]
 
-env:
-  COMPONENT_DIR: energidataservice
+permissions:
+  contents: write
 
 jobs:
-  release_zip_file:
-    name: Prepare release asset
+  release:
+    name: Publish release
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      RELEASE_ID: ${{ github.event.release.id }}
+      IS_PRERELEASE: ${{ github.event.release.prerelease }}
+      DEFAULT_BRANCH: master
+      COMPONENT_PATH: custom_components/energidataservice
+      MANIFEST_FILE: custom_components/energidataservice/manifest.json
+      ASSET_NAME: energidataservice.zip
     steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
       - name: Check out repository
         uses: actions/checkout@v6
-      - name: Update manifest.json version to ${{ github.event.release.tag_name }}
-        run: |
-          python3 ${{ github.workspace }}/.github/scripts/update_hacs_manifest.py --version ${{ github.event.release.tag_name }} --path /custom_components/energidataservice/
-      - name: Commit manifest update
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: master
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Configure git author
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add ./custom_components/energidataservice/manifest.json
-          git add ./custom_components/energidataservice/tariffs/energidataservice/chargeowners.py
-          git commit -m "Updated manifest.json and Charge Owners"
-          git push origin HEAD:master
-      - name: Create zip
+
+      - name: Update manifest version
         run: |
-          cd custom_components/energidataservice
-          zip energidataservice.zip -r ./
-      - name: Upload zip to release
-        uses: svenstaro/upload-release-action@2.11.4
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./custom_components/energidataservice/energidataservice.zip
-          asset_name: energidataservice.zip
-          tag: ${{ github.ref }}
-          overwrite: true
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          version = os.environ["RELEASE_TAG"]
+          manifest_path = Path(os.environ["MANIFEST_FILE"])
+          normalized = version[1:] if version.startswith("v") else version
+
+          with manifest_path.open(encoding="utf-8") as manifest_file:
+              manifest = json.load(manifest_file)
+
+          manifest["version"] = normalized
+
+          ordered_manifest = {
+              "domain": manifest["domain"],
+              "name": manifest["name"],
+              **{
+                  key: value
+                  for key, value in sorted(manifest.items())
+                  if key not in {"domain", "name"}
+              },
+          }
+
+          with manifest_path.open("w", encoding="utf-8") as manifest_file:
+              json.dump(ordered_manifest, manifest_file, indent=4)
+              manifest_file.write("\n")
+          PY
+
+      - name: Commit manifest update
+        id: commit
+        run: |
+          if git diff --quiet -- "$MANIFEST_FILE"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git add "$MANIFEST_FILE"
+          git commit -m "chore: bump manifest for ${RELEASE_TAG}"
+          git push origin "HEAD:${DEFAULT_BRANCH}"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Refresh local branch after push
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          git fetch origin "$DEFAULT_BRANCH" --depth=1
+          git checkout "$DEFAULT_BRANCH"
+          git merge --ff-only "origin/${DEFAULT_BRANCH}"
+
+      - name: Create or move release tag
+        run: |
+          remote_tag_sha="$(git ls-remote --tags origin "refs/tags/$RELEASE_TAG" | awk '{print $1}')"
+          head_sha="$(git rev-parse HEAD)"
+
+          if [ -n "$remote_tag_sha" ] && [ "$remote_tag_sha" != "$head_sha" ]; then
+            git tag -f "$RELEASE_TAG" "$head_sha"
+            git push origin "refs/tags/$RELEASE_TAG" --force
+            exit 0
+          fi
+
+          if [ -z "$remote_tag_sha" ]; then
+            git tag "$RELEASE_TAG"
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+
+      - name: Create zip asset
+        run: |
+          cd "$COMPONENT_PATH"
+          zip "$ASSET_NAME" -r ./
+
+      - name: Update published release and upload asset
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh release edit "$RELEASE_TAG" \
+            --repo "${{ github.repository }}" \
+            --draft=false
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            gh release edit "$RELEASE_TAG" \
+              --repo "${{ github.repository }}" \
+              --prerelease
+          fi
+
+          gh api \
+            --method PATCH \
+            "repos/${{ github.repository }}/releases/${RELEASE_ID}" \
+            -f target_commitish="$DEFAULT_BRANCH" >/dev/null
+
+          gh release upload "$RELEASE_TAG" \
+            "$COMPONENT_PATH/$ASSET_NAME" \
+            --repo "${{ github.repository }}" \
+            --clobber
