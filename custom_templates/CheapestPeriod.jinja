@@ -1,0 +1,37 @@
+{% macro CheapestPeriod(earliestDatetime, latestDatetime, durationTimedelta, findLastPeriodBoolean) %}
+
+{# Prepare input parameters #}
+{% set earliestDatetime = now() if earliestDatetime is not defined or earliestDatetime is not datetime else earliestDatetime %}
+{% set latestDatetime = now()+timedelta(days=7) if latestDatetime is not defined or latestDatetime is not datetime else latestDatetime %}
+{% set durationTimedelta = timedelta(hours=1) if durationTimedelta is not defined or durationTimedelta < timedelta(hours=1) else durationTimedelta %}
+{% set durationMinutes = durationTimedelta.total_seconds() // 60 | int %}
+{% set durationHours = "%.0f"|format((durationMinutes+30) // 60 | round | float) | int %}
+
+{# Retrieve energy prices #}
+{% set energyPrice = "sensor.energi_data_service" %}
+{% set today = state_attr(energyPrice, 'raw_today') %}
+{% set tomorrow = state_attr(energyPrice, 'raw_tomorrow') %}
+{% set forecast = state_attr(energyPrice, 'forecast') %}
+{% set prices = (today if today else []) + (tomorrow if tomorrow else []) + (forecast if forecast else []) %}
+
+{# Calculate cheapest period #}
+{% set result = namespace(priceSum=999999, priceStartTime=None) %}
+{% set prices_len = (prices | length) - durationHours | int %}
+{% for n in range(prices_len) %}
+  {% set priceStartTime = prices[n].hour %}
+  {% if earliestDatetime <= priceStartTime and priceStartTime <= latestDatetime %}
+    {% set priceSum = namespace(value=0) %}
+    {% for i in range(durationHours) %}
+      {% set priceSum.value = priceSum.value + prices[n+i].price %}
+    {% endfor %}
+    {% if priceSum.value<result.priceSum or (findLastPeriodBoolean and priceSum.value<=result.priceSum) %}
+      {% set result.priceSum = priceSum.value %}
+      {% set result.priceStartTime = priceStartTime %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{# Output result #}
+{{ result.priceStartTime + timedelta(seconds=durationHours*30*60-durationMinutes*30) }}
+
+{% endmacro %}
