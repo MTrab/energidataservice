@@ -41,6 +41,9 @@ from .const import (
     ATTR_TODAY_MAX,
     ATTR_TODAY_MEAN,
     ATTR_TODAY_MIN,
+    ATTR_TODAY_REMAINING_MAX,
+    ATTR_TODAY_REMAINING_MEAN,
+    ATTR_TODAY_REMAINING_MIN,
     ATTR_TOMORROW,
     ATTR_TOMORROW_MAX,
     ATTR_TOMORROW_MEAN,
@@ -57,6 +60,7 @@ from .const import (
     CONF_ENABLE_TARIFFS,
     CONF_FIXED_PRICE_VAT,
     CONF_PRICETYPE,
+    CONF_RESOLUTION,
     CONF_TARIFF_CHARGE_OWNER,
     CONF_TEMPLATE,
     CONF_VAT,
@@ -414,6 +418,8 @@ class EnergidataserviceSensor(SensorEntity):
         # Holds statistical prices for today
         self._today_min = None
         self._today_max = None
+        self._today_remaining_min = None
+        self._today_remaining_max = None
 
         # Holds statistical prices for tomorrow
         self._tomorrow_min = None
@@ -421,6 +427,7 @@ class EnergidataserviceSensor(SensorEntity):
 
         # Holds mean values for today and tomorrow
         self._today_mean = None
+        self._today_remaining_mean = None
         self._tomorrow_mean = None
 
         # Check incase the sensor was setup using config flow.
@@ -541,6 +548,25 @@ class EnergidataserviceSensor(SensorEntity):
                 self._api.today,
                 self._attr_suggested_display_precision,
             )
+
+            remaining_today = self._filter_remaining_today(self._api.today)
+
+            self._today_remaining_min = self._get_specific(
+                "min",
+                remaining_today,
+                self._attr_suggested_display_precision,
+            )
+            self._today_remaining_max = self._get_specific(
+                "max",
+                remaining_today,
+                self._attr_suggested_display_precision,
+            )
+            self._today_remaining_mean = self._get_specific(
+                "mean",
+                remaining_today,
+                self._attr_suggested_display_precision,
+            )
+
             self._tomorrow_min = self._get_specific(
                 "min",
                 self._api.tomorrow,
@@ -551,6 +577,15 @@ class EnergidataserviceSensor(SensorEntity):
                 self._api.tomorrow,
                 self._attr_suggested_display_precision,
             )
+        else:
+            self._today_min = None
+            self._today_max = None
+            self._today_mean = None
+            self._today_remaining_min = None
+            self._today_remaining_max = None
+            self._today_remaining_mean = None
+            self._tomorrow_min = None
+            self._tomorrow_max = None
 
         # If we have valid data for tomorrow, then find the mean value
         if self.tomorrow_valid:
@@ -615,6 +650,9 @@ class EnergidataserviceSensor(SensorEntity):
                 ATTR_TODAY_MIN: self._today_min,
                 ATTR_TODAY_MAX: self._today_max,
                 ATTR_TODAY_MEAN: self._today_mean,
+                ATTR_TODAY_REMAINING_MIN: self._today_remaining_min,
+                ATTR_TODAY_REMAINING_MAX: self._today_remaining_max,
+                ATTR_TODAY_REMAINING_MEAN: self._today_remaining_mean,
                 ATTR_TOMORROW_MIN: self._tomorrow_min or None,
                 ATTR_TOMORROW_MAX: self._tomorrow_max or None,
                 ATTR_TOMORROW_MEAN: self._tomorrow_mean or None,
@@ -729,6 +767,24 @@ class EnergidataserviceSensor(SensorEntity):
         """Return predictions (forecasts) if enabled, else None."""
         if self._forecast:
             return self._api.predictions
+
+    def _filter_remaining_today(self, data) -> list:
+        """Return only current and upcoming entries for today."""
+        if not data:
+            return []
+
+        now = dt_utils.now()
+        is_hourly = self._config.options.get(
+            CONF_RESOLUTION,
+            self._config.data.get(CONF_RESOLUTION, True),
+        )
+        interval_length = timedelta(hours=1) if is_hourly else timedelta(minutes=15)
+
+        return [
+            entry
+            for entry in data
+            if (dt_utils.as_local(entry.time) + interval_length) > now
+        ]
 
     @staticmethod
     def _add_raw(data, decimals: int) -> list:
