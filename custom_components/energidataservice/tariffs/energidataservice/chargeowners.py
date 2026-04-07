@@ -16,7 +16,7 @@ CHARGEOWNERS = {
     "Konstant": {
         "gln": "5790000704842",
         "company": "Konstant Net A/S - 151",
-        "type": ["151-NT01T", "151-NRA04T"],
+        "type": ["C_FBTNTR_B", "C_FBTNTR_R"],
         "chargetype": ["D03"],
     },
     "Cerius": {
