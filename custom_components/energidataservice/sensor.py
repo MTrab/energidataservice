@@ -343,6 +343,9 @@ class EnergidataserviceSensor(SensorEntity):
             ATTR_RAW_TOMORROW,
             ATTR_FORECAST,
             ATTR_TARIFFS,
+            "spot_raw_today",
+            "spot_raw_tomorrow",
+
         }
     )
 
@@ -414,6 +417,10 @@ class EnergidataserviceSensor(SensorEntity):
         # Holds the raw data
         self._today_raw = None
         self._tomorrow_raw = None
+        self._today_spot = None
+        self.tomorrow_raw = None
+        self._today_spot = None
+        self._tomorrow_spot = None
 
         # Holds statistical prices for today
         self._today_min = None
@@ -628,6 +635,12 @@ class EnergidataserviceSensor(SensorEntity):
                     )
                 ):
                     self._attr_native_value = dataset.price
+                    self._current_spot_price = (
+                        self._api.today_spot[dataset.time.hour]["price"]
+                        if self._api.today_spot
+                        else None
+                    )
+
                     _LOGGER.debug(
                         "Current price updated to %f for %s",
                         self._attr_native_value,
@@ -647,6 +660,9 @@ class EnergidataserviceSensor(SensorEntity):
                 ATTR_TOMORROW: self.tomorrow or None,
                 ATTR_RAW_TODAY: self._today_raw or None,
                 ATTR_RAW_TOMORROW: self._tomorrow_raw or None,
+                "spot_price_current": self._current_spot_price,
+                "spot_raw_today": self._api.today_spot,
+                "spot_raw_tomorrow": self._api.today_tomorrow or None,
                 ATTR_TODAY_MIN: self._today_min,
                 ATTR_TODAY_MAX: self._today_max,
                 ATTR_TODAY_MEAN: self._today_mean,
@@ -955,6 +971,7 @@ class EnergidataserviceSensor(SensorEntity):
     ) -> None:
         """Format data as list with prices localized."""
         formatted_pricelist = []
+        spot_pricelist = []   # ← NEW
 
         if tomorrow:
             pass
@@ -965,12 +982,21 @@ class EnergidataserviceSensor(SensorEntity):
         _start = datetime.now().timestamp()
         Interval = namedtuple("Interval", "price time")
         for i in data:
+            spot_price = i.price  # ← PURE spot price (IMPORTANT)
             price = self._calculate(
                 i.price,
                 fake_dt=dt_utils.as_local(i.time),
                 default_currency=default_currency,
             )
             formatted_pricelist.append(Interval(price, i.time))
+
+            # Preserve spot price per hour
+            spot_pricelist.append(
+                {
+                    "hour": i.time,
+                    "price": round(spot_price, self._attr_suggested_display_precision),
+                }
+            )
 
         _stop = datetime.now().timestamp()
         _ttf = round(_stop - _start, 2)
@@ -979,6 +1005,7 @@ class EnergidataserviceSensor(SensorEntity):
             _calc_for = "TOMORROW"
             self._api.tomorrow_calculated = True
             self._api.tomorrow = formatted_pricelist
+            self._api.tomorrow_spot = spot_pricelist
         elif predictions:
             _calc_for = "PREDICTIONS"
             self._api.predictions_calculated = True
@@ -987,6 +1014,7 @@ class EnergidataserviceSensor(SensorEntity):
             _calc_for = "TODAY"
             self._api.today_calculated = True
             self._api.today = formatted_pricelist
+            self._api.today_spot = spot_pricelist
 
         _LOGGER.debug(
             "Calculation for %s in %s took %s seconds",
