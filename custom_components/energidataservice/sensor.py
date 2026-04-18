@@ -345,8 +345,7 @@ class EnergidataserviceSensor(SensorEntity):
             ATTR_RAW_TOMORROW,
             ATTR_FORECAST,
             ATTR_TARIFFS,
-            "Price_list",
-
+            ATTR_PRICE_LIST,
         }
     )
 
@@ -652,7 +651,10 @@ class EnergidataserviceSensor(SensorEntity):
             self._attr_extra_state_attributes = {
                 ATTR_CURRENT_PRICE: self.state,
                 ATTR_CURRENT_SPOT_PRICE: self._current_spot_price,
-                ATTR_PRICE_LIST:self._api.today_prices + getattr(self._api, "tomorrow_prices", None),
+                ATTR_PRICE_LIST: (
+                    (self._api.today_prices or [])
+                    + (self._api.tomorrow_prices or [])
+                ),
                 ATTR_UNIT: self.unit,
                 ATTR_CURRENCY: self._currency,
                 ATTR_REGION: self._area,
