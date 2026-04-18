@@ -29,11 +29,13 @@ from .const import (
     ATTR_ATTRIBUTION,
     ATTR_CURRENCY,
     ATTR_CURRENT_PRICE,
+    ATTR_CURRENT_SPOT_PRICE,
     ATTR_FORECAST,
     ATTR_NET_OPERATOR,
     ATTR_NEXT_DATA_UPDATE,
     ATTR_RAW_TODAY,
     ATTR_RAW_TOMORROW,
+    ATTR_PRICE_LIST,
     ATTR_REGION,
     ATTR_REGION_CODE,
     ATTR_TARIFFS,
@@ -343,8 +345,7 @@ class EnergidataserviceSensor(SensorEntity):
             ATTR_RAW_TOMORROW,
             ATTR_FORECAST,
             ATTR_TARIFFS,
-            "spot_raw_today",
-            "spot_raw_tomorrow",
+            "Price_list",
 
         }
     )
@@ -650,7 +651,8 @@ class EnergidataserviceSensor(SensorEntity):
 
             self._attr_extra_state_attributes = {
                 ATTR_CURRENT_PRICE: self.state,
-                "Current_spot_price": self._current_spot_price,
+                ATTR_CURRENT_SPOT_PRICE: self._current_spot_price,
+                ATTR_PRICE_LIST:self._api.today_prices + getattr(self._api, "tomorrow_prices", None),
                 ATTR_UNIT: self.unit,
                 ATTR_CURRENCY: self._currency,
                 ATTR_REGION: self._area,
@@ -661,8 +663,6 @@ class EnergidataserviceSensor(SensorEntity):
                 ATTR_TOMORROW: self.tomorrow or None,
                 ATTR_RAW_TODAY: self._today_raw or None,
                 ATTR_RAW_TOMORROW: self._tomorrow_raw or None,
-                "prices_today": self._api.today_prices,
-                "prices_tomorrow": getattr(self._api, "tomorrow_prices", None),
                 ATTR_TODAY_MIN: self._today_min,
                 ATTR_TODAY_MAX: self._today_max,
                 ATTR_TODAY_MEAN: self._today_mean,
@@ -983,7 +983,7 @@ class EnergidataserviceSensor(SensorEntity):
     ) -> None:
         """Format data as list with prices localized."""
         formatted_pricelist = []
-        pricelist = []   # ← NEW
+        pricelist = [] 
 
         if tomorrow:
             pass
@@ -1004,7 +1004,7 @@ class EnergidataserviceSensor(SensorEntity):
             # Preserve spot price per hour
             pricelist.append(
                 {
-                    "hour": i.time,
+                    "time": i.time,
                     **{
                         k: round(v, self._attr_suggested_display_precision)
                         for k, v in prices.items()
