@@ -29,11 +29,13 @@ from .const import (
     ATTR_ATTRIBUTION,
     ATTR_CURRENCY,
     ATTR_CURRENT_PRICE,
+    ATTR_CURRENT_SPOT_PRICE,
     ATTR_FORECAST,
     ATTR_NET_OPERATOR,
     ATTR_NEXT_DATA_UPDATE,
     ATTR_RAW_TODAY,
     ATTR_RAW_TOMORROW,
+    ATTR_PRICE_LIST,
     ATTR_REGION,
     ATTR_REGION_CODE,
     ATTR_TARIFFS,
@@ -343,6 +345,7 @@ class EnergidataserviceSensor(SensorEntity):
             ATTR_RAW_TOMORROW,
             ATTR_FORECAST,
             ATTR_TARIFFS,
+            ATTR_PRICE_LIST,
         }
     )
 
@@ -414,6 +417,10 @@ class EnergidataserviceSensor(SensorEntity):
         # Holds the raw data
         self._today_raw = None
         self._tomorrow_raw = None
+        self._today_spot = None
+        self.tomorrow_raw = None
+        self._today_spot = None
+        self._tomorrow_spot = None
 
         # Holds statistical prices for today
         self._today_min = None
@@ -628,6 +635,12 @@ class EnergidataserviceSensor(SensorEntity):
                     )
                 ):
                     self._attr_native_value = dataset.price
+                    self._current_spot_price = (
+                        self._api.today_prices[dataset.time.hour]["spot"]
+                        if self._api.today_prices
+                        else None
+                    )
+
                     _LOGGER.debug(
                         "Current price updated to %f for %s",
                         self._attr_native_value,
@@ -637,6 +650,11 @@ class EnergidataserviceSensor(SensorEntity):
 
             self._attr_extra_state_attributes = {
                 ATTR_CURRENT_PRICE: self.state,
+                ATTR_CURRENT_SPOT_PRICE: self._current_spot_price,
+                ATTR_PRICE_LIST: (
+                    (self._api.today_prices or [])
+                    + (self._api.tomorrow_prices or [])
+                ),
                 ATTR_UNIT: self.unit,
                 ATTR_CURRENCY: self._currency,
                 ATTR_REGION: self._area,
@@ -848,7 +866,7 @@ class EnergidataserviceSensor(SensorEntity):
         value=None,
         fake_dt=datetime,
         default_currency: str = "EUR",
-    ) -> float:
+    ) -> tuple[float, dict]:
         """Do price calculations."""
         if value is None:
             value = self._attr_native_value
@@ -865,6 +883,9 @@ class EnergidataserviceSensor(SensorEntity):
                 value, to_currency=self._currency, from_currency=default_currency
             )
 
+        price = value / UNIT_TO_MULTIPLIER[self._price_type]
+
+        prices = {"spot": price}
         tariff_value = 0
         owner_tariff = 0
         elafgift = 0
@@ -883,14 +904,17 @@ class EnergidataserviceSensor(SensorEntity):
 
                 if system_tariff:
                     for tariff, additional_tariff in system_tariff.items():
-                        tariff_value += float(additional_tariff)
+                        val=float(additional_tariff)
+                        tariff_value += val
+                        prices[tariff] = val
                         if tariff == "elafgift":
-                            elafgift = float(additional_tariff)
+                            elafgift = val
 
                 owner_tariff = float(
                     chargeowner_tariff[str(fake_dt.hour)] if chargeowner_tariff else 0
                 )
                 tariff_value += owner_tariff
+                prices["tariffs"] = owner_tariff
             except KeyError:
                 _LOGGER.warning(
                     "Error adding tariffs for %s, no valid tariffs was found!", fake_dt
@@ -905,7 +929,7 @@ class EnergidataserviceSensor(SensorEntity):
                 "Error adding tariffs for %s, empty tariff dataset was found!", fake_dt
             )
 
-        price = value / UNIT_TO_MULTIPLIER[self._price_type]
+        
 
         template_value = self._cost_template.async_render(
             now=faker(),
@@ -928,9 +952,12 @@ class EnergidataserviceSensor(SensorEntity):
 
         if isinstance(template_value, type(None)):
             template_value = 0
+        else:
+            prices["template_value"] = template_value
 
         try:
             price += template_value + tariff_value
+            prices["total"] = price
         except Exception:
             _LOGGER.debug(
                 "Price %s template value %s type %s dt %s tariff_value %s ",
@@ -943,18 +970,22 @@ class EnergidataserviceSensor(SensorEntity):
             raise
 
         # Add vat if selected
-        price = price * (float(1 + self._vat))
+        vat_factor = float(1 + self._vat)
+        price *= vat_factor
+        prices = {k: v * vat_factor for k, v in prices.items()}
 
         if self._cent:
             price = price * CENT_MULTIPLIER
+            prices = {k: v * CENT_MULTIPLIER for k, v in prices.items()}
 
-        return price
+        return price, prices
 
     def _format_list(
         self, data, tomorrow=False, predictions=False, default_currency: str = "EUR"
     ) -> None:
         """Format data as list with prices localized."""
         formatted_pricelist = []
+        pricelist = [] 
 
         if tomorrow:
             pass
@@ -965,12 +996,24 @@ class EnergidataserviceSensor(SensorEntity):
         _start = datetime.now().timestamp()
         Interval = namedtuple("Interval", "price time")
         for i in data:
-            price = self._calculate(
+            price, prices = self._calculate(
                 i.price,
                 fake_dt=dt_utils.as_local(i.time),
                 default_currency=default_currency,
             )
             formatted_pricelist.append(Interval(price, i.time))
+
+            # Preserve spot price per hour
+            pricelist.append(
+                {
+                    "time": i.time,
+                    **{
+                        k: round(v, self._attr_suggested_display_precision)
+                        for k, v in prices.items()
+                    },
+
+                }
+            )
 
         _stop = datetime.now().timestamp()
         _ttf = round(_stop - _start, 2)
@@ -979,6 +1022,7 @@ class EnergidataserviceSensor(SensorEntity):
             _calc_for = "TOMORROW"
             self._api.tomorrow_calculated = True
             self._api.tomorrow = formatted_pricelist
+            self._api.tomorrow_prices = pricelist
         elif predictions:
             _calc_for = "PREDICTIONS"
             self._api.predictions_calculated = True
@@ -987,6 +1031,7 @@ class EnergidataserviceSensor(SensorEntity):
             _calc_for = "TODAY"
             self._api.today_calculated = True
             self._api.today = formatted_pricelist
+            self._api.today_prices = pricelist
 
         _LOGGER.debug(
             "Calculation for %s in %s took %s seconds",
