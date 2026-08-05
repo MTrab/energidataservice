@@ -357,7 +357,7 @@ class APIConnector:
                     or not self.tariff_data["tariffs"]
                     or not self.tariff_data["additional_tariffs"]
                 ):
-                    if self.tariff_data["status"] in [400, 403, 411]:
+                    if self.tariff_data["status"] in [400, 411]:
                         _LOGGER.warning(
                             "Tariff endpoint returned %s, skipping retry for now",
                             self.tariff_data["status"],
