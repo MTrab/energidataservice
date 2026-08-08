@@ -324,7 +324,7 @@ class APIConnector:
 
                 self.api_predictions = self.predictions
 
-    async def async_get_tariffs(self, request_module=None) -> None:
+    async def async_get_tariffs(self, dt=None, request_module=None) -> None:  # type: ignore pylint: disable=unused-argument,invalid-name
         """Get tariff data."""
 
         if self.tariff:
@@ -352,8 +352,12 @@ class APIConnector:
                         "status": 503,
                     }
 
-                if self.tariff_data["status"] != 200:
-                    if self.tariff_data["status"] in [400, 403, 411]:
+                if (
+                    self.tariff_data["status"] != 200
+                    or not self.tariff_data["tariffs"]
+                    or not self.tariff_data["additional_tariffs"]
+                ):
+                    if self.tariff_data["status"] in [400, 411]:
                         _LOGGER.warning(
                             "Tariff endpoint returned %s, skipping retry for now",
                             self.tariff_data["status"],
