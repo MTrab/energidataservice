@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections import namedtuple
 from datetime import datetime, timedelta
@@ -382,6 +383,14 @@ class EnergidataserviceSensor(SensorEntity):
         self._friendly_name = config.options.get(CONF_NAME) or config.data.get(
             CONF_NAME
         )
+        self._validation_lock = asyncio.Lock()
+        self._today_source = None
+        self._tomorrow_source = None
+        self._predictions_source = None
+        self._tariff_data_source = None
+        self._tariff_connector_source = None
+        self._connector_currency_source = None
+        self._predictions_currency_source = None
 
         if config.options.get(CONF_VAT) is True:
             self._vat = region.vat
@@ -443,96 +452,139 @@ class EnergidataserviceSensor(SensorEntity):
 
     async def validate_data(self) -> None:
         """Validate sensor data."""
+        async with self._validation_lock:
+            await self._validate_data()
+
+    async def _validate_data(self) -> None:
+        """Validate and publish a consistent sensor data snapshot."""
         _LOGGER.debug("Validating sensor %s", self.name)
 
         # Do we have valid data for today? If not, try fetching new dataset
-        if not self._api.today:
+        if not self._api.api_today:
             _LOGGER.debug("No sensor data found - calling update")
             await self._api.update()
-            if self._api.today is not None and not self._api.today_calculated:
-                _LOGGER.debug("API currency: %s", self._api.connector_currency)
-                _LOGGER.debug("SELF currency: %s", self._currency)
-                await self._hass.async_add_executor_job(
-                    self._format_list,
-                    self._api.today,
-                    False,
-                    False,
-                    self._api.connector_currency or self._currency,
-                )
-
-        # Do we have valid data for tomorrow? If we do, calculate prices in local currency
-        # If not, set attributes to None
-        if self.tomorrow_valid:
-            if not self._api.tomorrow_calculated:
-                await self._hass.async_add_executor_job(
-                    self._format_list,
-                    self._api.tomorrow,
-                    True,
-                    False,
-                    self._api.connector_currency or self._currency,
-                )
-            self._tomorrow_raw = self._add_raw(
-                self._api.tomorrow, self._attr_suggested_display_precision
-            )
-        else:
-            self._api.tomorrow = None
-            self._tomorrow_raw = None
-            self._api.tomorrow_calculated = False
-
-        # Check if the data have been reset to API values rather than the calculated values
-        if self._api.today == self._api.api_today and not isinstance(
-            self._api.today, type(None)
-        ):
-            self._api.today_calculated = False
-
-        if self._api.tomorrow == self._api.api_tomorrow and not isinstance(
-            self._api.tomorrow, type(None)
-        ):
-            self._api.tomorrow_calculated = False
-
-        if self._api.predictions == self._api.api_predictions and not isinstance(
-            self._api.predictions, type(None)
-        ):
-            self._api.predictions_calculated = False
-
-        # If we haven't already calculated todays prices in local currency, do so now
-        if not self._api.today_calculated and not isinstance(
-            self._api.today, type(None)
-        ):
-            await self._hass.async_add_executor_job(
-                self._format_list,
-                self._api.today,
-                False,
-                False,
-                self._api.connector_currency or self._currency,
-            )
 
         # If predictions is enabled but no data exists, fetch dataset
-        if self._api.forecast and isinstance(self._api.predictions, type(None)):
+        if self._api.forecast and self._api.api_predictions is None:
             await self._api.update_carnot()
 
-        # If predictions is enabled but not calculated, do so now
-        if not self._api.predictions_calculated and not isinstance(
-            self._api.predictions, type(None)
-        ):
-            await self._hass.async_add_executor_job(
-                self._format_list,
-                self._api.predictions,
-                False,
-                True,
-                self._api.predictions_currency or self._currency,
+        # Build calculated lists from one consistent set of raw API data. If an API
+        # refresh replaces a source while calculation runs in the executor, retry
+        # once and otherwise retain the previously published state.
+        for attempt in range(2):
+            today_source = self._api.api_today
+            tomorrow_source = self._api.api_tomorrow if self.tomorrow_valid else None
+            predictions_source = (
+                self._api.api_predictions if self._api.forecast else None
             )
-        else:
-            _LOGGER.debug(
-                "Predictions: %s (%s)",
-                self._api.predictions,
-                type(self._api.predictions),
+            tariff_data_source = self._api.tariff_data
+            tariff_connector_source = self._api.tariff_connector
+            connector_currency = self._api.connector_currency or self._currency
+            predictions_currency = self._api.predictions_currency or self._currency
+
+            today = self._api.today
+            if today_source is not None and (
+                not self._api.today_calculated
+                or self._today_source is not today_source
+                or self._tariff_data_source is not tariff_data_source
+                or self._tariff_connector_source is not tariff_connector_source
+                or self._connector_currency_source != connector_currency
+            ):
+                today = await self._hass.async_add_executor_job(
+                    self._format_list,
+                    today_source,
+                    False,
+                    False,
+                    connector_currency,
+                )
+
+            tomorrow = self._api.tomorrow
+            if tomorrow_source is not None and (
+                not self._api.tomorrow_calculated
+                or self._tomorrow_source is not tomorrow_source
+                or self._tariff_data_source is not tariff_data_source
+                or self._tariff_connector_source is not tariff_connector_source
+                or self._connector_currency_source != connector_currency
+            ):
+                tomorrow = await self._hass.async_add_executor_job(
+                    self._format_list,
+                    tomorrow_source,
+                    True,
+                    False,
+                    connector_currency,
+                )
+
+            predictions = self._api.predictions
+            if predictions_source is not None and (
+                not self._api.predictions_calculated
+                or self._predictions_source is not predictions_source
+                or self._tariff_data_source is not tariff_data_source
+                or self._tariff_connector_source is not tariff_connector_source
+                or self._predictions_currency_source != predictions_currency
+            ):
+                predictions = await self._hass.async_add_executor_job(
+                    self._format_list,
+                    predictions_source,
+                    False,
+                    True,
+                    predictions_currency,
+                )
+
+            sources_unchanged = (
+                today_source is self._api.api_today
+                and tomorrow_source
+                is (self._api.api_tomorrow if self.tomorrow_valid else None)
+                and predictions_source
+                is (self._api.api_predictions if self._api.forecast else None)
+                and tariff_data_source is self._api.tariff_data
+                and tariff_connector_source is self._api.tariff_connector
+                and connector_currency
+                == (self._api.connector_currency or self._currency)
+                and predictions_currency
+                == (self._api.predictions_currency or self._currency)
             )
+            if not sources_unchanged:
+                _LOGGER.debug("Price data changed during calculation, retrying")
+                if attempt == 0:
+                    continue
+                _LOGGER.warning(
+                    "Price data kept changing during calculation; retaining the "
+                    "previous sensor state"
+                )
+                return
+
+            # Commit calculated data only after every source has been verified. No
+            # await is allowed between this point and writing the Home Assistant
+            # state, so raw and calculated data cannot be interleaved.
+            self._api.today = today if today_source is not None else None
+            self._api.today_calculated = today_source is not None
+            self._api.tomorrow = tomorrow if tomorrow_source is not None else None
+            self._api.tomorrow_calculated = tomorrow_source is not None
+            self._api.predictions = (
+                predictions if predictions_source is not None else None
+            )
+            self._api.predictions_calculated = predictions_source is not None
+
+            self._today_source = today_source
+            self._tomorrow_source = tomorrow_source
+            self._predictions_source = predictions_source
+            self._tariff_data_source = tariff_data_source
+            self._tariff_connector_source = tariff_connector_source
+            self._connector_currency_source = connector_currency
+            self._predictions_currency_source = predictions_currency
+            break
 
         # Update attributes
         if self._api.today:
             self._today_raw = self._add_raw(
                 self._api.today, self._attr_suggested_display_precision
+            )
+            self._tomorrow_raw = (
+                self._add_raw(
+                    self._api.tomorrow, self._attr_suggested_display_precision
+                )
+                if self._api.tomorrow
+                else None
             )
 
             self._today_min = self._get_specific(
@@ -604,16 +656,9 @@ class EnergidataserviceSensor(SensorEntity):
 
     def _get_current_price(self) -> None:
         """Get price for current hour."""
-        current_state_time = datetime.fromisoformat(
-            dt_utils.now()
-            .replace(microsecond=0)
-            .replace(second=0)
-            .replace(minute=0)
-            .isoformat()
-        )
         if self._api.today:
             for dataset in self._api.today:
-                if not dataset.time.hour == dt_utils.now().hour:
+                if dataset.time.hour != dt_utils.now().hour:
                     continue
 
                 if (
@@ -735,6 +780,7 @@ class EnergidataserviceSensor(SensorEntity):
 
         Returns:
             list: sorted list where today[0] is the price of hour 00.00 - 01.00.
+
         """
         return (
             [
@@ -752,6 +798,7 @@ class EnergidataserviceSensor(SensorEntity):
 
         Returns:
             list: sorted where tomorrow[0] is the price of hour 00.00 - 01.00 etc.
+
         """
         if self._api.tomorrow_valid:
             return [
@@ -952,7 +999,7 @@ class EnergidataserviceSensor(SensorEntity):
 
     def _format_list(
         self, data, tomorrow=False, predictions=False, default_currency: str = "EUR"
-    ) -> None:
+    ) -> list:
         """Format data as list with prices localized."""
         formatted_pricelist = []
 
@@ -977,16 +1024,10 @@ class EnergidataserviceSensor(SensorEntity):
 
         if tomorrow:
             _calc_for = "TOMORROW"
-            self._api.tomorrow_calculated = True
-            self._api.tomorrow = formatted_pricelist
         elif predictions:
             _calc_for = "PREDICTIONS"
-            self._api.predictions_calculated = True
-            self._api.predictions = formatted_pricelist
         else:
             _calc_for = "TODAY"
-            self._api.today_calculated = True
-            self._api.today = formatted_pricelist
 
         _LOGGER.debug(
             "Calculation for %s in %s took %s seconds",
@@ -994,6 +1035,7 @@ class EnergidataserviceSensor(SensorEntity):
             self.region.region,
             _ttf,
         )
+        return formatted_pricelist
 
     @staticmethod
     def _get_specific(datatype: str, data: list, decimals: int):
