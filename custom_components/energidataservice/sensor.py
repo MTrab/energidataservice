@@ -30,6 +30,7 @@ from .const import (
     ATTR_ATTRIBUTION,
     ATTR_CURRENCY,
     ATTR_CURRENT_PRICE,
+    ATTR_CURRENT_PRICE_BREAKDOWN,
     ATTR_FORECAST,
     ATTR_NET_OPERATOR,
     ATTR_NEXT_DATA_UPDATE,
@@ -391,6 +392,9 @@ class EnergidataserviceSensor(SensorEntity):
         self._tariff_connector_source = None
         self._connector_currency_source = None
         self._predictions_currency_source = None
+        self._price_breakdown_today = None
+        self._price_breakdown_tomorrow = None
+        self._current_price_breakdown = None
 
         if config.options.get(CONF_VAT) is True:
             self._vat = region.vat
@@ -485,34 +489,43 @@ class EnergidataserviceSensor(SensorEntity):
             today = self._api.today
             if today_source is not None and (
                 not self._api.today_calculated
+                or self._price_breakdown_today is None
                 or self._today_source is not today_source
                 or self._tariff_data_source is not tariff_data_source
                 or self._tariff_connector_source is not tariff_connector_source
                 or self._connector_currency_source != connector_currency
             ):
-                today = await self._hass.async_add_executor_job(
-                    self._format_list,
+                today, price_breakdown_today = await self._hass.async_add_executor_job(
+                    self._format_list_with_breakdown,
                     today_source,
                     False,
                     False,
                     connector_currency,
                 )
+            else:
+                price_breakdown_today = self._price_breakdown_today
 
             tomorrow = self._api.tomorrow
             if tomorrow_source is not None and (
                 not self._api.tomorrow_calculated
+                or self._price_breakdown_tomorrow is None
                 or self._tomorrow_source is not tomorrow_source
                 or self._tariff_data_source is not tariff_data_source
                 or self._tariff_connector_source is not tariff_connector_source
                 or self._connector_currency_source != connector_currency
             ):
-                tomorrow = await self._hass.async_add_executor_job(
-                    self._format_list,
+                (
+                    tomorrow,
+                    price_breakdown_tomorrow,
+                ) = await self._hass.async_add_executor_job(
+                    self._format_list_with_breakdown,
                     tomorrow_source,
                     True,
                     False,
                     connector_currency,
                 )
+            else:
+                price_breakdown_tomorrow = self._price_breakdown_tomorrow
 
             predictions = self._api.predictions
             if predictions_source is not None and (
@@ -564,6 +577,12 @@ class EnergidataserviceSensor(SensorEntity):
                 predictions if predictions_source is not None else None
             )
             self._api.predictions_calculated = predictions_source is not None
+            self._price_breakdown_today = (
+                price_breakdown_today if today_source is not None else None
+            )
+            self._price_breakdown_tomorrow = (
+                price_breakdown_tomorrow if tomorrow_source is not None else None
+            )
 
             self._today_source = today_source
             self._tomorrow_source = tomorrow_source
@@ -576,16 +595,8 @@ class EnergidataserviceSensor(SensorEntity):
 
         # Update attributes
         if self._api.today:
-            self._today_raw = self._add_raw(
-                self._api.today, self._attr_suggested_display_precision
-            )
-            self._tomorrow_raw = (
-                self._add_raw(
-                    self._api.tomorrow, self._attr_suggested_display_precision
-                )
-                if self._api.tomorrow
-                else None
-            )
+            self._today_raw = self._price_breakdown_today
+            self._tomorrow_raw = self._price_breakdown_tomorrow
 
             self._today_min = self._get_specific(
                 "min", self._api.today, self._attr_suggested_display_precision
@@ -657,7 +668,8 @@ class EnergidataserviceSensor(SensorEntity):
     def _get_current_price(self) -> None:
         """Get price for current hour."""
         if self._api.today:
-            for dataset in self._api.today:
+            self._current_price_breakdown = None
+            for index, dataset in enumerate(self._api.today):
                 if dataset.time.hour != dt_utils.now().hour:
                     continue
 
@@ -673,6 +685,7 @@ class EnergidataserviceSensor(SensorEntity):
                     )
                 ):
                     self._attr_native_value = dataset.price
+                    self._current_price_breakdown = self._price_breakdown_today[index]
                     _LOGGER.debug(
                         "Current price updated to %f for %s",
                         self._attr_native_value,
@@ -682,6 +695,7 @@ class EnergidataserviceSensor(SensorEntity):
 
             self._attr_extra_state_attributes = {
                 ATTR_CURRENT_PRICE: self.state,
+                ATTR_CURRENT_PRICE_BREAKDOWN: self._current_price_breakdown,
                 ATTR_UNIT: self.unit,
                 ATTR_CURRENCY: self._currency,
                 ATTR_REGION: self._area,
@@ -897,6 +911,15 @@ class EnergidataserviceSensor(SensorEntity):
         default_currency: str = "EUR",
     ) -> float:
         """Do price calculations."""
+        return self._calculate_breakdown(value, fake_dt, default_currency)["total"]
+
+    def _calculate_breakdown(
+        self,
+        value=None,
+        fake_dt=datetime,
+        default_currency: str = "EUR",
+    ) -> dict:
+        """Calculate a price and retain every component used in its total."""
         if value is None:
             value = self._attr_native_value
 
@@ -915,6 +938,7 @@ class EnergidataserviceSensor(SensorEntity):
         tariff_value = 0
         owner_tariff = 0
         elafgift = 0
+        system_tariffs = {}
         if (
             self._api.tariff_data is not None
             and fake_dt is not None
@@ -930,9 +954,11 @@ class EnergidataserviceSensor(SensorEntity):
 
                 if system_tariff:
                     for tariff, additional_tariff in system_tariff.items():
-                        tariff_value += float(additional_tariff)
+                        component_value = float(additional_tariff)
+                        system_tariffs[tariff] = component_value
+                        tariff_value += component_value
                         if tariff == "elafgift":
-                            elafgift = float(additional_tariff)
+                            elafgift = component_value
 
                 owner_tariff = float(
                     chargeowner_tariff[str(fake_dt.hour)] if chargeowner_tariff else 0
@@ -952,12 +978,12 @@ class EnergidataserviceSensor(SensorEntity):
                 "Error adding tariffs for %s, empty tariff dataset was found!", fake_dt
             )
 
-        price = value / UNIT_TO_MULTIPLIER[self._price_type]
+        spot_price = value / UNIT_TO_MULTIPLIER[self._price_type]
 
         template_value = self._cost_template.async_render(
             now=faker(),
             current_tariff=tariff_value,
-            current_price=price,
+            current_price=spot_price,
             el_afgift=elafgift,
             chargeowner_tariff=owner_tariff,
         )
@@ -977,11 +1003,11 @@ class EnergidataserviceSensor(SensorEntity):
             template_value = 0
 
         try:
-            price += template_value + tariff_value
+            subtotal = spot_price + template_value + tariff_value
         except Exception:
             _LOGGER.debug(
                 "Price %s template value %s type %s dt %s tariff_value %s ",
-                price,
+                spot_price,
                 template_value,
                 type(template_value),
                 fake_dt,
@@ -989,13 +1015,62 @@ class EnergidataserviceSensor(SensorEntity):
             )
             raise
 
-        # Add vat if selected
-        price = price * (float(1 + self._vat))
+        vat = subtotal * self._vat
+        total = subtotal + vat
 
         if self._cent:
-            price = price * CENT_MULTIPLIER
+            spot_price *= CENT_MULTIPLIER
+            owner_tariff *= CENT_MULTIPLIER
+            template_value *= CENT_MULTIPLIER
+            vat *= CENT_MULTIPLIER
+            total *= CENT_MULTIPLIER
+            system_tariffs = {
+                name: price * CENT_MULTIPLIER for name, price in system_tariffs.items()
+            }
 
-        return price
+        return {
+            "spot_price": spot_price,
+            "chargeowner_tariff": owner_tariff,
+            "system_tariffs": system_tariffs,
+            "additional_cost": template_value,
+            "vat": vat,
+            "total": total,
+        }
+
+    def _format_list_with_breakdown(
+        self, data, tomorrow=False, predictions=False, default_currency: str = "EUR"
+    ) -> tuple[list, list]:
+        """Format prices and their components from the same calculations."""
+        formatted_pricelist = []
+        breakdown = []
+        interval = namedtuple("Interval", "price time")
+        decimals = self._attr_suggested_display_precision
+
+        for item in data:
+            components = self._calculate_breakdown(
+                item.price,
+                fake_dt=dt_utils.as_local(item.time),
+                default_currency=default_currency,
+            )
+            formatted_pricelist.append(interval(components["total"], item.time))
+            breakdown.append(
+                {
+                    "hour": item.time,
+                    "price": round(components["total"], decimals),
+                    "spot_price": round(components["spot_price"], decimals),
+                    "chargeowner_tariff": round(
+                        components["chargeowner_tariff"], decimals
+                    ),
+                    **{
+                        name: round(price, decimals)
+                        for name, price in components["system_tariffs"].items()
+                    },
+                    "additional_cost": round(components["additional_cost"], decimals),
+                    "vat": round(components["vat"], decimals),
+                }
+            )
+
+        return formatted_pricelist, breakdown
 
     def _format_list(
         self, data, tomorrow=False, predictions=False, default_currency: str = "EUR"
