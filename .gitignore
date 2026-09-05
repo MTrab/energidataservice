@@ -16,3 +16,4 @@ notes.txt
 # Home Assistant configuration
 config/*
 !config/configuration.yaml
+.devcontainer-lock.json
