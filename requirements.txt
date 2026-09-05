@@ -1,5 +1,5 @@
 async-retrying==0.2.2
-CurrencyConverter==0.18.20
+CurrencyConverter==0.18.21
 colorlog==6.12.0
 homeassistant==2026.7.4
 pytest==9.1.1
