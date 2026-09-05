@@ -77,6 +77,9 @@ def _sensor(hass: ControlledHass, raw_today: list) -> EnergidataserviceSensor:
     sensor._tariff_connector_source = None
     sensor._connector_currency_source = None
     sensor._predictions_currency_source = None
+    sensor._price_breakdown_today = None
+    sensor._price_breakdown_tomorrow = None
+    sensor._current_price_breakdown = None
     sensor._currency = "DKK"
     sensor._forecast = False
     sensor._cent = False
@@ -103,6 +106,17 @@ def _sensor(hass: ControlledHass, raw_today: list) -> EnergidataserviceSensor:
         lambda self, value=None, fake_dt=None, default_currency="EUR": (
             value * CONVERSION_FACTOR
         ),
+        sensor,
+    )
+    sensor._calculate_breakdown = MethodType(
+        lambda self, value=None, fake_dt=None, default_currency="EUR": {
+            "spot_price": value * CONVERSION_FACTOR,
+            "chargeowner_tariff": 0,
+            "system_tariffs": {},
+            "additional_cost": 0,
+            "vat": 0,
+            "total": value * CONVERSION_FACTOR,
+        },
         sensor,
     )
     return sensor
@@ -139,6 +153,7 @@ async def test_concurrent_validation_never_publishes_raw_price() -> None:
     assert RAW_PRICE not in published_values
     assert sensor._api.today_calculated is True
     assert sensor._api.today[0].price == pytest.approx(expected_price)
+    assert sensor._price_breakdown_today[0]["price"] == round(expected_price, 3)
 
 
 @pytest.mark.asyncio
@@ -168,6 +183,7 @@ async def test_source_replaced_during_calculation_is_recalculated() -> None:
     assert published_values == pytest.approx([expected_price])
     assert RAW_PRICE not in published_values
     assert sensor._api.today[0].price == pytest.approx(expected_price)
+    assert sensor._price_breakdown_today[0]["spot_price"] == round(expected_price, 3)
 
 
 def test_format_list_does_not_mutate_shared_api_data() -> None:
@@ -182,6 +198,59 @@ def test_format_list_does_not_mutate_shared_api_data() -> None:
     assert sensor._api.today_calculated is False
     assert formatted is not raw_today
     assert formatted[0].price == pytest.approx(RAW_PRICE * CONVERSION_FACTOR)
+
+
+def test_price_breakdown_contains_every_component() -> None:
+    """The exposed components must reproduce the calculated total."""
+    hass = ControlledHass()
+    raw_today = _raw_data(100)
+    sensor = _sensor(hass, raw_today)
+    sensor._currency = "EUR"
+    sensor._vat = 0.25
+    sensor._calculate_breakdown = MethodType(
+        EnergidataserviceSensor._calculate_breakdown, sensor
+    )
+    sensor._cost_template = SimpleNamespace(async_render=lambda **_: 0.01)
+    sensor._api.tariff_data = {
+        "additional_tariffs": {"systemtarif": 0.09, "elafgift": 0.05},
+        "status": 200,
+        "tariffs": {str(hour): 0.2 for hour in range(24)},
+    }
+    sensor._api.tariff_connector = SimpleNamespace(
+        get_dated_system_tariff=lambda _: {"systemtarif": 0.09, "elafgift": 0.05},
+        get_dated_tariff=lambda _: {str(hour): 0.2 for hour in range(24)},
+    )
+
+    prices, breakdown = sensor._format_list_with_breakdown(raw_today)
+
+    item = breakdown[0]
+    assert item == {
+        "hour": raw_today[0].time,
+        "price": 0.562,
+        "spot_price": 0.1,
+        "chargeowner_tariff": 0.2,
+        "systemtarif": 0.09,
+        "elafgift": 0.05,
+        "additional_cost": 0.01,
+        "vat": 0.113,
+    }
+    assert prices[0].price == pytest.approx(0.5625)
+
+
+def test_price_breakdown_uses_cent_for_all_components() -> None:
+    """Cent display must be applied consistently to the whole breakdown."""
+    sensor = _sensor(ControlledHass(), _raw_data(100))
+    sensor._currency = "EUR"
+    sensor._cent = True
+    sensor._calculate_breakdown = MethodType(
+        EnergidataserviceSensor._calculate_breakdown, sensor
+    )
+    sensor._cost_template = SimpleNamespace(async_render=lambda **_: 0)
+
+    components = sensor._calculate_breakdown(100)
+
+    assert components["spot_price"] == pytest.approx(10)
+    assert components["total"] == pytest.approx(10)
 
 
 @pytest.mark.asyncio

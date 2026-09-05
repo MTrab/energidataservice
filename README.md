@@ -96,6 +96,7 @@ Here you have a list of the available attributes, along with a brief description
 Attribute name | Description | Adittional info
 ---|---|---
 current_price | Price for the current hour, same as the sensor state|
+current_price_breakdown | Spot price and every cost component used to calculate the current price | Uses the same structure as an entry in `raw_today`
 unit | The unit used for price calculations | One of MWh, kWh or Wh
 currency | The prices are displayed in this currency
 region | The region that was selected | This is the "human readable" version of the region
@@ -104,8 +105,8 @@ tomorrow_valid | True if there was received prices for tomorrow | Prices will be
 next_data_update | The API will be pulled at this time | If no data for today or tomorrow was found, the integration will keep trying at random intervals
 today | Array containing ONLY the prices for today |
 tomorrow | Array containing ONLY the prices for tomorrow | Will be empty if tomorro_valid is false
-raw_today | 24 objects containing a timestamp and a price, representating each hour in the day |
-raw_tomorrow | 24 objects containing a timestamp and a price, representating each hour in the day | Will be empty if tomorrow_valid is false
+raw_today | Timestamped total price and its spot price, tariff, additional cost and VAT components for every interval today | Components are shown before VAT; `price` is the total including VAT
+raw_tomorrow | Timestamped total price and its components for every interval tomorrow | Will be empty if tomorrow_valid is false
 today_min | Lowest price of today, as an object containing the hour and the price |
 today_max | Highest price of today, as an object containing the hour and the price |
 today_mean | Mean price of today, as an object containing the hour and the price |

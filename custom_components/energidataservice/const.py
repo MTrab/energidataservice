@@ -14,6 +14,7 @@ https://github.com/mtrab/energidataservice/issues
 """
 
 ATTR_CURRENT_PRICE = "current_price"
+ATTR_CURRENT_PRICE_BREAKDOWN = "current_price_breakdown"
 ATTR_UNIT = "unit"
 ATTR_CURRENCY = "currency"
 ATTR_REGION = "region"
