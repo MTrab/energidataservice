@@ -657,21 +657,16 @@ class EnergidataserviceSensor(SensorEntity):
     def _get_current_price(self) -> None:
         """Get price for current hour."""
         if self._api.today:
-            for dataset in self._api.today:
-                if dataset.time.hour != dt_utils.now().hour:
-                    continue
+            now = dt_utils.now()
+            is_hourly = self._config.options.get(
+                CONF_RESOLUTION,
+                self._config.data.get(CONF_RESOLUTION, True),
+            )
+            interval_length = timedelta(hours=1) if is_hourly else timedelta(minutes=15)
 
-                if (
-                    dataset.time.hour == dt_utils.now().hour
-                    and len(self._api.today) == 24
-                ) or (
-                    dataset.time.minute <= dt_utils.now().minute
-                    and (
-                        (dataset.time + timedelta(minutes=15)).minute
-                        > dt_utils.now().minute
-                        or (dataset.time + timedelta(minutes=15)).minute == 0
-                    )
-                ):
+            for dataset in self._api.today:
+                start = dt_utils.as_local(dataset.time)
+                if start <= now < start + interval_length:
                     self._attr_native_value = dataset.price
                     _LOGGER.debug(
                         "Current price updated to %f for %s",
