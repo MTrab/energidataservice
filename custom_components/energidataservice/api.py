@@ -303,24 +303,19 @@ class APIConnector:
                 _LOGGER.warning("Error fetching data from Carnot")
 
             if not isinstance(self.predictions, type(None)):
+                # Compare whole dates in local time - comparing day/month numbers
+                # breaks at month boundaries, and naive now() is in the system
+                # timezone (often UTC) while predictions are in local time.
+                first_day = (dt_util.now(self._tz) + datetime.timedelta(days=1)).date()
+                if self._tomorrow_valid:
+                    # Remove tomorrows predictions, as we have the actual values
+                    first_day += datetime.timedelta(days=1)
+
                 self.predictions[:] = (
                     value
                     for value in self.predictions
-                    if value.time.day
-                    >= (datetime.datetime.now() + datetime.timedelta(days=1)).day
-                    or value.time.month
-                    > (datetime.datetime.now() + datetime.timedelta(days=1)).month
-                    or value.time.year > datetime.datetime.now().year
+                    if value.time.astimezone(self._tz).date() >= first_day
                 )
-
-                if self._tomorrow_valid:
-                    # Remove tomorrows predictions, as we have the actual values
-                    self.predictions[:] = (
-                        value
-                        for value in self.predictions
-                        if value.time.day
-                        != (datetime.datetime.now() + datetime.timedelta(days=1)).day
-                    )
 
                 self.api_predictions = self.predictions
 

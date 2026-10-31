@@ -208,7 +208,7 @@ class Connector:
     @property
     def today(self) -> list:
         """Return raw dataset for today."""
-        date = datetime.now().strftime("%Y-%m-%d")
+        date = dt_util.now().strftime("%Y-%m-%d")
         return prepare_data(
             self.result, date, self._tz, self.config.options.get(CONF_RESOLUTION, True)
         )
@@ -216,7 +216,7 @@ class Connector:
     @property
     def tomorrow(self) -> list:
         """Return raw dataset for today."""
-        date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        date = (dt_util.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         return prepare_data(
             self.result, date, self._tz, self.config.options.get(CONF_RESOLUTION, True)
         )
@@ -224,5 +224,5 @@ class Connector:
     @property
     def co2data(self) -> list:
         """Return raw CO2 dataset."""
-        date = datetime.now().strftime("%Y-%m-%d")
+        date = dt_util.now().strftime("%Y-%m-%d")
         return prepare_co2_data(self._co2_result, date, self._tz)
