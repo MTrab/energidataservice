@@ -127,6 +127,7 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 "Prices for tomorrow is missing - trying to fetch data from API"
             )
             await api.update()
+            await api.update_carnot()
             await api.async_get_tariffs()
 
         api.today = api.api_today
