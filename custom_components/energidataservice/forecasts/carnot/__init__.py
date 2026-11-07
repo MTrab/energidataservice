@@ -26,16 +26,14 @@ def prepare_data(indata, tz) -> list | None:  # pylint: disable=invalid-name
     local_tz = dt_util.get_default_time_zone()
     reslist = []
     if not isinstance(indata, type(None)):
-        now = datetime.now()
+        today = dt_util.now(local_tz).date()
         for dataset in indata:
             tmpdate = (
                 datetime.fromisoformat(dataset["utctime"])
                 .replace(tzinfo=dt_util.UTC)
                 .astimezone(local_tz)
             )
-            if tmpdate.day != now.day:
-                if tmpdate.month == now.month and tmpdate.day < now.day:
-                    continue
+            if tmpdate.date() > today:
                 tmp = INTERVAL(dataset["prediction"], tmpdate)
                 reslist.append(tmp)
         return reslist

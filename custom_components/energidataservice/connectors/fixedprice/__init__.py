@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from logging import getLogger
 
 import homeassistant.util.dt as dt_util
@@ -71,11 +71,11 @@ class Connector:
     @property
     def today(self) -> list:
         """Return raw dataset for today."""
-        date = datetime.now().strftime("%Y-%m-%d")
+        date = dt_util.now().strftime("%Y-%m-%d")
         return prepare_data(self.value, date, self.tz)
 
     @property
     def tomorrow(self) -> list:
         """Return raw dataset for today."""
-        date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        date = (dt_util.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         return prepare_data(self.value, date, self.tz)
