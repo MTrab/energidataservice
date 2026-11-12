@@ -22,19 +22,19 @@ CHARGEOWNERS = {
     "Cerius": {
         "gln": "5790000705184",
         "company": "Cerius A/S",
-        "type": ["30TR_C_ET"],
+        "type": ["30TR_C_ET", "30RE_C_ET"],
         "chargetype": ["D03"],
     },
     "N1": {
         "gln": "5790001089030",
         "company": "N1 A/S - 131",
-        "type": ["CD", "CD R"],
+        "type": ["CD"],
         "chargetype": ["D03"],
     },
     "Dinel": {
         "gln": "5790000610099",
         "company": "Dinel A/S",
-        "type": ["TCL>100_02", "TCL<100_52"],
+        "type": ["TCL>100_02"],
         "chargetype": ["D03"],
     },
     "TREFOR El-net": {
@@ -172,7 +172,7 @@ CHARGEOWNERS = {
     "Forsyning Elnet": {
         "gln": "5790001088309",
         "company": "Forsyning Elnet A/S",
-        "type": ["STR-NT-03"],
+        "type": ["STR-NT-03", "STR-NT-02"],
         "chargetype": ["D03"],
     },
 }
