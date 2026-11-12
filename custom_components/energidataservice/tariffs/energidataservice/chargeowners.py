@@ -175,4 +175,10 @@ CHARGEOWNERS = {
         "type": ["STR-NT-03", "STR-NT-02"],
         "chargetype": ["D03"],
     },
+    "Grindsted Elnet": {
+        "gln": "5790000681105",
+        "company": "Grindsted Elnet A/S",
+        "type": ["GEV-NT-01", "GEV-NTR01", "GEV-NT-11"],
+        "chargetype": ["D03"],
+    },
 }
