@@ -6,8 +6,10 @@ from datetime import datetime, timedelta
 from logging import getLogger
 from random import randint
 
+from aiohttp import ClientError
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_call_later, async_track_time_change
 from homeassistant.loader import async_get_integration
@@ -98,7 +100,6 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             api.has_co2 = True
             break
 
-    hass.data[DOMAIN][entry.entry_id] = api
     use_forecast = entry.options.get(CONF_ENABLE_FORECAST) or False
 
     async def new_day(n):  # type: ignore pylint: disable=unused-argument, invalid-name
@@ -188,6 +189,17 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             api.carnot_update_listener()
             api.carnot_update_listener = None
 
+    try:
+        await get_new_data(0)
+    except (ClientError, TimeoutError, ConfigEntryNotReady) as err:
+        api.is_unloading = True
+        api.cancel_retry_updates()
+        if isinstance(err, ConfigEntryNotReady):
+            raise
+        raise ConfigEntryNotReady("Unable to fetch initial price data") from err
+
+    hass.data[DOMAIN][entry.entry_id] = api
+
     # Handle dataset updates
     update_tomorrow = async_track_time_change(
         hass,
@@ -208,7 +220,6 @@ async def _setup(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     update_new_price = async_track_time_change(hass, new_price, minute="/15", second=1)
     update_5min = async_track_time_change(hass, five_min, minute="/5", second=1)
 
-    await get_new_data(0)
     # async_call_later(hass, timedelta(seconds=1), refresh_co2_data)
     await refresh_co2_data(0)
 
