@@ -6,6 +6,7 @@ from datetime import datetime
 from logging import getLogger
 
 import homeassistant.util.dt as dt_util
+from aiohttp import ClientTimeout
 
 from ...const import INTERVAL
 from .regions import REGIONS
@@ -17,6 +18,7 @@ BASE_URL = "https://whale-app-dquqw.ondigitalocean.app/openapi/get_predict"
 SOURCE_NAME = "Carnot"
 DEFAULT_CURRENCY = "DKK"
 DEFAULT_UNIT = "MWh"
+REQUEST_TIMEOUT = ClientTimeout(total=30)
 
 __all__ = ["REGIONS", "Connector", "DEFAULT_CURRENCY", "DEFAULT_UNIT"]
 
@@ -45,7 +47,11 @@ class Connector:
     """Carnot forecast API."""
 
     def __init__(
-        self, regionhandler, client, tz, version  # pylint: disable=invalid-name
+        self,
+        regionhandler,
+        client,
+        tz,
+        version,  # pylint: disable=invalid-name
     ) -> None:
         """Init API connection to Carnot."""
         self.regionhandler = regionhandler
@@ -60,27 +66,27 @@ class Connector:
         headers = self._header(apikey, email, self._version)
         url = self._prepare_url(BASE_URL)
         _LOGGER.debug(
-            "Request for '%s' at Carnot API URL: '%s' with headers %s",
+            "Request for '%s' at Carnot API URL: '%s'",
             self.regionhandler.region,
             url,
-            headers,
         )
-        resp = await self.client.get(url, headers=headers)
-
-        if resp.status == 400:
-            _LOGGER.error("API returned error 400, Bad request!")
-        elif resp.status == 404:
-            _LOGGER.error("API returned error 404, Not found!")
-        elif resp.status == 422 or resp.status == 401:
-            _LOGGER.error(
-                "API returned error %s, Validation error - check your credentials!",
-                str(resp.status),
-            )
-        elif resp.status == 200:
-            res = await resp.json()
-            self._result = res["predictions"]
-        else:
-            _LOGGER.error("API returned error %s", str(resp.status))
+        async with self.client.get(
+            url, headers=headers, timeout=REQUEST_TIMEOUT
+        ) as resp:
+            if resp.status == 400:
+                _LOGGER.error("API returned error 400, Bad request!")
+            elif resp.status == 404:
+                _LOGGER.error("API returned error 404, Not found!")
+            elif resp.status == 422 or resp.status == 401:
+                _LOGGER.error(
+                    "API returned error %s, Validation error - check your credentials!",
+                    str(resp.status),
+                )
+            elif resp.status == 200:
+                res = await resp.json()
+                self._result = res["predictions"]
+            else:
+                _LOGGER.error("API returned error %s", str(resp.status))
 
         return (
             prepare_data(self._result, self._tz)

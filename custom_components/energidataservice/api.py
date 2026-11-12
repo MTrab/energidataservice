@@ -10,7 +10,7 @@ from logging import getLogger
 
 import homeassistant.util.dt as dt_util
 import voluptuous as vol
-from aiohttp import ClientConnectorError, ServerDisconnectedError
+from aiohttp import ClientError, ServerDisconnectedError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_EMAIL
 from homeassistant.core import HomeAssistant
@@ -299,8 +299,10 @@ class APIConnector:
                 self.predictions = await carnot.async_get_forecast(
                     self._carnot_apikey, self._carnot_user
                 )
-            except ClientConnectorError:
-                _LOGGER.warning("Error fetching data from Carnot")
+            except (ClientError, TimeoutError):
+                _LOGGER.warning(
+                    "Unable to fetch Carnot forecast; retrying at the next scheduled update"
+                )
 
             if not isinstance(self.predictions, type(None)):
                 # Compare whole dates in local time - comparing day/month numbers
